@@ -11,5 +11,9 @@ Java concurrency patterns for educational purposes
 
 [Philosopher with semaphore example](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/examples/philosopher/PhilosopherWithSemaphore.java)
 
+[BlockingQueue example](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/examples/queue/BlockingQueueExample.java)
+
+[ExecutorService example](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/examples/executorservice/ExecutorServiceExample.java)
+
 ### Pattern section:
 [Double check locking pattern](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/doublechecklocking/Singleton.java)
