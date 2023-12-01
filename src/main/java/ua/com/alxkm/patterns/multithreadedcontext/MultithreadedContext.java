@@ -29,4 +29,14 @@ public class MultithreadedContext {
             lock.unlock();
         }
     }
+
+    public void tryApply(Runnable runnable) {
+        if (lock.tryLock()) {
+            try {
+                runnable.run();
+            } finally {
+                lock.unlock();
+            }
+        }
+    }
 }
