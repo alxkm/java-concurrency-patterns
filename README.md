@@ -1,4 +1,4 @@
-# java-concurrency
+# java-concurrency-patterns
 Java concurrency patterns for educational purposes
 
 
