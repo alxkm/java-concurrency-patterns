@@ -19,3 +19,5 @@ Java concurrency patterns for educational purposes
 [Double check locking pattern](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/doublechecklocking/Singleton.java)
 
 [Barrier pattern](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/barrier/BarrierExample.java)
+
+[MultithreadedContext pattern](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/multithreadedcontext/MultithreadedContext.java)
