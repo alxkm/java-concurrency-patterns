@@ -21,3 +21,7 @@ Java concurrency patterns for educational purposes
 [Barrier pattern](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/barrier/BarrierExample.java)
 
 [MultithreadedContext pattern](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/multithreadedcontext/MultithreadedContext.java)
+
+[ReentrantReadWriteLockCounter pattern](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/readwritelock/ReentrantReadWriteLockCounter.java)
+
+[CustomBlockingQueue pattern](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/customblockingqueue/CustomBlockingQueue.java)
