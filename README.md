@@ -7,6 +7,8 @@ Java concurrency patterns for educational purposes
 
 [Odd Even printer another version example](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/examples/oddevenprinter/OddEvenPrinterExample.java)
 
+[Thread race condition example](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/examples/racecondition/AmountExample.java)
+
 [Philosopher with lock example](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/examples/philosopher/PhilosopherWithLock.java)
 
 [Philosopher with semaphore example](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/examples/philosopher/PhilosopherWithSemaphore.java)

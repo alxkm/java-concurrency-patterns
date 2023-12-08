@@ -2,7 +2,7 @@ package ua.com.alxkm.examples.racecondition;
 
 import java.util.stream.IntStream;
 
-public class AmountExample {
+public class AccountExample {
     public static void main(String[] args) {
         unsafeIncrement();
         safeSynchronizedIncrement();
