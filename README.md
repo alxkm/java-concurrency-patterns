@@ -168,6 +168,15 @@ This section introduces classes for active thread management:
 
 **Phaser** - An advanced barrier for thread synchronization, combining features of CyclicBarrier and CountDownLatch. The number of threads is dynamic and can change. The class can be reused and allows threads to report readiness without blocking.
 
+### Examples:
+
+[Barrier wrapper example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/synchronizers/Barrier.java)\
+[Barrier usage example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/synchronizers/BarrierExample.java)\
+[CountDownLatch example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/synchronizers/CountDownLatchExample.java)\
+[Exchanger Example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/synchronizers/ExchangerExample.java)\
+[Phaser Example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/synchronizers/PhaserExample.java)\
+[SemaphorePrintQueue Example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/synchronizers/SemaphorePrintQueueExample.java)
+
 # Executors
 
 Here, we reach the most extensive section of the package. This part covers interfaces for executing asynchronous tasks with the capability of receiving results via the Future and Callable interfaces. Additionally, it includes services and factories for creating thread pools such as ThreadPoolExecutor, ScheduledThreadPoolExecutor, and ForkJoinPool. To enhance comprehension, we will break down the interfaces and classes into smaller, more manageable parts.
