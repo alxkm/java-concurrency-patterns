@@ -203,6 +203,7 @@ Here, we reach the most extensive section of the package. This part covers inter
 [Custom ExecutorService implementation example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/executors/AbstractExecutorServiceExample.java)\
 [ExecutorCompletionService usage example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/executors/CompletionServiceExample.java)\
 [Executors example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/executors/ExecutorsExample.java)\
+[ExecutorService example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/executors/ExecutorService.java)\
 [ScheduledThreadPoolExecutor usage examples](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/executors/ScheduledThreadPoolExecutorExample.java)\
 [ThreadPoolExecutor usage examples](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/executors/ThreadPoolExecutorExample.java)
 
@@ -288,6 +289,8 @@ Thus, by dividing into parts, it is possible to achieve their parallel processin
 **AtomicReferenceArray** — An array of object references that can be updated atomically.
 
 **AtomicIntegerFieldUpdater, AtomicLongFieldUpdater, AtomicReferenceFieldUpdater** — These classes allow for atomic updates of fields by their names using reflection. The field offsets for CAS are determined in the constructor and cached, so the performance impact of reflection is minimal.
+
+# Examples:
 
 [Atomics different examples](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/atomics/AtomicExample.java)\
 [AtomicIntegerFieldUpdater example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/atomics/AtomicIntegerFieldUpdaterExample.java)\
