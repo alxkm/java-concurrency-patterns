@@ -197,6 +197,15 @@ Here, we reach the most extensive section of the package. This part covers inter
 
 **AbstractExecutorService** — An abstract class that serves as a base for building an ExecutorService. It provides the basic implementation of the submit, invokeAll, and invokeAny methods. Classes such as ThreadPoolExecutor, ScheduledThreadPoolExecutor, and ForkJoinPool inherit from this class.
 
+### Examples:
+
+[AbstractExecutorServiceExample Demonstrates the usage of AbstractExecutorService in a custom ExecutorService implementation](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/executors/AbstractExecutorServiceExample.java)
+[CompletionServiceExample Demonstrates the usage of ExecutorCompletionService](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/executors/CompletionServiceExample.java)
+[ExecutorsExample Demonstrates the usage of Executors utility class to create thread pools](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/executors/ExecutorsExample.java)
+[ScheduledThreadPoolExecutorExample Demonstrates the usage of ScheduledThreadPoolExecutor to schedule tasks](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/executors/ScheduledThreadPoolExecutorExample.java)
+[ThreadPoolExecutorExample Demonstrates the usage of ThreadPoolExecutor to execute tasks](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/executors/ThreadPoolExecutorExample.java)
+
+
 # ThreadPoolExecutor & Factory
 
 ![image](images/AbstractExecutorService.png)
