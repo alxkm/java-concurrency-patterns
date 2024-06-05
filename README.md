@@ -67,6 +67,9 @@ The name is self-explanatory. All modification operations on the collection (add
 
 **CopyOnWriteArraySet<E>** — Implementation of the Set interface, using CopyOnWriteArrayList as a basis. Unlike CopyOnWriteArrayList, there are no additional methods.
 
+[ConcurrentSkipListSetExample class demonstrates the usage of ConcurrentSkipListSet](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/collections/ConcurrentSkipListSetExample.java)
+[CopyOnWriteArrayListExample class demonstrates the usage of CopyOnWriteArrayList](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/collections/CopyOnWriteArrayListExample.java)
+
 # Scalable Maps
 
 ![image](images/ConcurrentMap.png)
@@ -88,6 +91,7 @@ Improved implementations of HashMap, TreeMap with better support for multithread
 
 **ConcurrentHashMap<K, V>** — Unlike Hashtable and synchronized blocks on HashMap, data is represented as segments, broken down by key hashes. As a result, access to data is locked by segments, not by a single object. In addition, iterators represent data for a specific time slice and do not throw ConcurrentModificationException. More details ConcurrentHashMap
 
+
 ### Additional constructor
 
 **ConcurrentHashMap(int initialCapacity, float loadFactor, int concurrencyLevel)** - The third parameter in the constructor represents the anticipated number of concurrent writing threads, with a default value of 16. This parameter significantly impacts the collection's memory footprint and performance.
@@ -97,6 +101,10 @@ Improved implementations of HashMap, TreeMap with better support for multithread
 **ConcurrentSkipListMap<K, V>** - This class serves as a thread-safe equivalent of TreeMap. It organizes data based on keys and ensures an average performance of log(N) for operations like containsKey, get, put, remove, and similar operations.
 
 **ConcurrentSkipListSet<E>** - This class implements the Set interface and is built upon ConcurrentSkipListMap for thread-safe set operations.
+
+[ConcurrentHashMapExample class demonstrates the usage of the ConcurrentHashMap](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/collections/ConcurrentHashMapExample.java)
+[ConcurrentSkipListMapExample class demonstrates the usage of ConcurrentSkipListMap](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/collections/ConcurrentSkipListMapExample.java)
+
 
 # Queues
 
@@ -132,6 +140,10 @@ Thread-safe and non-blocking queue implementations based on linked nodes.
 **TransferQueue<E>** — This interface is interesting because it allows blocking the producer thread when adding an element until a consumer thread retrieves an element from the queue. The blocking can include a timeout or a check for waiting consumers, enabling synchronous and asynchronous message transfer mechanisms.
 
 **LinkedTransferQueue<E>** — An implementation of TransferQueue based on the Dual Queues with Slack algorithm, utilizing CAS and thread parking extensively when idle.
+
+### Examples:
+
+[Blocking Queue Producer-Consumer Example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/collections/BlockingQueueSimpleExample.java)
 
 # Synchronizers
 ![image](images/Synchronizers.png)
