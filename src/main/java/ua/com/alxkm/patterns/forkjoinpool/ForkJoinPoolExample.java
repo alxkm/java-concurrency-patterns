@@ -1,4 +1,4 @@
-package ua.com.alxkm.examples.forkjoinpool;
+package ua.com.alxkm.patterns.forkjoinpool;
 
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveTask;
