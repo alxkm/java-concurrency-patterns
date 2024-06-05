@@ -146,7 +146,9 @@ Thread-safe and non-blocking queue implementations based on linked nodes.
 **LinkedTransferQueue<E>** — An implementation of TransferQueue based on the Dual Queues with Slack algorithm, utilizing CAS and thread parking extensively when idle.
 
 ### Examples:
-
+[ArrayBlockingQueue example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/queue/ArrayBlockingQueueExample.java)\
+[ConcurrentLinkedDeque example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/queue/ConcurrentLinkedDequeExample.java)\
+[ConcurrentLinkedQueue example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/queue/ConcurrentLinkedQueueExample.java)\
 [BlockingQueue Producer-Consumer example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/collections/BlockingQueueSimpleExample.java)\
 [CustomBlockingQueue example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/customblockingqueue/CustomBlockingQueue.java)
 
