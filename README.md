@@ -289,11 +289,11 @@ Thus, by dividing into parts, it is possible to achieve their parallel processin
 
 **AtomicIntegerFieldUpdater, AtomicLongFieldUpdater, AtomicReferenceFieldUpdater** — These classes allow for atomic updates of fields by their names using reflection. The field offsets for CAS are determined in the constructor and cached, so the performance impact of reflection is minimal.
 
-[Atomics different examples](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/atomics/AtomicExample.java)
-[AtomicIntegerFieldUpdater example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/atomics/AtomicIntegerFieldUpdaterExample.java)
-[AtomicLongFieldUpdater example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/atomics/AtomicLongFieldUpdaterExample.java)
-[AtomicMarkableReference example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/atomics/AtomicMarkableReferenceExample.java)
-[AtomicReferenceArray example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/atomics/AtomicReferenceArrayExample.java)
-[AtomicReference example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/atomics/AtomicReferenceExample.java)
-[AtomicReferenceFieldUpdater example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/atomics/AtomicReferenceFieldUpdaterExample.java)
-[AtomicStampedReference example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/atomics/AtomicStampedReferenceExample.java)
+[Atomics different examples](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/atomics/AtomicExample.java)\
+[AtomicIntegerFieldUpdater example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/atomics/AtomicIntegerFieldUpdaterExample.java)\
+[AtomicLongFieldUpdater example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/atomics/AtomicLongFieldUpdaterExample.java)\
+[AtomicMarkableReference example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/atomics/AtomicMarkableReferenceExample.java)\
+[AtomicReferenceArray example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/atomics/AtomicReferenceArrayExample.java)\
+[AtomicReference example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/atomics/AtomicReferenceExample.java)\
+[AtomicReferenceFieldUpdater example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/atomics/AtomicReferenceFieldUpdaterExample.java)\
+[AtomicStampedReference example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/atomics/AtomicStampedReferenceExample.java)\
