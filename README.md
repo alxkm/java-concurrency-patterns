@@ -67,6 +67,8 @@ The name is self-explanatory. All modification operations on the collection (add
 
 **CopyOnWriteArraySet<E>** — Implementation of the Set interface, using CopyOnWriteArrayList as a basis. Unlike CopyOnWriteArrayList, there are no additional methods.
 
+### Examples:
+
 [ConcurrentSkipListSetExample class demonstrates the usage of ConcurrentSkipListSet](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/collections/ConcurrentSkipListSetExample.java)
 [CopyOnWriteArrayListExample class demonstrates the usage of CopyOnWriteArrayList](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/collections/CopyOnWriteArrayListExample.java)
 
@@ -101,6 +103,8 @@ Improved implementations of HashMap, TreeMap with better support for multithread
 **ConcurrentSkipListMap<K, V>** - This class serves as a thread-safe equivalent of TreeMap. It organizes data based on keys and ensures an average performance of log(N) for operations like containsKey, get, put, remove, and similar operations.
 
 **ConcurrentSkipListSet<E>** - This class implements the Set interface and is built upon ConcurrentSkipListMap for thread-safe set operations.
+
+### Examples:
 
 [ConcurrentHashMapExample class demonstrates the usage of the ConcurrentHashMap](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/collections/ConcurrentHashMapExample.java)
 [ConcurrentSkipListMapExample class demonstrates the usage of ConcurrentSkipListMap](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/collections/ConcurrentSkipListMapExample.java)
