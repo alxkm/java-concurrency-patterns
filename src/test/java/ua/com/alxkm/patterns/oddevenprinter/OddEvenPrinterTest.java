@@ -1,12 +1,21 @@
-package ua.com.alxkm.examples.oddevenprinter;
+package ua.com.alxkm.patterns.oddevenprinter;
 
 import org.junit.jupiter.api.Test;
+import ua.com.alxkm.patterns.oddevenprinter.OddEvenPrinter;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class OddEvenPrinterTest {
+
+    /**
+     * This test method verifies the functionality of the OddEvenPrinter class, which implements a
+     * solution to the classic Odd-Even printing problem using two separate threads. It starts the
+     * printing process by invoking the startPrinting method of the OddEvenPrinter instance. After
+     * allowing some time for the threads to finish printing, the test compares the printed output
+     * against the expected output. The expected output contains alternating lines of numbers printed
+     * by the OddThread and EvenThread threads, starting from 1. This test ensures that the OddEvenPrinter
+     * class correctly prints odd and even numbers in sequence using two separate threads.
+     */
     @Test
     public void testOddEvenPrinter() throws InterruptedException {
         OddEvenPrinter oddEvenPrinter = new OddEvenPrinter();
