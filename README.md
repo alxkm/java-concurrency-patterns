@@ -148,6 +148,7 @@ Thread-safe and non-blocking queue implementations based on linked nodes.
 ### Examples:
 
 [Blocking Queue Producer-Consumer Example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/collections/BlockingQueueSimpleExample.java)
+[Custom Blocking Queue Example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/customblockingqueue/CustomBlockingQueue.java)
 
 # Synchronizers
 ![image](images/Synchronizers.png)
