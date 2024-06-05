@@ -71,7 +71,7 @@ The name is self-explanatory. All modification operations on the collection (add
 
 ### Examples:
 
-[ConcurrentSkipListSet usage example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/collections/ConcurrentSkipListSetExample.java)
+[ConcurrentSkipListSet usage example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/collections/ConcurrentSkipListSetExample.java)\
 [CopyOnWriteArrayList usage example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/collections/CopyOnWriteArrayListExample.java)
 
 # Scalable Maps
@@ -107,7 +107,7 @@ Improved implementations of HashMap, TreeMap with better support for multithread
 
 ### Examples:
 
-[ConcurrentHashMap usage example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/collections/ConcurrentHashMapExample.java)
+[ConcurrentHashMap usage example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/collections/ConcurrentHashMapExample.java)\
 [ConcurrentSkipListMap usage example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/collections/ConcurrentSkipListMapExample.java)
 
 # Queues
@@ -147,7 +147,7 @@ Thread-safe and non-blocking queue implementations based on linked nodes.
 
 ### Examples:
 
-[BlockingQueue Producer-Consumer example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/collections/BlockingQueueSimpleExample.java)
+[BlockingQueue Producer-Consumer example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/collections/BlockingQueueSimpleExample.java)\
 [CustomBlockingQueue example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/customblockingqueue/CustomBlockingQueue.java)
 
 # Synchronizers
@@ -200,10 +200,10 @@ Here, we reach the most extensive section of the package. This part covers inter
 
 ### Examples:
 
-[Custom ExecutorService implementation example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/executors/AbstractExecutorServiceExample.java)
-[ExecutorCompletionService usage example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/executors/CompletionServiceExample.java)
-[Executors example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/executors/ExecutorsExample.java)
-[ScheduledThreadPoolExecutor usage examples](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/executors/ScheduledThreadPoolExecutorExample.java)
+[Custom ExecutorService implementation example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/executors/AbstractExecutorServiceExample.java)\
+[ExecutorCompletionService usage example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/executors/CompletionServiceExample.java)\
+[Executors example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/executors/ExecutorsExample.java)\
+[ScheduledThreadPoolExecutor usage examples](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/executors/ScheduledThreadPoolExecutorExample.java)\
 [ThreadPoolExecutor usage examples](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/executors/ThreadPoolExecutorExample.java)
 
 # ThreadPoolExecutor & Factory
@@ -296,4 +296,4 @@ Thus, by dividing into parts, it is possible to achieve their parallel processin
 [AtomicReferenceArray example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/atomics/AtomicReferenceArrayExample.java)\
 [AtomicReference example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/atomics/AtomicReferenceExample.java)\
 [AtomicReferenceFieldUpdater example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/atomics/AtomicReferenceFieldUpdaterExample.java)\
-[AtomicStampedReference example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/atomics/AtomicStampedReferenceExample.java)\
+[AtomicStampedReference example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/atomics/AtomicStampedReferenceExample.java)
