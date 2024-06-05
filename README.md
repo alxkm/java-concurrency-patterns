@@ -146,6 +146,7 @@ Thread-safe and non-blocking queue implementations based on linked nodes.
 **LinkedTransferQueue<E>** — An implementation of TransferQueue based on the Dual Queues with Slack algorithm, utilizing CAS and thread parking extensively when idle.
 
 ### Examples:
+
 [ArrayBlockingQueue example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/queue/ArrayBlockingQueueExample.java)\
 [ConcurrentLinkedDeque example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/queue/ConcurrentLinkedDequeExample.java)\
 [ConcurrentLinkedQueue example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/queue/ConcurrentLinkedQueueExample.java)\
@@ -267,6 +268,16 @@ Thus, by dividing into parts, it is possible to achieve their parallel processin
 
 **LockSupport** — Designed for creating classes with locks. It includes methods for parking threads, serving as replacements for the deprecated Thread.suspend() and Thread.resume() methods.
 
+### Examples:
+
+[ReadWriteLock example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/locks/ReadWriteLockExample.java)\
+[ReentrantReadWriteLockCounter example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/locks/ReentrantReadWriteLockCounter.java)\
+[ReentrantReadWriteLockCounter example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/locks/ReentrantReadWriteLockCounterExample.java)\
+[AbstractOwnableSynchronizer example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/locks/AbstractOwnableSynchronizerExample.java)\
+[AbstractQueuedLongSynchronizer example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/locks/AbstractQueuedLongSynchronizerExample.java)\
+[AbstractQueuedSynchronizer example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/locks/AbstractQueuedSynchronizerExample.java)\
+[LockSupport example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/locks/LockSupportExample.java)
+
 ![image](images/AbstractOwnableSynchronizer.png)
 
 **AbstractOwnableSynchronizer** — A base class designed for creating synchronization mechanisms. It includes a simple getter/setter pair for storing and accessing an exclusive thread that can interact with the data.
@@ -292,7 +303,7 @@ Thus, by dividing into parts, it is possible to achieve their parallel processin
 
 **AtomicIntegerFieldUpdater, AtomicLongFieldUpdater, AtomicReferenceFieldUpdater** — These classes allow for atomic updates of fields by their names using reflection. The field offsets for CAS are determined in the constructor and cached, so the performance impact of reflection is minimal.
 
-# Examples:
+### Examples:
 
 [Atomics different examples](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/atomics/AtomicExample.java)\
 [AtomicIntegerFieldUpdater example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/atomics/AtomicIntegerFieldUpdaterExample.java)\
