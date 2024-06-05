@@ -31,6 +31,8 @@ Java concurrency patterns for educational purposes
 [PhaserExample pattern](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/phaser/PhaserExample.java)
 
 
+# java.util.concurrent.*
+
 ![image](images/structure.jpeg)
 
 
@@ -69,8 +71,8 @@ The name is self-explanatory. All modification operations on the collection (add
 
 ### Examples:
 
-[ConcurrentSkipListSetExample class demonstrates the usage of ConcurrentSkipListSet](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/collections/ConcurrentSkipListSetExample.java)
-[CopyOnWriteArrayListExample class demonstrates the usage of CopyOnWriteArrayList](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/collections/CopyOnWriteArrayListExample.java)
+[ConcurrentSkipListSet usage example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/collections/ConcurrentSkipListSetExample.java)
+[CopyOnWriteArrayList usage example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/collections/CopyOnWriteArrayListExample.java)
 
 # Scalable Maps
 
@@ -90,7 +92,6 @@ Improved implementations of HashMap, TreeMap with better support for multithread
 
 **V replace(K key, V value)**: Replaces the value for the given key with the new one, if the key is associated with any value. It returns the previous value associated with the key.
 
-
 **ConcurrentHashMap<K, V>** — Unlike Hashtable and synchronized blocks on HashMap, data is represented as segments, broken down by key hashes. As a result, access to data is locked by segments, not by a single object. In addition, iterators represent data for a specific time slice and do not throw ConcurrentModificationException. More details ConcurrentHashMap
 
 
@@ -106,9 +107,8 @@ Improved implementations of HashMap, TreeMap with better support for multithread
 
 ### Examples:
 
-[ConcurrentHashMapExample class demonstrates the usage of the ConcurrentHashMap](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/collections/ConcurrentHashMapExample.java)
-[ConcurrentSkipListMapExample class demonstrates the usage of ConcurrentSkipListMap](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/collections/ConcurrentSkipListMapExample.java)
-
+[ConcurrentHashMap usage example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/collections/ConcurrentHashMapExample.java)
+[ConcurrentSkipListMap usage example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/collections/ConcurrentSkipListMapExample.java)
 
 # Queues
 
@@ -147,8 +147,8 @@ Thread-safe and non-blocking queue implementations based on linked nodes.
 
 ### Examples:
 
-[Blocking Queue Producer-Consumer Example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/collections/BlockingQueueSimpleExample.java)
-[Custom Blocking Queue Example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/customblockingqueue/CustomBlockingQueue.java)
+[BlockingQueue Producer-Consumer example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/collections/BlockingQueueSimpleExample.java)
+[CustomBlockingQueue example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/customblockingqueue/CustomBlockingQueue.java)
 
 # Synchronizers
 ![image](images/Synchronizers.png)
@@ -200,12 +200,11 @@ Here, we reach the most extensive section of the package. This part covers inter
 
 ### Examples:
 
-[AbstractExecutorServiceExample Demonstrates the usage of AbstractExecutorService in a custom ExecutorService implementation](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/executors/AbstractExecutorServiceExample.java)
-[CompletionServiceExample Demonstrates the usage of ExecutorCompletionService](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/executors/CompletionServiceExample.java)
-[ExecutorsExample Demonstrates the usage of Executors utility class to create thread pools](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/executors/ExecutorsExample.java)
-[ScheduledThreadPoolExecutorExample Demonstrates the usage of ScheduledThreadPoolExecutor to schedule tasks](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/executors/ScheduledThreadPoolExecutorExample.java)
-[ThreadPoolExecutorExample Demonstrates the usage of ThreadPoolExecutor to execute tasks](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/executors/ThreadPoolExecutorExample.java)
-
+[Custom ExecutorService implementation example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/executors/AbstractExecutorServiceExample.java)
+[ExecutorCompletionService usage example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/executors/CompletionServiceExample.java)
+[Executors example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/executors/ExecutorsExample.java)
+[ScheduledThreadPoolExecutor usage examples](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/executors/ScheduledThreadPoolExecutorExample.java)
+[ThreadPoolExecutor usage examples](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/executors/ThreadPoolExecutorExample.java)
 
 # ThreadPoolExecutor & Factory
 
