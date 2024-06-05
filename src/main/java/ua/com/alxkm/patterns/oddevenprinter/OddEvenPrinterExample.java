@@ -1,10 +1,19 @@
-package ua.com.alxkm.examples.oddevenprinter;
+package ua.com.alxkm.patterns.oddevenprinter;
 
+/**
+ * The OddEvenPrinterExample class demonstrates printing odd and even numbers in separate threads without a dedicated printer class.
+ * It synchronizes the printing process to ensure that odd and even numbers are printed in alternating order.
+ */
 public class OddEvenPrinterExample {
     private static final Object lock = new Object();
     private static boolean isOddTurn = true;
     private static final int limit = 10;
 
+    /**
+     * Main method to start the odd and even threads for printing numbers.
+     *
+     * @param args command line arguments (not used)
+     */
     public static void main(String[] args) {
         Thread oddThread = new Thread(() -> printOddNumbers());
         Thread evenThread = new Thread(() -> printEvenNumbers());
