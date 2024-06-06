@@ -1,4 +1,4 @@
-package ua.com.alxkm.patterns.customblockingqueue;
+package ua.com.alxkm.patterns.queue;
 
 import java.util.LinkedList;
 import java.util.Queue;
