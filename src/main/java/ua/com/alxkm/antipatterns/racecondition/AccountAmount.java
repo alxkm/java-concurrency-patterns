@@ -1,4 +1,4 @@
-package ua.com.alxkm.patterns.racecondition;
+package ua.com.alxkm.antipatterns.racecondition;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
