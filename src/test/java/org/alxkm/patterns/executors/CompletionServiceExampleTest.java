@@ -1,6 +1,5 @@
 package org.alxkm.patterns.executors;
 
-import org.alxkm.patterns.executors.CompletionServiceExample;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -8,8 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Unit tests for the CompletionServiceExample class.

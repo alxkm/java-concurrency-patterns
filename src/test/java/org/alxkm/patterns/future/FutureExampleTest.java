@@ -1,6 +1,5 @@
 package org.alxkm.patterns.future;
 
-import org.alxkm.patterns.future.Task;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.ExecutionException;
