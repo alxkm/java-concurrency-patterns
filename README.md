@@ -1,6 +1,6 @@
-# Java multithreading and concurrency patterns
+# Java multithreading and concurrency patterns and antipatterns
 
-### List of patterns:
+### Patterns:
 
 # Atomics examples:
 - [ActiveObject.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/activeobject/ActiveObject.java): Example of Active Object pattern.
@@ -129,6 +129,159 @@
 
 # Two-phase termination
 - [TwoPhaseTermination.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/twophasetermination/TwoPhaseTermination.java): Demonstrates the two-phase termination pattern.
+
+
+# Antipatterns
+
+### Thread Leakage
+
+- Description: Threads are created but never terminated, leading to resource exhaustion.
+- Solution: Use thread pools (e.g., ThreadPoolExecutor) to manage threads.
+
+#### Examples:
+- [ThreadLeakageExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/org/alxkm/antipatterns/threadleakage/ThreadLeakageExample.java)
+- [ThreadLeakageResolution.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/org/alxkm/antipatterns/threadleakage/ThreadLeakageResolution.java)
+
+### Busy Waiting
+
+- Description: A thread repeatedly checks a condition in a loop, wasting CPU cycles.
+- Solution: Use wait/notify mechanisms or higher-level concurrency constructs like CountDownLatch, CyclicBarrier, or Condition.
+
+#### Examples:
+- [BusyWaitingExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/org/alxkm/antipatterns/busywaiting/BusyWaitingExample.java)
+- [BusyWaitingResolution.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/org/alxkm/antipatterns/busywaiting/BusyWaitingResolution.java)
+
+### Nested Monitor Lockout (Deadlock)
+
+- Description: Two or more threads block each other by holding resources the other needs.
+- Solution: Always acquire multiple locks in a consistent global order, use tryLock with timeouts, or avoid acquiring multiple locks if possible.
+
+#### Examples:
+- [DeadlockExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/org/alxkm/antipatterns/deadlock/DeadlockExample.java)
+- [DeadlockResolutionExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/org/alxkm/antipatterns/deadlock/DeadlockResolutionExample.java)
+
+### Forgotten Synchronization
+
+- Description: Access to shared resources is not properly synchronized, leading to race conditions.
+- Solution: Use synchronized blocks or higher-level concurrency utilities (e.g., ReentrantLock, Atomic* classes).
+
+#### Examples:
+- [CounterExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/org/alxkm/antipatterns/forgottensynchronization/CounterExample.java)
+- [CounterReentrantLockResolution.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/org/alxkm/antipatterns/forgottensynchronization/CounterReentrantLockResolution.java)
+- [CounterResolution.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/org/alxkm/antipatterns/forgottensynchronization/CounterResolution.java)
+
+### Excessive Synchronization
+
+- Description: Overuse of synchronization, leading to contention and reduced parallelism.
+- Solution: Minimize the scope of synchronized blocks, use lock-free algorithms, or utilize concurrent collections (e.g., ConcurrentHashMap, CopyOnWriteArrayList).
+
+#### Examples:
+- [AtomicCounter.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/org/alxkm/antipatterns/excessivesynchronization/AtomicCounter.java)
+- [ExcessiveSyncCounter.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/org/alxkm/antipatterns/excessivesynchronization/ExcessiveSyncCounter.java)
+- [OptimizedCounter.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/org/alxkm/antipatterns/excessivesynchronization/OptimizedCounter.java)
+
+### Using Thread-Safe Collections Incorrectly
+
+- Description: Assuming individual thread-safe operations guarantee overall thread-safe logic.
+- Solution: Combine operations using explicit locks or use higher-level synchronization constructs to maintain logical thread safety.
+
+#### Examples:
+- [CorrectUsage.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/org/alxkm/antipatterns/usingthreadsafecollectionsincorrectly/CorrectUsage.java)
+- [IncorrectUsage.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/org/alxkm/antipatterns/usingthreadsafecollectionsincorrectly/IncorrectUsage.java)
+- [OptimizedUsage.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/org/alxkm/antipatterns/usingthreadsafecollectionsincorrectly/OptimizedUsage.java)
+
+### Ignoring InterruptedException
+
+- Description: Swallowing or ignoring the InterruptedException, leading to threads that cannot be properly managed or interrupted.
+- Solution: Handle interruptions properly, typically by cleaning up and propagating the interruption status.
+
+#### Examples:
+- [IgnoringInterruptedException.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/org/alxkm/antipatterns/ignoringinterruptedexception/IgnoringInterruptedException.java)
+- [PropagatingInterruptedException.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/org/alxkm/antipatterns/ignoringinterruptedexception/PropagatingInterruptedException.java)
+- [ProperlyHandlingInterruptedException.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/org/alxkm/antipatterns/ignoringinterruptedexception/ProperlyHandlingInterruptedException.java)
+
+### Starting a Thread in a Constructor
+
+- Description: Starting a thread from within a constructor, possibly before the object is fully constructed.
+- Solution: Start threads from a dedicated method called after construction, or use factory methods.
+
+#### Examples:
+- [ThreadInConstructor.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/org/alxkm/antipatterns/threadinconstructor/ThreadInConstructor.java)
+- [ThreadStartedOutsideConstructor.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/org/alxkm/antipatterns/threadinconstructor/ThreadStartedOutsideConstructor.java)
+- [ThreadUsingFactory.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/org/alxkm/antipatterns/threadinconstructor/ThreadUsingFactory.java)
+
+### Double-Checked Locking
+
+- Description: A broken idiom for lazy initialization that was incorrectly implemented before Java 5.
+- Solution: Use the volatile keyword correctly or the Initialization-on-demand holder idiom.
+
+#### Examples:
+- [Singleton.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/org/alxkm/antipatterns/doublechecklocking/Singleton.java)
+- [Holder.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/org/alxkm/antipatterns/doublechecklocking/Holder.java)
+- [SingletonInitializationOnDemand.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/org/alxkm/antipatterns/doublechecklocking/SingletonInitializationOnDemand.java)
+- [SingletonWithVolatile.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/org/alxkm/antipatterns/doublechecklocking/SingletonWithVolatile.java)
+
+### Lock Contention
+
+- Description: Multiple threads trying to acquire the same lock, leading to reduced performance.
+- Solution: Reduce the granularity of locks, use read-write locks, or employ lock-free data structures.
+
+#### Examples:
+- [LockContentionExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/org/alxkm/antipatterns/lockcontention/LockContentionExample.java)
+- [LockContentionResolution.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/org/alxkm/antipatterns/lockcontention/LockContentionResolution.java)
+- [StampedLockExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/org/alxkm/antipatterns/lockcontention/StampedLockExample.java)
+
+### Improper Use of ThreadLocal
+
+- Description: Using ThreadLocal incorrectly, leading to memory leaks or unexpected behavior.
+- Solution: Ensure proper management and cleanup of ThreadLocal variables.
+
+#### Examples:
+- [ThreadLocalCleanupExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/org/alxkm/antipatterns/improperuseofthreadlocal/ThreadLocalCleanupExample.java)
+- [ThreadLocalExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/org/alxkm/antipatterns/improperuseofthreadlocal/ThreadLocalExample.java)
+- [ThreadLocalCleaner.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/org/alxkm/antipatterns/improperuseofthreadlocal/ThreadLocalCleaner.java)
+- [ThreadLocalWithResourceExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/org/alxkm/antipatterns/improperuseofthreadlocal/ThreadLocalWithResourceExample.java)
+
+### Non-Atomic Compound Actions
+
+- Description: Performing compound actions (e.g., check-then-act, read-modify-write) without proper synchronization.
+- Solution: Use atomic variables or synchronized blocks to ensure compound actions are atomic.
+
+#### Examples:
+- [AtomicCompoundActionsExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/org/alxkm/antipatterns/nonatomiccompoundactions/AtomicCompoundActionsExample.java)
+- [AtomicIntegerExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/org/alxkm/antipatterns/nonatomiccompoundactions/AtomicIntegerExample.java)
+- [NonAtomicCompoundActionsExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/org/alxkm/antipatterns/nonatomiccompoundactions/NonAtomicCompoundActionsExample.java)
+
+### Race Conditions
+
+- Description: The system's behavior depends on the sequence or timing of uncontrollable events.
+- Solution: Properly synchronize access to shared resources and use thread-safe collections.
+
+#### Examples:
+- [AccountAmount.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/org/alxkm/antipatterns/racecondition/AccountAmount.java)
+- [AccountExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/org/alxkm/antipatterns/racecondition/AccountExample.java)
+
+### Lack of Thread Safety in Singletons
+
+- Description: Singleton instances not properly synchronized, leading to multiple instances.
+- Solution: Use the enum singleton pattern or the Initialization-on-demand holder idiom.
+
+#### Examples:
+- [DoubleCheckedLockingSingleton.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/org/alxkm/antipatterns/lackofthreadsafetyinsingletons/DoubleCheckedLockingSingleton.java)
+- [Holder.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/org/alxkm/antipatterns/lackofthreadsafetyinsingletons/Holder.java)
+- [HolderSingleton.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/org/alxkm/antipatterns/lackofthreadsafetyinsingletons/HolderSingleton.java)
+- [SafeSingleton.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/org/alxkm/antipatterns/lackofthreadsafetyinsingletons/SafeSingleton.java)
+- [UnsafeSingleton.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/org/alxkm/antipatterns/lackofthreadsafetyinsingletons/UnsafeSingleton.java)
+
+### Using Threads Instead of Tasks
+
+- Description: Directly creating and managing threads instead of using the Executor framework.
+- Solution: Use ExecutorService and related classes to manage thread pools and tasks efficiently.
+
+#### Examples:
+- [CompletableFutureExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/org/alxkm/antipatterns/threadsinsteadoftasks/CompletableFutureExample.java)
+- [DirectThreadManagement.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/org/alxkm/antipatterns/threadsinsteadoftasks/DirectThreadManagement.java)
+- [ExecutorFrameworkExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/org/alxkm/antipatterns/threadsinsteadoftasks/ExecutorFrameworkExample.java)
 
 
 
@@ -405,79 +558,3 @@ Thus, by dividing into parts, it is possible to achieve their parallel processin
 [AtomicStampedReference example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/atomics/AtomicStampedReferenceExample.java)
 
 
-# Antipaterns
-
-### Thread Leakage
-
-- Description: Threads are created but never terminated, leading to resource exhaustion.
-- Solution: Use thread pools (e.g., ThreadPoolExecutor) to manage threads.
-
-### Busy Waiting
-
-- Description: A thread repeatedly checks a condition in a loop, wasting CPU cycles.
-- Solution: Use wait/notify mechanisms or higher-level concurrency constructs like CountDownLatch, CyclicBarrier, or Condition.
-
-### Nested Monitor Lockout (Deadlock)
-
-- Description: Two or more threads block each other by holding resources the other needs.
-- Solution: Always acquire multiple locks in a consistent global order, use tryLock with timeouts, or avoid acquiring multiple locks if possible.
-
-### Forgotten Synchronization
-
-- Description: Access to shared resources is not properly synchronized, leading to race conditions.
-- Solution: Use synchronized blocks or higher-level concurrency utilities (e.g., ReentrantLock, Atomic* classes).
-
-### Excessive Synchronization
-
-- Description: Overuse of synchronization, leading to contention and reduced parallelism.
-- Solution: Minimize the scope of synchronized blocks, use lock-free algorithms, or utilize concurrent collections (e.g., ConcurrentHashMap, CopyOnWriteArrayList).
-
-### Using Thread-Safe Collections Incorrectly
-
-- Description: Assuming individual thread-safe operations guarantee overall thread-safe logic.
-- Solution: Combine operations using explicit locks or use higher-level synchronization constructs to maintain logical thread safety.
-
-### Ignoring InterruptedException
-
-- Description: Swallowing or ignoring the InterruptedException, leading to threads that cannot be properly managed or interrupted.
-- Solution: Handle interruptions properly, typically by cleaning up and propagating the interruption status.
-
-### Starting a Thread in a Constructor
-
-- Description: Starting a thread from within a constructor, possibly before the object is fully constructed.
-- Solution: Start threads from a dedicated method called after construction, or use factory methods.
-
-### Double-Checked Locking
-
-- Description: A broken idiom for lazy initialization that was incorrectly implemented before Java 5.
-- Solution: Use the volatile keyword correctly or the Initialization-on-demand holder idiom.
-
-### Lock Contention
-
-- Description: Multiple threads trying to acquire the same lock, leading to reduced performance.
-- Solution: Reduce the granularity of locks, use read-write locks, or employ lock-free data structures.
-
-### Improper Use of ThreadLocal
-
-- Description: Using ThreadLocal incorrectly, leading to memory leaks or unexpected behavior.
-- Solution: Ensure proper management and cleanup of ThreadLocal variables.
-
-### Non-Atomic Compound Actions
-
-- Description: Performing compound actions (e.g., check-then-act, read-modify-write) without proper synchronization.
-- Solution: Use atomic variables or synchronized blocks to ensure compound actions are atomic.
-
-### Race Conditions
-
-- Description: The system's behavior depends on the sequence or timing of uncontrollable events.
-- Solution: Properly synchronize access to shared resources and use thread-safe collections.
-
-### Lack of Thread Safety in Singletons
-
-- Description: Singleton instances not properly synchronized, leading to multiple instances.
-- Solution: Use the enum singleton pattern or the Initialization-on-demand holder idiom.
-
-### Using Threads Instead of Tasks
-
-- Description: Directly creating and managing threads instead of using the Executor framework.
-- Solution: Use ExecutorService and related classes to manage thread pools and tasks efficiently.
