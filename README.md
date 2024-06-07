@@ -2,31 +2,134 @@
 
 ### List of patterns:
 
-[Odd Even printer simple example](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/examples/oddevenprinter/OddEvenPrinterExample.java)
+# Atomics examples:
+- [ActiveObject.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/activeobject/ActiveObject.java): Example of Active Object pattern.
+- [AtomicExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/atomics/AtomicExample.java): Demonstrates basic atomic operations.
+- [MyClass.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/atomics/MyClass.java): Example class used in atomic operations.
+- [AtomicIntegerFieldUpdaterExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/atomics/AtomicIntegerFieldUpdaterExample.java): Demonstrates atomic field updater for integer fields.
+- [AtomicLongFieldUpdaterExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/atomics/AtomicLongFieldUpdaterExample.java): Demonstrates atomic field updater for long fields.
+- [SharedResource.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/atomics/SharedResource.java): Example class representing a shared resource.
+- [AtomicMarkableReferenceExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/atomics/AtomicMarkableReferenceExample.java): Example of AtomicMarkableReference usage.
+- [AtomicReferenceArrayExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/atomics/AtomicReferenceArrayExample.java): Demonstrates atomic operations on arrays.
+- [AtomicReferenceExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/atomics/AtomicReferenceExample.java): Example of using AtomicReference.
+- [AtomicReferenceFieldUpdaterExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/atomics/AtomicReferenceFieldUpdaterExample.java): Demonstrates atomic field updater for reference fields.
+- [AtomicStampedReferenceExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/atomics/AtomicStampedReferenceExample.java): Example of using AtomicStampedReference.
 
-[Odd Even printer another version example](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/examples/oddevenprinter/OddEvenPrinterExample.java)
+# Balking pattern
+- [BalkingPatternExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/balking/BalkingPatternExample.java): Demonstrates the Balking pattern.
 
-[Thread race condition example](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/examples/racecondition/AccountExample.java)
+# Queue
+- [BlockingQueueSimpleExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/collections/BlockingQueueSimpleExample.java): Simple example of a blocking queue.
 
-[Philosopher with lock example](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/examples/philosopher/PhilosopherWithLock.java)
+# Concurrent collections
+- [ConcurrentHashMapExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/collections/ConcurrentHashMapExample.java): Demonstrates usage of ConcurrentHashMap.
+- [ConcurrentSkipListMapExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/collections/ConcurrentSkipListMapExample.java): Example of using ConcurrentSkipListMap.
+- [ConcurrentSkipListSetExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/collections/ConcurrentSkipListSetExample.java): Demonstrates usage of ConcurrentSkipListSet.
+- [CopyOnWriteArrayListExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/collections/CopyOnWriteArrayListExample.java): Example of CopyOnWriteArrayList usage.
 
-[Philosopher with semaphore example](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/examples/philosopher/PhilosopherWithSemaphore.java)
+# Double check locking singleton
+- [DoubleCheckedLockingSingleton.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/doublechecklocking/DoubleCheckedLockingSingleton.java): Demonstrates double-checked locking for singleton pattern.
 
-[BlockingQueue example](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/examples/queue/BlockingQueueExample.java)
+# Executors example
+- [AbstractExecutorServiceExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/executors/AbstractExecutorServiceExample.java): Example of AbstractExecutorService usage.
+- [CompletionServiceExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/executors/CompletionServiceExample.java): Demonstrates usage of CompletionService.
+- [ExecutorServiceExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/executors/ExecutorServiceExample.java): Example of using ExecutorService.
+- [ExecutorsExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/executors/ExecutorsExample.java): Demonstrates various executor services.
+- [ScheduledThreadPoolExecutorExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/executors/ScheduledThreadPoolExecutorExample.java): Example of ScheduledThreadPoolExecutor usage.
+- [Task.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/executors/Task.java): Represents a task for executor services.
+- [ThreadPoolExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/executors/ThreadPoolExample.java): Demonstrates thread pool usage.
+- [ThreadPoolExecutorExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/executors/ThreadPoolExecutorExample.java): Example of ThreadPoolExecutor usage.
 
-[CustomBlockingQueue pattern](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/customblockingqueue/CustomBlockingQueue.java)
+# Fork join pool example
+- [MergeSortTask.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/forkjoinpool/MergeSortTask.java): Task for merge sort using ForkJoinPool.
+- [ForkJoinMergeSort.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/forkjoinpool/ForkJoinMergeSort.java): Example of merge sort using ForkJoinPool.
+- [ForkJoinPoolExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/forkjoinpool/ForkJoinPoolExample.java): Demonstrates ForkJoinPool usage.
+- [MyRecursiveTask.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/forkjoinpool/MyRecursiveTask.java): Custom recursive task example.
 
-[ExecutorService example](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/examples/executorservice/ExecutorServiceExample.java)
+# Future example
+- [FutureExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/future/FutureExample.java): Demonstrates usage of Future.
+- [Task.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/future/Task.java): Represents a task for future computation.
 
-[Double check locking pattern](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/doublechecklocking/Singleton.java)
+# Guarded suspension pattern
+- [GuardedSuspensionExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/guardedsuspension/GuardedSuspensionExample.java): Demonstrates the Guarded Suspension pattern.
 
-[MultithreadedContext pattern](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/multithreadedcontext/MultithreadedContext.java)
+# Immutable pattern
+- [Immutable.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/immutable/Immutable.java): Example of an immutable object.
 
-[ReentrantReadWriteLockCounter pattern](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/readwritelock/ReentrantReadWriteLockCounter.java)
+# Locks
+- [CustomSynchronizer.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/locks/CustomSynchronizer.java): Example of a custom synchronizer.
+- [AbstractOwnableSynchronizerExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/locks/AbstractOwnableSynchronizerExample.java): Demonstrates AbstractOwnableSynchronizer usage.
+- [AbstractQueuedLongSynchronizerExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/locks/AbstractQueuedLongSynchronizerExample.java): Example of AbstractQueuedLongSynchronizer usage.
+- [AbstractQueuedSynchronizerExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/locks/AbstractQueuedSynchronizerExample.java): Demonstrates AbstractQueuedSynchronizer usage.
+- [Task.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/locks/Task.java): Represents a task using locks.
+- [LockSupportExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/locks/LockSupportExample.java): Demonstrates usage of LockSupport.
+- [ReadWriteLockExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/locks/ReadWriteLockExample.java): Example of ReadWriteLock usage.
+- [ReentrantReadWriteLockCounter.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/locks/ReentrantReadWriteLockCounter.java): Counter using ReentrantReadWriteLock.
+- [ReentrantReadWriteLockCounterExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/locks/ReentrantReadWriteLockCounterExample.java): Demonstrates counter with ReentrantReadWriteLock.
 
-[Barrier pattern](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/barrier/BarrierExample.java)
+# Monitor object pattern
+- [MonitorObject.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/monitorobject/MonitorObject.java): Example of the monitor object pattern.
 
-[PhaserExample pattern](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/phaser/PhaserExample.java)
+# Multithreaded context
+- [MultithreadedContext.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/multithreadedcontext/MultithreadedContext.java): Example of multithreaded context.
+
+# Mutex
+- [MutexExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/mutex/MutexExample.java): Demonstrates usage of a mutex.
+
+# Odd-Even Printer
+- [OddEvenPrinter.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/oddevenprinter/OddEvenPrinter.java): Example of odd-even printing using threads.
+- [OddEvenPrinterExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/oddevenprinter/OddEvenPrinterExample.java): Demonstrates odd-even printer example.
+
+# Philosopher problem
+- [PhilosopherWithLock.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/philosopher/PhilosopherWithLock.java): Philosopher problem using locks.
+- [PhilosopherWithSemaphore.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/philosopher/PhilosopherWithSemaphore.java): Philosopher problem using semaphores.
+
+# Queue
+- [ArrayBlockingQueueExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/queue/ArrayBlockingQueueExample.java): Example of ArrayBlockingQueue usage.
+- [ConcurrentLinkedDequeExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/queue/ConcurrentLinkedDequeExample.java): Demonstrates usage of ConcurrentLinkedDeque.
+- [ConcurrentLinkedQueueExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/queue/ConcurrentLinkedQueueExample.java): Example of ConcurrentLinkedQueue usage.
+- [Consumer.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/queue/Consumer.java): Represents a consumer in producer-consumer problem.
+- [CustomBlockingQueue.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/queue/CustomBlockingQueue.java): Example of a custom blocking queue.
+- [Producer.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/queue/Producer.java): Represents a producer in producer-consumer problem.
+- [ProducerConsumerBlockingQueueExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/queue/ProducerConsumerBlockingQueueExample.java): Demonstrates producer-consumer problem using blocking queue.
+
+# Reactor pattern
+- [Reactor.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/reactor/Reactor.java): Example of the reactor pattern.
+
+# Reentrant lock
+- [ReentrantLockCounter.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/reentrantlock/ReentrantLockCounter.java): Counter using ReentrantLock.
+- [ReentrantLockExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/reentrantlock/ReentrantLockExample.java): Demonstrates usage of ReentrantLock.
+
+# Scheduler
+- [Scheduler.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/scheduler/Scheduler.java): Example of a task scheduler.
+
+# Semaphore
+- [SemaphoreExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/semaphore/SemaphoreExample.java): Demonstrates usage of a semaphore.
+
+# Singleton pattern
+- [Singleton.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/singleton/Singleton.java): Example of the singleton pattern.
+
+# Synchronizers
+- [Barrier.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/synchronizers/Barrier.java): Demonstrates a custom barrier implementation.
+- [BarrierExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/synchronizers/BarrierExample.java): Example of using barriers.
+- [CountDownLatchExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/synchronizers/CountDownLatchExample.java): Demonstrates usage of CountDownLatch.
+- [CustomTask.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/synchronizers/CustomTask.java): Represents a custom task using synchronizers.
+- [Consumer.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/synchronizers/Consumer.java): Consumer in a synchronization context.
+- [Producer.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/synchronizers/Producer.java): Producer in a synchronization context.
+- [ExchangerExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/synchronizers/ExchangerExample.java): Demonstrates usage of Exchanger.
+- [PhaserExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/synchronizers/PhaserExample.java): Example of using Phaser.
+- [SemaphorePrintQueueExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/synchronizers/SemaphorePrintQueueExample.java): Demonstrates a print queue using semaphore.
+
+# Thread local
+- [ThreadLocalExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/threadlocal/ThreadLocalExample.java): Example of using ThreadLocal.
+
+# Thread-safe lazy initialization
+- [Holder.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/threadsafelazyinitialization/Holder.java): Demonstrates thread-safe lazy initialization using holder pattern.
+- [LazyInitialization.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/threadsafelazyinitialization/LazyInitialization.java): Example of thread-safe lazy initialization.
+
+# Two-phase termination
+- [TwoPhaseTermination.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/twophasetermination/TwoPhaseTermination.java): Demonstrates the two-phase termination pattern.
+
 
 
 # java.util.concurrent.*
