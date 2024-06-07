@@ -1,4 +1,4 @@
-package ua.com.alxkm.patterns.philosopher;
+package org.alxkm.patterns.philosopher;
 
 import org.junit.jupiter.api.Test;
 
