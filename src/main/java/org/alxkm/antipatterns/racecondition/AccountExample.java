@@ -1,4 +1,4 @@
-package ua.com.alxkm.antipatterns.racecondition;
+package org.alxkm.antipatterns.racecondition;
 
 import java.util.stream.IntStream;
 
