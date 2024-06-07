@@ -1,6 +1,5 @@
 package org.alxkm.patterns.guardedsuspension;
 
-import org.alxkm.patterns.guardedsuspension.GuardedSuspensionExample;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
