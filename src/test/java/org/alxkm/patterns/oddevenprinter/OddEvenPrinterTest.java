@@ -1,7 +1,6 @@
-package ua.com.alxkm.patterns.oddevenprinter;
+package org.alxkm.patterns.oddevenprinter;
 
 import org.junit.jupiter.api.Test;
-import ua.com.alxkm.patterns.oddevenprinter.OddEvenPrinter;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
