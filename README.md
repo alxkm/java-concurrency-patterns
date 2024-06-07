@@ -1,9 +1,6 @@
 # Java multithreading and concurrency patterns and antipatterns
 
 ### Patterns:
- 
-# Active object:
-- [ActiveObject.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/activeobject/ActiveObject.java): Example of Active Object pattern.
 
 # Atomics examples:
 - [AtomicExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/atomics/AtomicExample.java): Demonstrates basic atomic operations.
@@ -90,6 +87,9 @@
 
 # Double check locking singleton
 - [DoubleCheckedLockingSingleton.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/doublechecklocking/DoubleCheckedLockingSingleton.java): Demonstrates double-checked locking for singleton pattern.
+ 
+# Active object:
+- [ActiveObject.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/activeobject/ActiveObject.java): Example of Active Object pattern.
 
 # Balking pattern
 - [BalkingPatternExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/balking/BalkingPatternExample.java): Demonstrates the Balking pattern.
@@ -106,14 +106,6 @@
 # Multithreaded context
 - [MultithreadedContext.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/multithreadedcontext/MultithreadedContext.java): Example of multithreaded context.
 
-# Odd-Even Printer
-- [OddEvenPrinter.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/oddevenprinter/OddEvenPrinter.java): Example of odd-even printing using threads.
-- [OddEvenPrinterExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/oddevenprinter/OddEvenPrinterExample.java): Demonstrates odd-even printer example.
-
-# Philosopher problem
-- [PhilosopherWithLock.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/philosopher/PhilosopherWithLock.java): Philosopher problem using locks.
-- [PhilosopherWithSemaphore.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/philosopher/PhilosopherWithSemaphore.java): Philosopher problem using semaphores.
-
 # Reactor pattern
 - [Reactor.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/reactor/Reactor.java): Example of the reactor pattern.
 
@@ -129,6 +121,14 @@
 
 # Two-phase termination
 - [TwoPhaseTermination.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/twophasetermination/TwoPhaseTermination.java): Demonstrates the two-phase termination pattern.
+
+# Odd-Even Printer
+- [OddEvenPrinter.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/oddevenprinter/OddEvenPrinter.java): Example of odd-even printing using threads.
+- [OddEvenPrinterExample.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/oddevenprinter/OddEvenPrinterExample.java): Demonstrates odd-even printer example.
+
+# Philosopher problem
+- [PhilosopherWithLock.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/philosopher/PhilosopherWithLock.java): Philosopher problem using locks.
+- [PhilosopherWithSemaphore.java](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/patterns/philosopher/PhilosopherWithSemaphore.java): Philosopher problem using semaphores.
 
 
 # Antipatterns
