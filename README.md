@@ -1,8 +1,6 @@
-# java-concurrency-patterns
-Java concurrency patterns for educational purposes
+# Java multithreading and concurrency patterns
 
-
-### Examples:
+### List of patterns:
 
 [Odd Even printer simple example](https://github.com/alxkm/java-concurrency/blob/main/src/main/java/ua/com/alxkm/examples/oddevenprinter/OddEvenPrinterExample.java)
 
@@ -58,15 +56,6 @@ The name is self-explanatory. All modification operations on the collection (add
 
 **CopyOnWriteArrayList<E>** — A thread-safe analogue of ArrayList, implemented with the CopyOnWrite algorithm.
 
-**Additional methods and constructor**
-
-**CopyOnWriteArrayList(E[] toCopyIn)** - Constructor accepting an array as input.
-**int indexOf(E e, int index)** - Returns the index of the first occurrence of the specified element, starting the search from the given index.
-**int lastIndexOf(E e, int index)** - Returns the index of the last occurrence of the specified element when searching backward, starting from the given index.
-**boolean addIfAbsent(E e)** - Adds an element to the collection if it is not already present. The equality of elements is determined using the equals method.
-**int addAllAbsent(Collection<? extends E> c)** - Adds elements from the specified collection to this collection if they are not already present. Returns the number of elements added.
-
-
 **CopyOnWriteArraySet<E>** — Implementation of the Set interface, using CopyOnWriteArrayList as a basis. Unlike CopyOnWriteArrayList, there are no additional methods.
 
 ### Examples:
@@ -82,18 +71,7 @@ Improved implementations of HashMap, TreeMap with better support for multithread
 
 **ConcurrentMap<K, V>** — An interface that extends Map with several additional atomic operations.
 
-**Additional methods**
-
-**V putIfAbsent(K key, V value)** Inserts a new key-value pair into the collection if the specified key is not already present. It returns the previous value associated with the given key, if any.
-
-**boolean remove(Object key, Object value)** Removes a key-value pair from the Map only if the specified key is associated with the specified value. It returns true if the element was successfully removed.
-
-**boolean replace(K key, V oldValue, V newValue)** Replaces the old value with the new one for the given key, only if the current value matches the specified old value. It returns true if the value was successfully replaced.
-
-**V replace(K key, V value)**: Replaces the value for the given key with the new one, if the key is associated with any value. It returns the previous value associated with the key.
-
 **ConcurrentHashMap<K, V>** — Unlike Hashtable and synchronized blocks on HashMap, data is represented as segments, broken down by key hashes. As a result, access to data is locked by segments, not by a single object. In addition, iterators represent data for a specific time slice and do not throw ConcurrentModificationException. More details ConcurrentHashMap
-
 
 ### Additional constructor
 
@@ -322,3 +300,81 @@ Thus, by dividing into parts, it is possible to achieve their parallel processin
 [AtomicReference example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/atomics/AtomicReferenceExample.java)\
 [AtomicReferenceFieldUpdater example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/atomics/AtomicReferenceFieldUpdaterExample.java)\
 [AtomicStampedReference example](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/ua/com/alxkm/patterns/atomics/AtomicStampedReferenceExample.java)
+
+
+# Antipaterns
+
+### Thread Leakage
+
+- Description: Threads are created but never terminated, leading to resource exhaustion.
+- Solution: Use thread pools (e.g., ThreadPoolExecutor) to manage threads.
+
+### Busy Waiting
+
+- Description: A thread repeatedly checks a condition in a loop, wasting CPU cycles.
+- Solution: Use wait/notify mechanisms or higher-level concurrency constructs like CountDownLatch, CyclicBarrier, or Condition.
+
+### Nested Monitor Lockout (Deadlock)
+
+- Description: Two or more threads block each other by holding resources the other needs.
+- Solution: Always acquire multiple locks in a consistent global order, use tryLock with timeouts, or avoid acquiring multiple locks if possible.
+
+### Forgotten Synchronization
+
+- Description: Access to shared resources is not properly synchronized, leading to race conditions.
+- Solution: Use synchronized blocks or higher-level concurrency utilities (e.g., ReentrantLock, Atomic* classes).
+
+### Excessive Synchronization
+
+- Description: Overuse of synchronization, leading to contention and reduced parallelism.
+- Solution: Minimize the scope of synchronized blocks, use lock-free algorithms, or utilize concurrent collections (e.g., ConcurrentHashMap, CopyOnWriteArrayList).
+
+### Using Thread-Safe Collections Incorrectly
+
+- Description: Assuming individual thread-safe operations guarantee overall thread-safe logic.
+- Solution: Combine operations using explicit locks or use higher-level synchronization constructs to maintain logical thread safety.
+
+### Ignoring InterruptedException
+
+- Description: Swallowing or ignoring the InterruptedException, leading to threads that cannot be properly managed or interrupted.
+- Solution: Handle interruptions properly, typically by cleaning up and propagating the interruption status.
+
+### Starting a Thread in a Constructor
+
+- Description: Starting a thread from within a constructor, possibly before the object is fully constructed.
+- Solution: Start threads from a dedicated method called after construction, or use factory methods.
+
+### Double-Checked Locking
+
+- Description: A broken idiom for lazy initialization that was incorrectly implemented before Java 5.
+- Solution: Use the volatile keyword correctly or the Initialization-on-demand holder idiom.
+
+### Lock Contention
+
+- Description: Multiple threads trying to acquire the same lock, leading to reduced performance.
+- Solution: Reduce the granularity of locks, use read-write locks, or employ lock-free data structures.
+
+### Improper Use of ThreadLocal
+
+- Description: Using ThreadLocal incorrectly, leading to memory leaks or unexpected behavior.
+- Solution: Ensure proper management and cleanup of ThreadLocal variables.
+
+### Non-Atomic Compound Actions
+
+- Description: Performing compound actions (e.g., check-then-act, read-modify-write) without proper synchronization.
+- Solution: Use atomic variables or synchronized blocks to ensure compound actions are atomic.
+
+### Race Conditions
+
+- Description: The system's behavior depends on the sequence or timing of uncontrollable events.
+- Solution: Properly synchronize access to shared resources and use thread-safe collections.
+
+### Lack of Thread Safety in Singletons
+
+- Description: Singleton instances not properly synchronized, leading to multiple instances.
+- Solution: Use the enum singleton pattern or the Initialization-on-demand holder idiom.
+
+### Using Threads Instead of Tasks
+
+- Description: Directly creating and managing threads instead of using the Executor framework.
+- Solution: Use ExecutorService and related classes to manage thread pools and tasks efficiently.
