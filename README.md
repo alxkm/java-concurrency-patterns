@@ -1,4 +1,5 @@
 # Java multithreading and concurrency patterns and antipatterns
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 # Patterns:
 
@@ -557,4 +558,13 @@ Thus, by dividing into parts, it is possible to achieve their parallel processin
 [AtomicReferenceFieldUpdater](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/org/alxkm/patterns/atomics/AtomicReferenceFieldUpdaterExample.java)\
 [AtomicStampedReference](https://github.com/alxkm/java-concurrency-patterns/blob/main/src/main/java/org/alxkm/patterns/atomics/AtomicStampedReferenceExample.java)
 
+Some images [source](http://habrahabr.ru/company/luxoft/blog/157273/)
 
+**Installation**
+Include this library in your project by adding the respective files to your classpath.
+
+**Requirements**
+Java 8 or higher is required to use this library.
+
+**License**
+This library is licensed under the MIT License.
