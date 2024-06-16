@@ -1,5 +1,5 @@
 # Java multithreading and concurrency patterns and antipatterns
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Java CI with Gradle](https://github.com/alxkm/java-concurrency-patterns/actions/workflows/gradle.yml/badge.svg)](https://github.com/alxkm/java-concurrency-patterns/actions/workflows/gradle.yml)[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 # Patterns:
 
