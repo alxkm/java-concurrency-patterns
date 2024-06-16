@@ -560,17 +560,17 @@ Thus, by dividing into parts, it is possible to achieve their parallel processin
 
 Some images [source](http://habrahabr.ru/company/luxoft/blog/157273/)
 
-### Installation
+## Installation
 Include this library in your project by adding the respective files to your classpath.
 
-### Requirements 
+## Requirements 
 Java 8 or higher is required to use this library.
- 
-### Testing
+
+## Testing
 
 The repository includes JUnit tests that validate the functionality of each cache implementation. These tests cover repository described functionality.
 
-### License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) file for details.
 
