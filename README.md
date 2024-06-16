@@ -560,11 +560,30 @@ Thus, by dividing into parts, it is possible to achieve their parallel processin
 
 Some images [source](http://habrahabr.ru/company/luxoft/blog/157273/)
 
-**Installation**
+### Installation
 Include this library in your project by adding the respective files to your classpath.
 
-**Requirements**
+### Requirements 
 Java 8 or higher is required to use this library.
+ 
+### Testing
 
-**License**
-This library is licensed under the MIT License.
+The repository includes JUnit tests that validate the functionality of each cache implementation. These tests cover repository described functionality.
+
+### License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) file for details.
+
+Feel free to fork and modify these implementations for your own use cases or contribute to enhance them further. If you have any questions or suggestions, please feel free to reach out or open an issue!
+
+## Contributing
+
+Contributions are welcome! Please open an issue or submit a pull request for any improvements or bug fixes.
+
+## Acknowledgments
+
+This repository was inspired by multithreading technics and adapted for educational purposes.
+
+## Contact
+
+For any questions or suggestions, please feel free to reach out or open an issue!
