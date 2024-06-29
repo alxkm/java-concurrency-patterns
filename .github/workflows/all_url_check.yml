@@ -1,0 +1,28 @@
+---
+name: all_url_check
+
+'on':
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+  pull_request:
+  schedule:
+    - cron: '41 3 * * SUN'
+
+jobs:
+  run_lychee:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: run lychee
+        uses: lycheeverse/lychee-action@v1.10.0
+        with:
+          args: >
+            --no-progress
+            **/*.java **/*.md
+          fail: true
+...
