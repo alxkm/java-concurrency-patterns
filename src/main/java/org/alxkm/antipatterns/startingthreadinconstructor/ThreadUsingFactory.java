@@ -12,7 +12,7 @@ package org.alxkm.antipatterns.startingthreadinconstructor;
  *
  * */
 public class ThreadUsingFactory {
-    private String message;
+    private final String message;
 
     /**
      * Private constructor to enforce usage of factory method.

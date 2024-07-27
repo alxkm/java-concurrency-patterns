@@ -7,7 +7,7 @@ package org.alxkm.antipatterns.improperuseofthreadlocal;
  * In this version, the ThreadLocalCleaner class implements AutoCloseable, allowing it to be used in a try-with-resources statement to ensure ThreadLocal cleanup.
  */
 public class ThreadLocalWithResourceExample {
-    private static final ThreadLocal<String> threadLocal = new ThreadLocal<>();
+    private static final ThreadLocal<String> THREAD_LOCAL = new ThreadLocal<>();
 
     /**
      * Custom class to handle ThreadLocal cleanup using AutoCloseable.
@@ -15,7 +15,7 @@ public class ThreadLocalWithResourceExample {
     public static class ThreadLocalCleaner implements AutoCloseable {
         @Override
         public void close() {
-            threadLocal.remove();
+            THREAD_LOCAL.remove();
         }
     }
 
@@ -25,7 +25,7 @@ public class ThreadLocalWithResourceExample {
      * @param value the value to set.
      */
     public void setThreadLocalValue(String value) {
-        threadLocal.set(value);
+        THREAD_LOCAL.set(value);
     }
 
     /**
@@ -34,7 +34,7 @@ public class ThreadLocalWithResourceExample {
      * @return the value from ThreadLocal.
      */
     public String getThreadLocalValue() {
-        return threadLocal.get();
+        return THREAD_LOCAL.get();
     }
 
     public static void main(String[] args) {
