@@ -38,5 +38,34 @@ public class AtomicCounter {
     public int getCount() {
         return count.get();
     }
+
+    /**
+     * Main method to demonstrate the usage of AtomicCounter.
+     */
+    public static void main(String[] args) {
+        AtomicCounter counter = new AtomicCounter();
+
+        // Print initial count
+        System.out.println("Initial count: " + counter.getCount());
+
+        // Increment the counter
+        counter.increment();
+        System.out.println("Count after incrementing: " + counter.getCount());
+
+        // Decrement the counter
+        counter.decrement();
+        System.out.println("Count after decrementing: " + counter.getCount());
+
+        // Increment multiple times
+        counter.increment();
+        counter.increment();
+        counter.increment();
+        System.out.println("Count after incrementing three times: " + counter.getCount());
+
+        // Decrement multiple times
+        counter.decrement();
+        counter.decrement();
+        System.out.println("Count after decrementing two times: " + counter.getCount());
+    }
 }
 
