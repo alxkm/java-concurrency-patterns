@@ -7,7 +7,7 @@ package org.alxkm.antipatterns.improperuseofthreadlocal;
  * In this revised example, the removeThreadLocalValue method is called in the finally block to ensure that the ThreadLocal variable is cleaned up after use, preventing memory leaks.
  */
 public class ThreadLocalCleanupExample {
-    private static final ThreadLocal<String> threadLocal = new ThreadLocal<>();
+    private static final ThreadLocal<String> THREAD_LOCAL = new ThreadLocal<>();
 
     /**
      * Sets a value in the ThreadLocal variable.
@@ -15,7 +15,7 @@ public class ThreadLocalCleanupExample {
      * @param value the value to set.
      */
     public void setThreadLocalValue(String value) {
-        threadLocal.set(value);
+        THREAD_LOCAL.set(value);
     }
 
     /**
@@ -24,14 +24,14 @@ public class ThreadLocalCleanupExample {
      * @return the value from ThreadLocal.
      */
     public String getThreadLocalValue() {
-        return threadLocal.get();
+        return THREAD_LOCAL.get();
     }
 
     /**
      * Removes the value from the ThreadLocal variable to prevent memory leaks.
      */
     public void removeThreadLocalValue() {
-        threadLocal.remove();
+        THREAD_LOCAL.remove();
     }
 
     public static void main(String[] args) {

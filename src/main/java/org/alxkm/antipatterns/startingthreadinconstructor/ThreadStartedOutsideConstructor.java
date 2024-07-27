@@ -10,7 +10,7 @@ package org.alxkm.antipatterns.startingthreadinconstructor;
  *
  * */
 public class ThreadStartedOutsideConstructor extends Thread {
-    private String message;
+    private final String message;
 
     /**
      * Constructor initializes the message.
