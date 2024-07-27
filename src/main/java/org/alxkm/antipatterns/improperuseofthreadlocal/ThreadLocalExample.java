@@ -13,7 +13,7 @@ package org.alxkm.antipatterns.improperuseofthreadlocal;
  *
  * */
 public class ThreadLocalExample {
-    private static final ThreadLocal<String> threadLocal = new ThreadLocal<>();
+    private static final ThreadLocal<String> THREAD_LOCAL = new ThreadLocal<>();
 
     /**
      * Sets a value in the ThreadLocal variable.
@@ -21,7 +21,7 @@ public class ThreadLocalExample {
      * @param value the value to set.
      */
     public void setThreadLocalValue(String value) {
-        threadLocal.set(value);
+        THREAD_LOCAL.set(value);
     }
 
     /**
@@ -30,7 +30,7 @@ public class ThreadLocalExample {
      * @return the value from ThreadLocal.
      */
     public String getThreadLocalValue() {
-        return threadLocal.get();
+        return THREAD_LOCAL.get();
     }
 
     public static void main(String[] args) {
