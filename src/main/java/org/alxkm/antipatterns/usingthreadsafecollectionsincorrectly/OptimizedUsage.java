@@ -1,5 +1,7 @@
 package org.alxkm.antipatterns.usingthreadsafecollectionsincorrectly;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -16,8 +18,8 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * */
 
-public class OptimizedUsage {
-    private final Set<String> set = ConcurrentHashMap.newKeySet();
+public class OptimizedUsage implements BaseListUsage<String> {
+    private final Collection<String> set = ConcurrentHashMap.newKeySet();
 
     /**
      * Adds a new element to the set if it's not already present.
@@ -36,5 +38,10 @@ public class OptimizedUsage {
      */
     public int size() {
         return set.size();
+    }
+
+    @Override
+    public Collection<String> getCollection() {
+        return set;
     }
 }
