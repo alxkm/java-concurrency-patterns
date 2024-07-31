@@ -24,7 +24,7 @@ public class AbstractExecutorServiceExample extends AbstractExecutorService {
 
     private final AtomicInteger taskCount = new AtomicInteger(0);
     private volatile boolean isShutdown = false;
-    private ConcurrentSkipListSet<Runnable> tasks = new ConcurrentSkipListSet<>();
+    private final ConcurrentSkipListSet<Runnable> tasks = new ConcurrentSkipListSet<>();
 
     /**
      * Submits a task for execution.
