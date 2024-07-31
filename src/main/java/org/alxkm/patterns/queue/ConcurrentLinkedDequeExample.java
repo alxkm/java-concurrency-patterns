@@ -9,7 +9,6 @@ import java.util.concurrent.ConcurrentLinkedDeque;
  */
 public class ConcurrentLinkedDequeExample {
 
-
     /**
      * We create a ConcurrentLinkedDeque named deque.
      * We define two producer threads (producer1 and producer2) that add elements to the deque.

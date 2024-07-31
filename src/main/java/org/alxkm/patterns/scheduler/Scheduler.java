@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
  * a specified delay or at regular intervals.
  */
 public class Scheduler {
-    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1); // The ScheduledExecutorService for scheduling tasks
+    private final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1); // The ScheduledExecutorService for scheduling tasks
 
     /**
      * Schedules a task to be executed after a specified delay.
@@ -20,7 +20,7 @@ public class Scheduler {
      * @param unit  The time unit of the delay parameter.
      */
     public void schedule(Runnable task, long delay, TimeUnit unit) {
-        scheduler.schedule(task, delay, unit); // Schedule the task
+        scheduledExecutorService.schedule(task, delay, unit); // Schedule the task
     }
 
     /**
@@ -28,7 +28,7 @@ public class Scheduler {
      * Any previously submitted tasks will continue to execute.
      */
     public void shutdown() {
-        scheduler.shutdown(); // Shutdown the scheduler
+        scheduledExecutorService.shutdown(); // Shutdown the scheduler
     }
 }
 
