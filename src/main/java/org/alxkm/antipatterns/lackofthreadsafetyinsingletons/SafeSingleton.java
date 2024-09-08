@@ -3,8 +3,7 @@ package org.alxkm.antipatterns.lackofthreadsafetyinsingletons;
 /**
  *
  * To ensure thread safety, we can synchronize the getInstance method.
- *
- *
+ * <p>
  * In this revised example, the getInstance method is synchronized,
  * ensuring that only one instance is created even when multiple threads access the method simultaneously.
  *

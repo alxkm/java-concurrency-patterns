@@ -1,4 +1,5 @@
 package org.alxkm.antipatterns.nonatomiccompoundactions;
+
 /**
  *
  * To resolve this issue, we can synchronize the method to ensure that the compound action is atomic.
