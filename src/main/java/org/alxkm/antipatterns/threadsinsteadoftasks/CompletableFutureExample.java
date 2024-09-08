@@ -17,13 +17,8 @@ public class CompletableFutureExample {
      * A simple task that prints the thread name.
      */
     public void performTask() {
-        CompletableFuture<Void> task1 = CompletableFuture.runAsync(() -> {
-            System.out.println("Task executed by: " + Thread.currentThread().getName());
-        });
-
-        CompletableFuture<Void> task2 = CompletableFuture.runAsync(() -> {
-            System.out.println("Task executed by: " + Thread.currentThread().getName());
-        });
+        CompletableFuture<Void> task1 = CompletableFuture.runAsync(() -> System.out.println("Task executed by: " + Thread.currentThread().getName()));
+        CompletableFuture<Void> task2 = CompletableFuture.runAsync(() -> System.out.println("Task executed by: " + Thread.currentThread().getName()));
 
         // Wait for all tasks to complete
         try {

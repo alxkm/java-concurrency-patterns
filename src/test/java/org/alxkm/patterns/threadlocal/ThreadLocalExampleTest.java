@@ -18,13 +18,13 @@ public class ThreadLocalExampleTest {
         ThreadLocalExample example = new ThreadLocalExample();
 
         Thread t1 = new Thread(() -> {
-            example.threadLocal.set(1);
-            assertEquals(1, example.threadLocal.get());
+            example.THREAD_LOCAL.set(1);
+            assertEquals(1, example.THREAD_LOCAL.get());
         });
 
         Thread t2 = new Thread(() -> {
-            example.threadLocal.set(2);
-            assertEquals(2, example.threadLocal.get());
+            example.THREAD_LOCAL.set(2);
+            assertEquals(2, example.THREAD_LOCAL.get());
         });
 
         t1.start();
