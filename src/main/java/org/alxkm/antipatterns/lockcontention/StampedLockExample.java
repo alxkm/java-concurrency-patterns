@@ -47,11 +47,11 @@ public class StampedLockExample {
     }
 
     public static void main(String[] args) {
-        StampedLockExample example = new StampedLockExample();
+        StampedLockExample stampedLockExample = new StampedLockExample();
 
         Runnable task = () -> {
             for (int i = 0; i < 1000; i++) {
-                example.increment();
+                stampedLockExample.increment();
             }
         };
 
@@ -68,7 +68,7 @@ public class StampedLockExample {
             e.printStackTrace();
         }
 
-        System.out.println("Final counter value: " + example.getCounter());
+        System.out.println("Final counter value: " + stampedLockExample.getCounter());
     }
 }
 
