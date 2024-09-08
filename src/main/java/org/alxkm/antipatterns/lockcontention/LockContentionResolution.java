@@ -30,11 +30,11 @@ public class LockContentionResolution {
     }
 
     public static void main(String[] args) {
-        LockContentionResolution example = new LockContentionResolution();
+        LockContentionResolution lockContentionResolution = new LockContentionResolution();
 
         Runnable task = () -> {
             for (int i = 0; i < 1000; i++) {
-                example.increment();
+                lockContentionResolution.increment();
             }
         };
 
@@ -51,7 +51,7 @@ public class LockContentionResolution {
             e.printStackTrace();
         }
 
-        System.out.println("Final counter value: " + example.getCounter());
+        System.out.println("Final counter value: " + lockContentionResolution.getCounter());
     }
 }
 

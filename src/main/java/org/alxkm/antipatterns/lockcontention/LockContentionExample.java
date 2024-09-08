@@ -37,11 +37,11 @@ public class LockContentionExample {
     }
 
     public static void main(String[] args) {
-        LockContentionExample example = new LockContentionExample();
+        LockContentionExample lockContentionExample = new LockContentionExample();
 
         Runnable task = () -> {
             for (int i = 0; i < 1000; i++) {
-                example.increment();
+                lockContentionExample.increment();
             }
         };
 
@@ -58,7 +58,7 @@ public class LockContentionExample {
             e.printStackTrace();
         }
 
-        System.out.println("Final counter value: " + example.getCounter());
+        System.out.println("Final counter value: " + lockContentionExample.getCounter());
     }
 }
 
