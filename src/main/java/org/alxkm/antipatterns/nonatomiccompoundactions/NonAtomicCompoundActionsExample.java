@@ -1,14 +1,15 @@
 package org.alxkm.antipatterns.nonatomiccompoundactions;
 
 /**
+ *
  * Non-atomic compound actions occur when compound actions (e.g., check-then-act, read-modify-write) are performed without proper synchronization,
  * leading to race conditions and incorrect results. Here's an example demonstrating this problem along with a resolution.
  * <p>
  * In this example, the incrementIfLessThan method performs a non-atomic compound action.
  * If multiple threads execute this method concurrently, they may both pass the check before either increments the counter,
  * leading to incorrect results.
+ *
  */
-
 public class NonAtomicCompoundActionsExample {
     private int counter = 0;
 

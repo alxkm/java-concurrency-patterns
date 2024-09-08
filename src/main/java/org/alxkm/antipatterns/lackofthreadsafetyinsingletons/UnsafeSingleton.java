@@ -1,11 +1,13 @@
 package org.alxkm.antipatterns.lackofthreadsafetyinsingletons;
 
 /**
+ *
  * A common issue with singletons is the lack of proper synchronization,
  * which can lead to multiple instances being created in a multithreaded environment.
  * <p>
  * In this example, the getInstance method is not synchronized,
  * which can lead to multiple instances being created if multiple threads access the method simultaneously.
+ *
  */
 public class UnsafeSingleton {
     private static UnsafeSingleton instance;

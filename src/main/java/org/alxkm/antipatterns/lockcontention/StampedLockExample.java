@@ -2,7 +2,6 @@ package org.alxkm.antipatterns.lockcontention;
 
 import java.util.concurrent.locks.StampedLock;
 
-
 /**
  *
  * Another approach is to use StampedLock, which allows for more flexible lock handling, including optimistic reads.

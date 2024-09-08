@@ -9,7 +9,6 @@ package org.alxkm.antipatterns.lockcontention;
  * When multiple threads try to access these methods simultaneously, they experience high contention, reducing performance.
  *
  */
-
 public class LockContentionExample {
     private final Object lock = new Object();
     private int counter = 0;

@@ -1,12 +1,11 @@
 package org.alxkm.antipatterns.startingthreadinconstructor;
 
 /**
- * Starting a thread within a constructor can lead to unpredictable behavior or issues where the thread starts before the object is fully constructed.
  *
+ * Starting a thread within a constructor can lead to unpredictable behavior or issues where the thread starts before the object is fully constructed.
  *
  * In this example, the ThreadInConstructor class starts the thread within the constructor.
  * This can lead to issues where the thread starts before the object is fully initialized, potentially causing unexpected behavior.
- *
  *
  */
 public class ThreadInConstructor extends Thread {
