@@ -1,15 +1,13 @@
 package org.alxkm.antipatterns.lackofthreadsafetyinsingletons;
 
-
 /**
+ *
  * Alternative Resolution: Initialization-on-Demand Holder Idiom
  * Another approach to implement a thread-safe singleton is the Initialization-on-Demand Holder idiom, which leverages the class loader mechanism to ensure thread safety.
  * <p>
- * <p>
  * In this version, the Holder class is loaded on the first invocation of getInstance(), ensuring thread safety through the class loader mechanism.
+ *
  **/
-
-
 public class HolderSingleton {
     /**
      * Private constructor to prevent instantiation.

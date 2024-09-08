@@ -3,10 +3,9 @@ package org.alxkm.antipatterns.lackofthreadsafetyinsingletons;
 /**
  *
  * Another approach is to use double-checked locking with the volatile keyword to minimize synchronization overhead.
- *
+ * <p>
  * In this version, the volatile keyword ensures visibility of changes to the instance variable across threads,
  * while double-checked locking minimizes synchronization overhead.
- *
  *
  * */
 public class DoubleCheckedLockingSingleton {
