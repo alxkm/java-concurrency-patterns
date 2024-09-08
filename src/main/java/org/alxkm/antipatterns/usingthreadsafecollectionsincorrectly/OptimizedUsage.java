@@ -1,23 +1,16 @@
 package org.alxkm.antipatterns.usingthreadsafecollectionsincorrectly;
 
 import java.util.Collection;
-import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 
-/***
- *
+/**
  * Another approach is to use a ConcurrentHashMap to achieve atomic check-and-add operations.
- * The ConcurrentHashMap provides thread-safe methods that can help simplify the code.
+ * The ConcurrentHashMap provides thread-safe methods, simplifying the code.
  *
- *
- * In this case, ConcurrentHashMap.newKeySet() creates a thread-safe set backed by a ConcurrentHashMap. The add method of this set is atomic, ensuring that the element is added only if it is not already present.
- *
- *
- *
- * */
-
+ * In this case, ConcurrentHashMap.newKeySet() creates a thread-safe set backed by a ConcurrentHashMap.
+ * The add method of this set is atomic, ensuring that the element is added only if it is not already present.
+ */
 public class OptimizedUsage implements BaseListUsage<String> {
     private final Collection<String> set = ConcurrentHashMap.newKeySet();
 
