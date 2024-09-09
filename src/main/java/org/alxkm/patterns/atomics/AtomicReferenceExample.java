@@ -23,7 +23,6 @@ public class AtomicReferenceExample {
         }
     }
 
-
     /**
      *
      * Demonstrates how AtomicReference ensures atomic updates of a shared reference in a multithreaded environment

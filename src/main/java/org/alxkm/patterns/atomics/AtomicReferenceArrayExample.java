@@ -7,8 +7,6 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
  * AtomicReferenceArray provides atomic operations on arrays of reference values.
  */
 public class AtomicReferenceArrayExample {
-
-
     /**
      * An AtomicReferenceArray named array is created with an initial size of 3 and populated with initial values.
      * The updater thread updates the value at index 1 of the array using the compareAndSet method, which atomically compares the current value with an expected value and sets the new value if the comparison is successful.

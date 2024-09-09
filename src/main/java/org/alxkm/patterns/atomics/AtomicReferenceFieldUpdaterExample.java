@@ -14,7 +14,6 @@ public class AtomicReferenceFieldUpdaterExample {
         volatile String value;
     }
 
-
     /**
      * MyClass is a simple class with a volatile reference field named value.
      * An AtomicReferenceFieldUpdater named updater is created for the value field of MyClass.
