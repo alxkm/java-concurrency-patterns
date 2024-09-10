@@ -3,7 +3,6 @@ package org.alxkm.antipatterns.usingthreadsafecollectionsincorrectly;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 
-
 /**
  * Another approach is to use a ConcurrentHashMap to achieve atomic check-and-add operations.
  * The ConcurrentHashMap provides thread-safe methods, simplifying the code.

@@ -4,7 +4,6 @@ package org.alxkm.antipatterns.nonatomiccompoundactions;
  *
  * To resolve this issue, we can synchronize the method to ensure that the compound action is atomic.
  *
- *
  * In this revised example, the incrementIfLessThan method is synchronized,
  * ensuring that the compound action is performed atomically.
  * This prevents race conditions and ensures correct results.
