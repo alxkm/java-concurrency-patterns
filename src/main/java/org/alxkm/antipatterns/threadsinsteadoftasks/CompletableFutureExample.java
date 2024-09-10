@@ -3,7 +3,6 @@ package org.alxkm.antipatterns.threadsinsteadoftasks;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
-
 /**
  * Another approach is to use CompletableFuture,
  * which is part of the java.util.concurrent package and allows for more flexible task management and asynchronous programming.

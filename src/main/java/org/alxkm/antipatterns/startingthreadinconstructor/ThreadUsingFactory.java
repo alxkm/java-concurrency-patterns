@@ -5,7 +5,6 @@ package org.alxkm.antipatterns.startingthreadinconstructor;
  * Another approach is to use factory methods to create and start the thread,
  * ensuring separation of concerns and better control over the thread lifecycle.
  *
- *
  * In this version, the ThreadUsingFactory class provides a private constructor
  * and a factory method createAndStart to create and start the thread.
  * This ensures that the thread starts at an appropriate time and provides better encapsulation of the thread creation logic.

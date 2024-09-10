@@ -10,7 +10,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
  *
  * By synchronizing the addIfAbsent method, we ensure that only one thread can execute it at a time, making the operation atomic.
  *
- *
  * */
 public class CorrectUsage implements BaseListUsage<String> {
     private final List<String> list = new CopyOnWriteArrayList<>();
