@@ -9,7 +9,7 @@ import java.util.concurrent.locks.StampedLock;
  * In this version, StampedLock is used to manage the counter.
  * StampedLock allows for optimistic reads, which can improve performance by avoiding locks if the data hasn't changed.
  *
- * */
+ */
 public class StampedLockExample {
     private final StampedLock lock = new StampedLock();
     private int counter = 0;

@@ -6,7 +6,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * Demonstrates the usage of ConcurrentLinkedQueue in a multithreaded environment.
  */
 public class ConcurrentLinkedQueueExample {
-    /***
+    /**
      *
      * We create a ConcurrentLinkedQueue named queue.
      * We define two producer threads (producer1 and producer2) that add elements to the queue using the offer() method.
@@ -16,7 +16,7 @@ public class ConcurrentLinkedQueueExample {
      * We start all producer and consumer threads concurrently.
      * As elements are added and removed from the queue, the producer and consumer threads print messages indicating the elements they add or remove.
      *
-     * */
+     */
     public static void main(String[] args) {
         // Create a ConcurrentLinkedQueue
         ConcurrentLinkedQueue<Integer> queue = new ConcurrentLinkedQueue<>();

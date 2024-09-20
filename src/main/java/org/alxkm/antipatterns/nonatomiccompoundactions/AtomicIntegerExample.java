@@ -3,6 +3,7 @@ package org.alxkm.antipatterns.nonatomiccompoundactions;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
+ *
  * Another approach is to use the atomic classes provided by the java.util.concurrent package,
  * such as AtomicInteger, which provides atomic operations for integers.
  * <p>

@@ -17,7 +17,7 @@ public class ScheduledThreadPoolExecutorExample {
      * Task 3: Executes repeatedly with a fixed delay between termination of one execution and commencement of the next, starting after an initial delay of 2 seconds, with a delay of 3 seconds using scheduleWithFixedDelay().
      * Finally, we schedule a task to shut down the executor after 10 seconds using schedule().
      *
-     * */
+     */
     public static void main(String[] args) {
         // Create a ScheduledThreadPoolExecutor with 3 threads
         ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(3);
