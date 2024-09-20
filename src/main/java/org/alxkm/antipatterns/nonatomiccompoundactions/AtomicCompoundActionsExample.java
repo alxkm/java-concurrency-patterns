@@ -8,7 +8,7 @@ package org.alxkm.antipatterns.nonatomiccompoundactions;
  * ensuring that the compound action is performed atomically.
  * This prevents race conditions and ensures correct results.
  *
- * */
+ */
 public class AtomicCompoundActionsExample {
     private int counter = 0;
 

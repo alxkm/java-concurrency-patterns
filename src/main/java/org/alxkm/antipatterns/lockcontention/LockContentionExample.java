@@ -1,6 +1,7 @@
 package org.alxkm.antipatterns.lockcontention;
 
 /**
+ *
  * Lock contention occurs when multiple threads compete for the same lock, causing some threads to wait while another thread holds the lock.
  * This can lead to reduced performance due to increased waiting times and underutilized CPU resources.
  *

@@ -1,10 +1,10 @@
 package org.alxkm.antipatterns.forgottensynchronization;
 
-/***
+/**
  *
  * To resolve this issue, we need to synchronize the methods to ensure that only one thread can access these critical sections at a time.
  *
- * */
+ */
 public class CounterSynchronized {
     private int counter = 0;
 

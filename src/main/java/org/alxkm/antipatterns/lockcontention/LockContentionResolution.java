@@ -9,7 +9,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * In this revised example, we use AtomicInteger to manage the counter.
  * AtomicInteger provides thread-safe operations without the need for explicit synchronization, significantly reducing lock contention.
  *
- * */
+ */
 public class LockContentionResolution {
     private final AtomicInteger counter = new AtomicInteger();
 

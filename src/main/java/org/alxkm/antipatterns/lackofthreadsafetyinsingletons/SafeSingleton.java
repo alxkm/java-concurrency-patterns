@@ -7,7 +7,7 @@ package org.alxkm.antipatterns.lackofthreadsafetyinsingletons;
  * In this revised example, the getInstance method is synchronized,
  * ensuring that only one instance is created even when multiple threads access the method simultaneously.
  *
- * */
+ */
 public class SafeSingleton {
     private static SafeSingleton instance;
 
