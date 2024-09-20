@@ -10,7 +10,7 @@ package org.alxkm.antipatterns.improperuseofthreadlocal;
  * However, the values are not removed after usage, which can lead to memory leaks,
  * especially in environments where threads are reused, such as in thread pools.
  *
- * */
+ */
 public class ThreadLocalExample {
     private static final ThreadLocal<String> THREAD_LOCAL = new ThreadLocal<>();
 

@@ -4,12 +4,11 @@ package org.alxkm.antipatterns.ignoringinterruptedexception;
  *
  * To resolve this issue, the thread should properly handle InterruptedException by either propagating the exception or breaking out of the loop.
  *
- *
  * In this revised example, the run method handles the
  * InterruptedException by restoring the interrupt status with Thread.currentThread().interrupt() and breaking out of the loop.
  * This ensures that the thread stops running as intended.
  *
- * */
+ */
 public class ProperlyHandlingInterruptedException implements Runnable {
     /**
      * The run method performs a long-running task.

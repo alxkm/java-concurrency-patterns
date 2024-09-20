@@ -7,7 +7,7 @@ package org.alxkm.antipatterns.lackofthreadsafetyinsingletons;
  * In this version, the volatile keyword ensures visibility of changes to the instance variable across threads,
  * while double-checked locking minimizes synchronization overhead.
  *
- * */
+ */
 public class DoubleCheckedLockingSingleton {
     private static volatile DoubleCheckedLockingSingleton instance;
 

@@ -36,7 +36,7 @@ public class AtomicReferenceExample {
      * Both threads run concurrently.
      * After both threads have completed, the main thread prints the final state of the shared resource.
      *
-     * */
+     */
     public static void main(String[] args) {
         SharedResource initialResource = new SharedResource("Initial Data");
         AtomicReference<SharedResource> atomicReference = new AtomicReference<>(initialResource);
