@@ -1,6 +1,5 @@
 package org.alxkm.antipatterns.forgottensynchronization;
 
-
 /***
  *
  * Forgotten synchronization is a common concurrency issue in Java where a method or block of code that should be synchronized is not,
@@ -12,14 +11,14 @@ package org.alxkm.antipatterns.forgottensynchronization;
  *
  * */
 public class CounterExample {
-    private int count = 0;
+    private int counter = 0;
 
     /**
      * Increments the counter by one.
      * This method is not synchronized, leading to potential race conditions.
      */
     public void increment() {
-        count++;
+        counter++;
     }
 
     /**
@@ -28,7 +27,35 @@ public class CounterExample {
      *
      * @return the current count value.
      */
-    public int getCount() {
-        return count;
+    public int getCounter() {
+        return counter;
+    }
+
+
+    public static void main(String[] args) throws InterruptedException {
+        CounterExample counter = new CounterExample();
+
+        // Create two threads that both call increment 1000 times
+        Thread t1 = new Thread(() -> {
+            for (int i = 0; i < 1000; i++) {
+                counter.increment();
+            }
+        });
+
+        Thread t2 = new Thread(() -> {
+            for (int i = 0; i < 1000; i++) {
+                counter.increment();
+            }
+        });
+
+        t1.start();
+        t2.start();
+
+        // Wait for threads to finish
+        t1.join();
+        t2.join();
+
+        // This will likely print a number less than 2000 due to race conditions
+        System.out.println("Final Counter Value (without synchronization): " + counter.getCounter());
     }
 }
