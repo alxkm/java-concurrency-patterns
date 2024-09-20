@@ -1,6 +1,6 @@
 package org.alxkm.antipatterns.startingthreadinconstructor;
 
-/***
+/**
  *
  * To resolve this issue, start the thread outside the constructor,
  * ensuring that the object is fully constructed before the thread starts.
@@ -8,7 +8,7 @@ package org.alxkm.antipatterns.startingthreadinconstructor;
  * In this revised example, the thread is created in the main method after the object is fully constructed,
  * ensuring that the thread starts at an appropriate time.
  *
- * */
+ */
 public class ThreadStartedOutsideConstructor extends Thread {
     private final String message;
 
