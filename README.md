@@ -155,7 +155,7 @@
 #### Examples:
 - [CounterExample.java](./src/main/java/org/alxkm/antipatterns/forgottensynchronization/CounterExample.java)
 - [CounterReentrantLockResolution.java](./src/main/java/org/alxkm/antipatterns/forgottensynchronization/CounterReentrantLockResolution.java)
-- [CounterResolution.java](./src/main/java/org/alxkm/antipatterns/forgottensynchronization/CounterResolution.java)
+- [CounterSynchronized.java](./src/main/java/org/alxkm/antipatterns/forgottensynchronization/CounterSynchronized.java)
 
 ### Excessive Synchronization
 
