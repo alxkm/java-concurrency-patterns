@@ -112,6 +112,9 @@
 ### Thread-Safe Builder Pattern
 - [ThreadSafeBuilder.java](./src/main/java/org/alxkm/patterns/builder/ThreadSafeBuilder.java): Example of thread-safe builder pattern implementation.
 
+### Concurrent Object Pool Pattern
+- [ConcurrentObjectPool.java](./src/main/java/org/alxkm/patterns/objectpool/ConcurrentObjectPool.java): Thread-safe object pool for managing reusable resources.
+
 ### Odd-Even Printer
 - [OddEvenPrinter.java](./src/main/java/org/alxkm/patterns/oddevenprinter/OddEvenPrinter.java): Example of odd-even printing using threads.
 - [OddEvenPrinterExample.java](./src/main/java/org/alxkm/patterns/oddevenprinter/OddEvenPrinterExample.java): Demonstrates odd-even printer example.
@@ -644,6 +647,9 @@ The repository includes comprehensive JUnit tests that validate the functionalit
 
 #### Thread-Safe Builder Pattern
 - [ThreadSafeBuilderTest.java](./src/test/java/org/alxkm/patterns/builder/ThreadSafeBuilderTest.java)
+
+#### Concurrent Object Pool Pattern
+- [ConcurrentObjectPoolTest.java](./src/test/java/org/alxkm/patterns/objectpool/ConcurrentObjectPoolTest.java)
 
 #### Two-Phase Termination
 - [TwoPhaseTerminationTest.java](./src/test/java/org/alxkm/patterns/twophasetermination/TwoPhaseTerminationTest.java)
