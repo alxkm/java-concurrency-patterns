@@ -117,6 +117,13 @@
 - [PhilosopherWithLock.java](./src/main/java/org/alxkm/patterns/philosopher/PhilosopherWithLock.java): Philosopher problem using locks.
 - [PhilosopherWithSemaphore.java](./src/main/java/org/alxkm/patterns/philosopher/PhilosopherWithSemaphore.java): Philosopher problem using semaphores.
 
+### Producer-Consumer with BlockingQueue Variations
+- [BasicProducerConsumerExample.java](./src/main/java/org/alxkm/patterns/producerconsumer/BasicProducerConsumerExample.java): Basic producer-consumer pattern using ArrayBlockingQueue.
+- [PriorityProducerConsumerExample.java](./src/main/java/org/alxkm/patterns/producerconsumer/PriorityProducerConsumerExample.java): Priority-based processing using PriorityBlockingQueue.
+- [DelayedProducerConsumerExample.java](./src/main/java/org/alxkm/patterns/producerconsumer/DelayedProducerConsumerExample.java): Delayed processing using DelayQueue for scheduled tasks.
+- [TransferQueueExample.java](./src/main/java/org/alxkm/patterns/producerconsumer/TransferQueueExample.java): Synchronous handoff using LinkedTransferQueue.
+- [BatchProducerConsumerExample.java](./src/main/java/org/alxkm/patterns/producerconsumer/BatchProducerConsumerExample.java): Batch processing pattern for improved efficiency.
+
 
 # Antipatterns
 
@@ -597,6 +604,9 @@ The repository includes comprehensive JUnit tests that validate the functionalit
 #### Philosopher Problem
 - [PhilosopherWithLockTest.java](./src/test/java/org/alxkm/patterns/philosopher/PhilosopherWithLockTest.java)
 - [PhilosopherWithSemaphoreTest.java](./src/test/java/org/alxkm/patterns/philosopher/PhilosopherWithSemaphoreTest.java)
+
+#### Producer-Consumer Patterns
+- [ProducerConsumerPatternsTest.java](./src/test/java/org/alxkm/patterns/producerconsumer/ProducerConsumerPatternsTest.java) - Comprehensive tests for all producer-consumer variations
 
 #### Queue
 - [ArrayBlockingQueueExampleTest.java](./src/test/java/org/alxkm/patterns/queue/ArrayBlockingQueueExampleTest.java)
