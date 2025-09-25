@@ -551,7 +551,119 @@ Java 8 or higher is required to use this library.
 
 ## Testing
 
-The repository includes JUnit tests that validate the functionality of each cache implementation. These tests cover repository described functionality.
+The repository includes comprehensive JUnit tests that validate the functionality of each concurrency pattern and demonstrate anti-patterns with their failures. These tests cover both patterns and anti-patterns functionality.
+
+### Pattern Tests
+
+#### Active Objects
+- [ActiveObjectTest.java](./src/test/java/org/alxkm/patterns/activeobjects/ActiveObjectTest.java)
+
+#### Atomics
+- [AtomicExampleTest.java](./src/test/java/org/alxkm/patterns/atomics/AtomicExampleTest.java)
+
+#### Balking Pattern
+- [BalkingPatternExampleTest.java](./src/test/java/org/alxkm/patterns/balking/BalkingPatternExampleTest.java)
+
+#### Collections
+- [ConcurrentHashMapExampleTest.java](./src/test/java/org/alxkm/patterns/collections/ConcurrentHashMapExampleTest.java)
+- [ConcurrentSkipListSetExampleTest.java](./src/test/java/org/alxkm/patterns/collections/ConcurrentSkipListSetExampleTest.java)
+- [CopyOnWriteArrayListExampleTest.java](./src/test/java/org/alxkm/patterns/collections/CopyOnWriteArrayListExampleTest.java)
+
+#### Double Checked Locking
+- [DoubleCheckedLockingSingletonTest.java](./src/test/java/org/alxkm/patterns/doublechecklocking/DoubleCheckedLockingSingletonTest.java)
+
+#### Executors
+- [CompletionServiceExampleTest.java](./src/test/java/org/alxkm/patterns/executors/CompletionServiceExampleTest.java)
+- [ThreadPoolExampleTest.java](./src/test/java/org/alxkm/patterns/executors/ThreadPoolExampleTest.java)
+
+#### Future
+- [FutureExampleTest.java](./src/test/java/org/alxkm/patterns/future/FutureExampleTest.java)
+
+#### Guarded Suspension
+- [GuardedSuspensionExampleTest.java](./src/test/java/org/alxkm/patterns/guardedsuspension/GuardedSuspensionExampleTest.java)
+
+#### Immutable Pattern
+- [ImmutableTest.java](./src/test/java/org/alxkm/patterns/immutable/ImmutableTest.java)
+
+#### Monitor Object
+- [MonitorObjectTest.java](./src/test/java/org/alxkm/patterns/monitorobject/MonitorObjectTest.java)
+
+#### Mutex
+- [MutexExampleTest.java](./src/test/java/org/alxkm/patterns/mutex/MutexExampleTest.java)
+
+#### Odd-Even Printer
+- [OddEvenPrinterTest.java](./src/test/java/org/alxkm/patterns/oddevenprinter/OddEvenPrinterTest.java)
+
+#### Philosopher Problem
+- [PhilosopherWithLockTest.java](./src/test/java/org/alxkm/patterns/philosopher/PhilosopherWithLockTest.java)
+- [PhilosopherWithSemaphoreTest.java](./src/test/java/org/alxkm/patterns/philosopher/PhilosopherWithSemaphoreTest.java)
+
+#### Queue
+- [ArrayBlockingQueueExampleTest.java](./src/test/java/org/alxkm/patterns/queue/ArrayBlockingQueueExampleTest.java)
+- [CustomBlockingQueueTest.java](./src/test/java/org/alxkm/patterns/queue/CustomBlockingQueueTest.java)
+
+#### Read-Write Lock
+- [ReentrantReadWriteLockCounterTest.java](./src/test/java/org/alxkm/patterns/readwritelock/ReentrantReadWriteLockCounterTest.java)
+
+#### Reactor Pattern
+- [ReactorTest.java](./src/test/java/org/alxkm/patterns/reactor/ReactorTest.java)
+
+#### Scheduler
+- [SchedulerTest.java](./src/test/java/org/alxkm/patterns/scheduler/SchedulerTest.java)
+
+#### Semaphore
+- [SemaphoreExampleTest.java](./src/test/java/org/alxkm/patterns/semaphore/SemaphoreExampleTest.java)
+
+#### Singleton
+- [DoubleCheckedLockingSingletonTest.java](./src/test/java/org/alxkm/patterns/singleton/DoubleCheckedLockingSingletonTest.java)
+
+#### Synchronizers
+- [BarrierTest.java](./src/test/java/org/alxkm/patterns/synchronizers/BarrierTest.java)
+- [CountDownLatchExampleTest.java](./src/test/java/org/alxkm/patterns/synchronizers/CountDownLatchExampleTest.java)
+- [ExchangerExampleTest.java](./src/test/java/org/alxkm/patterns/synchronizers/ExchangerExampleTest.java)
+- [SemaphorePrintQueueExampleTest.java](./src/test/java/org/alxkm/patterns/synchronizers/SemaphorePrintQueueExampleTest.java)
+
+#### Thread Local
+- [ThreadLocalExampleTest.java](./src/test/java/org/alxkm/patterns/threadlocal/ThreadLocalExampleTest.java)
+
+#### Thread-Safe Lazy Initialization
+- [LazyInitializationTest.java](./src/test/java/org/alxkm/patterns/threadsafelazyinitialization/LazyInitializationTest.java)
+
+#### Two-Phase Termination
+- [TwoPhaseTerminationTest.java](./src/test/java/org/alxkm/patterns/twophasetermination/TwoPhaseTerminationTest.java)
+
+### Anti-Pattern Tests
+
+#### Busy Waiting
+- [BusyWaitingExampleTest.java](./src/test/java/org/alxkm/antipatterns/busywaiting/BusyWaitingExampleTest.java) - Demonstrates CPU consumption and thread blocking issues
+
+#### Deadlock
+- [DeadlockExampleTest.java](./src/test/java/org/alxkm/antipatterns/deadlock/DeadlockExampleTest.java) - Detects deadlocks using ThreadMXBean
+
+#### Forgotten Synchronization
+- [ForgottenSynchronizationTest.java](./src/test/java/org/alxkm/antipatterns/forgottensynchronization/ForgottenSynchronizationTest.java) - Shows race conditions from missing synchronization
+
+#### Race Conditions
+- [RaceConditionTest.java](./src/test/java/org/alxkm/antipatterns/racecondition/RaceConditionTest.java) - Demonstrates lost updates and inconsistent reads
+
+#### Thread Leakage
+- [ThreadLeakageTest.java](./src/test/java/org/alxkm/antipatterns/threadleakage/ThreadLeakageTest.java) - Shows resource exhaustion from thread leaks
+
+### Running Tests
+
+To run all tests:
+```bash
+./gradlew test
+```
+
+To run specific test categories:
+```bash
+# Run only pattern tests
+./gradlew test --tests "org.alxkm.patterns.*"
+
+# Run only anti-pattern tests  
+./gradlew test --tests "org.alxkm.antipatterns.*"
+```
 
 ## License
 
