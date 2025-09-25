@@ -21,7 +21,12 @@ public class ActiveObject {
      */
     public Future<String> sayHello(String name) {
         return executor.submit(() -> {
-            Thread.sleep(100); // Simulate delay
+            try {
+                Thread.sleep(100); // Simulate delay
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return "Interrupted while processing: " + name;
+            }
             return "Hello, " + name;
         });
     }
