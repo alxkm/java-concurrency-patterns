@@ -118,6 +118,14 @@
 ### Leader-Follower Pattern
 - [LeaderFollowerPattern.java](./src/main/java/org/alxkm/patterns/leaderfollower/LeaderFollowerPattern.java): Efficient thread pool where one leader waits for events while followers wait to be promoted.
 
+## Modern Java Features (Java 21+)
+
+### Virtual Threads Pattern
+- [VirtualThreadsExample.java](./src/main/java/org/alxkm/patterns/virtualthreads/VirtualThreadsExample.java): Lightweight threads (Project Loom) for massive concurrency with minimal overhead.
+
+### Structured Concurrency Pattern  
+- [StructuredConcurrencyExample.java](./src/main/java/org/alxkm/patterns/structured/StructuredConcurrencyExample.java): Treats groups of related tasks as a single unit of work with streamlined error handling.
+
 ### Odd-Even Printer
 - [OddEvenPrinter.java](./src/main/java/org/alxkm/patterns/oddevenprinter/OddEvenPrinter.java): Example of odd-even printing using threads.
 - [OddEvenPrinterExample.java](./src/main/java/org/alxkm/patterns/oddevenprinter/OddEvenPrinterExample.java): Demonstrates odd-even printer example.
@@ -563,7 +571,8 @@ Some images [source](http://habrahabr.ru/company/luxoft/blog/157273/)
 Include this library in your project by adding the respective files to your classpath.
 
 ## Requirements 
-Java 8 or higher is required to use this library.
+- **Java 21 or higher** is required to use this library (upgraded from Java 8 to support modern features like Virtual Threads and Structured Concurrency)
+- For basic patterns only: Java 8 or higher
 
 ## Testing
 
@@ -656,6 +665,14 @@ The repository includes comprehensive JUnit tests that validate the functionalit
 
 #### Leader-Follower Pattern
 - [LeaderFollowerPatternTest.java](./src/test/java/org/alxkm/patterns/leaderfollower/LeaderFollowerPatternTest.java)
+
+#### Modern Java Features (Java 21+)
+
+#### Virtual Threads Pattern
+- [VirtualThreadsExampleTest.java](./src/test/java/org/alxkm/patterns/virtualthreads/VirtualThreadsExampleTest.java)
+
+#### Structured Concurrency Pattern
+- [StructuredConcurrencyExampleTest.java](./src/test/java/org/alxkm/patterns/structured/StructuredConcurrencyExampleTest.java)
 
 #### Two-Phase Termination
 - [TwoPhaseTerminationTest.java](./src/test/java/org/alxkm/patterns/twophasetermination/TwoPhaseTerminationTest.java)
