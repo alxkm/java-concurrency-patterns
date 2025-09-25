@@ -23,6 +23,16 @@ public class OddEvenPrinterExample {
 
         evenThread.start();
         oddThread.start();
+
+        try {
+            // Wait for both threads to complete
+            oddThread.join();
+            evenThread.join();
+            System.out.println("Both threads completed successfully");
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            System.err.println("Main thread was interrupted");
+        }
     }
 
     private static void printOddNumbers() {
