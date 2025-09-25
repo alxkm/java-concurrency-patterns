@@ -22,3 +22,232 @@
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
+
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+gradle-app.setting
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# Maven (in case someone uses it)
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+.idea_modules/
+atlassian-ide-plugin.xml
+com_crashlytics_export_strings.xml
+crashlytics.properties
+crashlytics-build.properties
+fabric.properties
+
+# Eclipse
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.metadata
+.loadpath
+.recommenders
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+nbactions.xml
+nb-configuration.xml
+
+# VS Code
+.vscode/
+.code-workspace
+*.code-workspace
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# OS Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Test Coverage and Reports
+*.exec
+jacoco.exec
+jacoco-it.exec
+**/build/reports/
+**/build/jacocoHtml/
+**/build/jacoco/
+coverage/
+.nyc_output/
+
+# Static Analysis Reports
+**/build/reports/spotbugs/
+**/build/reports/pmd/
+**/build/reports/checkstyle/
+**/build/reports/dependency-check/
+**/build/reports/tests/
+sonar-project.properties
+
+# JMH (Java Microbenchmark Harness)
+**/jmh-result.*
+
+# Profiling
+*.hprof
+*.prof
+flight.jfr
+*.jfr
+
+# Spring Boot
+spring-shell.log
+
+# JUnit
+junit*.properties
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Logs
+logs/
+*.log.*
+log/
+application.log*
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# Terraform (if used for infrastructure)
+*.tfstate
+*.tfstate.*
+.terraform/
+terraform.tfvars
+
+# Configuration files with secrets
+application-local.yml
+application-local.yaml
+application-local.properties
+*-local.properties
+*-local.yml
+*-local.yaml
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+h2/
+
+# Node.js (if using any JS tooling)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python (if using any Python tooling)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+ENV/
+env/
+
+# Generated documentation
+docs/_build/
+site/
+
+# JetBrains Fleet
+.fleet/
+
+# Android Studio (if applicable)
+*.ap_
+/build
+/captures
+.externalNativeBuild
+.cxx
+
+# Custom project files
+config/local/
+secrets/
+keys/
+certificates/
+
+# Backup files
+*.backup
+*.bak
+*.old
+
+# Cache directories
+.cache/
+cache/
+
+# IDE workspace files
+*.code-workspace
+.history/
+
+# Performance monitoring
+perf.data*
+
+# Core dumps
+core.*
