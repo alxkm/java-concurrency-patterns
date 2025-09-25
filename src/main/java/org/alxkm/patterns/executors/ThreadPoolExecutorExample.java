@@ -17,20 +17,33 @@ public class ThreadPoolExecutorExample {
         // Create a ThreadPoolExecutor with a core pool size of 2, maximum pool size of 4, and a queue capacity of 10
         ThreadPoolExecutor executor = new ThreadPoolExecutor(2, 4, 0L, TimeUnit.MILLISECONDS, new java.util.concurrent.LinkedBlockingQueue<>(10));
 
-        // Submit tasks to the executor
-        for (int i = 0; i < 10; i++) {
-            final int taskId = i;
-            executor.submit(() -> {
-                System.out.println("Task " + taskId + " executed by thread: " + Thread.currentThread().getName());
-                try {
-                    Thread.sleep(1000); // Simulate task execution time
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+        try {
+            // Submit tasks to the executor
+            for (int i = 0; i < 10; i++) {
+                final int taskId = i;
+                executor.submit(() -> {
+                    System.out.println("Task " + taskId + " executed by thread: " + Thread.currentThread().getName());
+                    try {
+                        Thread.sleep(1000); // Simulate task execution time
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        System.err.println("Task " + taskId + " was interrupted");
+                    }
+                });
+            }
+        } finally {
+            // Shutdown the executor
+            executor.shutdown();
+            try {
+                // Wait for tasks to complete
+                if (!executor.awaitTermination(15, TimeUnit.SECONDS)) {
+                    System.err.println("Executor did not terminate in the specified time.");
+                    executor.shutdownNow();
                 }
-            });
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                executor.shutdownNow();
+            }
         }
-
-        // Shutdown the executor
-        executor.shutdown();
     }
 }

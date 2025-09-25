@@ -7,9 +7,21 @@ public class ForkJoinPoolExample {
 
     public static void main(String[] args) {
         ForkJoinPool forkJoinPool = new ForkJoinPool(4); // 4 parallel threads
-        MyRecursiveTask task = new MyRecursiveTask(100);
-        Integer result = forkJoinPool.invoke(task);
-        System.out.println("Result: " + result);
+        try {
+            MyRecursiveTask task = new MyRecursiveTask(100);
+            Integer result = forkJoinPool.invoke(task);
+            System.out.println("Result: " + result);
+        } finally {
+            forkJoinPool.shutdown();
+            try {
+                if (!forkJoinPool.awaitTermination(5, java.util.concurrent.TimeUnit.SECONDS)) {
+                    forkJoinPool.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                forkJoinPool.shutdownNow();
+            }
+        }
     }
 }
 
