@@ -115,6 +115,9 @@
 ### Concurrent Object Pool Pattern
 - [ConcurrentObjectPool.java](./src/main/java/org/alxkm/patterns/objectpool/ConcurrentObjectPool.java): Thread-safe object pool for managing reusable resources.
 
+### Leader-Follower Pattern
+- [LeaderFollowerPattern.java](./src/main/java/org/alxkm/patterns/leaderfollower/LeaderFollowerPattern.java): Efficient thread pool where one leader waits for events while followers wait to be promoted.
+
 ### Odd-Even Printer
 - [OddEvenPrinter.java](./src/main/java/org/alxkm/patterns/oddevenprinter/OddEvenPrinter.java): Example of odd-even printing using threads.
 - [OddEvenPrinterExample.java](./src/main/java/org/alxkm/patterns/oddevenprinter/OddEvenPrinterExample.java): Demonstrates odd-even printer example.
@@ -650,6 +653,9 @@ The repository includes comprehensive JUnit tests that validate the functionalit
 
 #### Concurrent Object Pool Pattern
 - [ConcurrentObjectPoolTest.java](./src/test/java/org/alxkm/patterns/objectpool/ConcurrentObjectPoolTest.java)
+
+#### Leader-Follower Pattern
+- [LeaderFollowerPatternTest.java](./src/test/java/org/alxkm/patterns/leaderfollower/LeaderFollowerPatternTest.java)
 
 #### Two-Phase Termination
 - [TwoPhaseTerminationTest.java](./src/test/java/org/alxkm/patterns/twophasetermination/TwoPhaseTerminationTest.java)
