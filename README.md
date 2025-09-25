@@ -109,6 +109,9 @@
 ### Two-phase termination
 - [TwoPhaseTermination.java](./src/main/java/org/alxkm/patterns/twophasetermination/TwoPhaseTermination.java): Demonstrates the two-phase termination pattern.
 
+### Thread-Safe Builder Pattern
+- [ThreadSafeBuilder.java](./src/main/java/org/alxkm/patterns/builder/ThreadSafeBuilder.java): Example of thread-safe builder pattern implementation.
+
 ### Odd-Even Printer
 - [OddEvenPrinter.java](./src/main/java/org/alxkm/patterns/oddevenprinter/OddEvenPrinter.java): Example of odd-even printing using threads.
 - [OddEvenPrinterExample.java](./src/main/java/org/alxkm/patterns/oddevenprinter/OddEvenPrinterExample.java): Demonstrates odd-even printer example.
@@ -638,6 +641,9 @@ The repository includes comprehensive JUnit tests that validate the functionalit
 
 #### Thread-Safe Lazy Initialization
 - [LazyInitializationTest.java](./src/test/java/org/alxkm/patterns/threadsafelazyinitialization/LazyInitializationTest.java)
+
+#### Thread-Safe Builder Pattern
+- [ThreadSafeBuilderTest.java](./src/test/java/org/alxkm/patterns/builder/ThreadSafeBuilderTest.java)
 
 #### Two-Phase Termination
 - [TwoPhaseTerminationTest.java](./src/test/java/org/alxkm/patterns/twophasetermination/TwoPhaseTerminationTest.java)
