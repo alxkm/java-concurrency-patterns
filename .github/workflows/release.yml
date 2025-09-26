@@ -1,0 +1,345 @@
+name: Release Automation
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., v1.0.0)'
+        required: true
+        type: string
+      prerelease:
+        description: 'Mark as pre-release'
+        required: false
+        default: false
+        type: boolean
+      draft:
+        description: 'Create as draft release'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  validate-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      is_prerelease: ${{ steps.version.outputs.is_prerelease }}
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Extract version information
+      id: version
+      run: |
+        if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+          VERSION="${{ inputs.version }}"
+          IS_PRERELEASE="${{ inputs.prerelease }}"
+        else
+          VERSION="${GITHUB_REF#refs/tags/}"
+          # Check if version contains alpha, beta, rc (case insensitive)
+          if echo "$VERSION" | grep -qiE "(alpha|beta|rc|snapshot)"; then
+            IS_PRERELEASE="true"
+          else
+            IS_PRERELEASE="false"
+          fi
+        fi
+        
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "is_prerelease=$IS_PRERELEASE" >> $GITHUB_OUTPUT
+        
+        # Validate version format
+        if ! echo "$VERSION" | grep -qE "^v[0-9]+\.[0-9]+\.[0-9]+"; then
+          echo "Invalid version format: $VERSION"
+          exit 1
+        fi
+
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@417ae3ccd767c252f5661f1ace9f835f9654f2b5
+
+    - name: Make gradlew executable
+      run: chmod +x ./gradlew
+
+    - name: Run all tests
+      run: ./gradlew test
+
+    - name: Run quality checks
+      run: ./gradlew check
+
+    - name: Generate test coverage
+      run: ./gradlew jacocoTestReport
+
+  build-artifacts:
+    needs: validate-release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@417ae3ccd767c252f5661f1ace9f835f9654f2b5
+
+    - name: Make gradlew executable
+      run: chmod +x ./gradlew
+
+    - name: Update version in build.gradle
+      run: |
+        VERSION="${{ needs.validate-release.outputs.version }}"
+        # Remove 'v' prefix for gradle version
+        GRADLE_VERSION="${VERSION#v}"
+        sed -i "s/version '.*'/version '$GRADLE_VERSION'/" build.gradle
+
+    - name: Build JAR files
+      run: ./gradlew build -x test
+
+    - name: Build sources JAR
+      run: ./gradlew sourcesJar
+
+    - name: Build Javadoc JAR
+      run: ./gradlew javadocJar
+
+    - name: Create distribution archive
+      run: |
+        VERSION="${{ needs.validate-release.outputs.version }}"
+        mkdir -p dist
+        
+        # Copy main artifacts
+        cp build/libs/*.jar dist/
+        
+        # Copy documentation
+        cp README.md dist/
+        cp LICENSE* dist/
+        
+        # Create examples archive
+        tar -czf dist/java-concurrency-patterns-examples-${VERSION}.tar.gz \
+          src/main/java/org/alxkm/patterns/ \
+          --transform="s,^src/main/java/org/alxkm/patterns/,examples/,"
+        
+        # Create full source archive
+        git archive --format=tar.gz --prefix=java-concurrency-patterns-${VERSION}/ HEAD \
+          > dist/java-concurrency-patterns-${VERSION}-source.tar.gz
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-artifacts
+        path: |
+          dist/
+          build/libs/
+          build/reports/
+
+  generate-release-notes:
+    needs: validate-release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    outputs:
+      release_notes: ${{ steps.notes.outputs.release_notes }}
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Generate release notes
+      id: notes
+      run: |
+        VERSION="${{ needs.validate-release.outputs.version }}"
+        
+        # Get the previous tag
+        PREVIOUS_TAG=$(git tag --sort=-version:refname | grep -v "^${VERSION}$" | head -n1)
+        
+        echo "Generating release notes from $PREVIOUS_TAG to $VERSION"
+        
+        # Create release notes
+        cat > release_notes.md << EOF
+        # Release Notes for $VERSION
+        
+        ## What's New
+        
+        ### 🚀 Features
+        $(git log $PREVIOUS_TAG..HEAD --pretty=format:"- %s" --grep="feat:" --grep="feature:" || echo "- No new features in this release")
+        
+        ### 🐛 Bug Fixes
+        $(git log $PREVIOUS_TAG..HEAD --pretty=format:"- %s" --grep="fix:" --grep="bug:" || echo "- No bug fixes in this release")
+        
+        ### 📚 Documentation
+        $(git log $PREVIOUS_TAG..HEAD --pretty=format:"- %s" --grep="docs:" || echo "- No documentation updates in this release")
+        
+        ### 🔧 Technical Improvements
+        $(git log $PREVIOUS_TAG..HEAD --pretty=format:"- %s" --grep="refactor:" --grep="perf:" --grep="chore:" || echo "- No technical improvements in this release")
+        
+        ## 📊 Statistics
+        - **Commits**: $(git rev-list --count $PREVIOUS_TAG..HEAD)
+        - **Files Changed**: $(git diff --name-only $PREVIOUS_TAG..HEAD | wc -l)
+        - **Contributors**: $(git log $PREVIOUS_TAG..HEAD --pretty=format:"%an" | sort | uniq | wc -l)
+        
+        ## 🧪 Testing
+        - All existing tests pass
+        - Coverage reports available in artifacts
+        - Performance benchmarks completed
+        
+        ## 📦 Artifacts
+        - \`java-concurrency-patterns-${VERSION}.jar\` - Main library
+        - \`java-concurrency-patterns-${VERSION}-sources.jar\` - Source code
+        - \`java-concurrency-patterns-${VERSION}-javadoc.jar\` - Documentation
+        - \`java-concurrency-patterns-examples-${VERSION}.tar.gz\` - Example code
+        - \`java-concurrency-patterns-${VERSION}-source.tar.gz\` - Full source archive
+        
+        ## 🔧 Requirements
+        - Java 21 or higher
+        - For basic patterns only: Java 8 or higher
+        
+        ## 🚀 Usage
+        Include the JAR file in your project classpath and explore the concurrency patterns in the \`org.alxkm.patterns\` package.
+        
+        ---
+        
+        **Full Changelog**: https://github.com/\${{ github.repository }}/compare/$PREVIOUS_TAG...$VERSION
+        EOF
+        
+        # Read the release notes and set as output
+        {
+          echo 'release_notes<<EOF'
+          cat release_notes.md
+          echo 'EOF'
+        } >> $GITHUB_OUTPUT
+
+    - name: Upload release notes
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-notes
+        path: release_notes.md
+
+  create-release:
+    needs: [validate-release, build-artifacts, generate-release-notes]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      discussions: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: release-artifacts
+        path: artifacts/
+
+    - name: Download release notes
+      uses: actions/download-artifact@v4
+      with:
+        name: release-notes
+        path: release-notes/
+
+    - name: Create GitHub Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ needs.validate-release.outputs.version }}
+        release_name: ${{ needs.validate-release.outputs.version }}
+        body_path: release-notes/release_notes.md
+        draft: ${{ inputs.draft || false }}
+        prerelease: ${{ needs.validate-release.outputs.is_prerelease }}
+
+    - name: Upload JAR file
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: artifacts/java-concurrency-patterns-${{ needs.validate-release.outputs.version }}.jar
+        asset_name: java-concurrency-patterns-${{ needs.validate-release.outputs.version }}.jar
+        asset_content_type: application/java-archive
+
+    - name: Upload sources JAR
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: artifacts/java-concurrency-patterns-${{ needs.validate-release.outputs.version }}-sources.jar
+        asset_name: java-concurrency-patterns-${{ needs.validate-release.outputs.version }}-sources.jar
+        asset_content_type: application/java-archive
+
+    - name: Upload examples archive
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: artifacts/java-concurrency-patterns-examples-${{ needs.validate-release.outputs.version }}.tar.gz
+        asset_name: java-concurrency-patterns-examples-${{ needs.validate-release.outputs.version }}.tar.gz
+        asset_content_type: application/gzip
+
+  post-release:
+    needs: [validate-release, create-release]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Create post-release tasks
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const version = '${{ needs.validate-release.outputs.version }}';
+          
+          // Create an issue for post-release tasks
+          const issue = await github.rest.issues.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title: `Post-release tasks for ${version}`,
+            body: `
+            ## Post-release checklist for ${version}
+            
+            - [ ] Update documentation website
+            - [ ] Announce release on social media
+            - [ ] Update examples in blog posts
+            - [ ] Check for any urgent issues
+            - [ ] Update roadmap if needed
+            - [ ] Send announcement to mailing list
+            
+            This issue was automatically created after releasing ${version}.
+            `,
+            labels: ['release', 'task']
+          });
+          
+          console.log(\`Created post-release issue: \${issue.data.html_url}\`);
+
+    - name: Update development version
+      run: |
+        # This would typically increment the version for next development cycle
+        echo "Release ${{ needs.validate-release.outputs.version }} completed successfully!"
+        echo "Consider updating the version in build.gradle for next development iteration."

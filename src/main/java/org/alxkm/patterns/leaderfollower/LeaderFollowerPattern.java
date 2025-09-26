@@ -2,11 +2,14 @@ package org.alxkm.patterns.leaderfollower;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.Condition;
 import java.util.function.Consumer;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * Leader-Follower Pattern implementation.
@@ -37,6 +40,9 @@ public class LeaderFollowerPattern<T> {
     private final AtomicInteger processedEvents;
     private final AtomicInteger leaderPromotions;
     
+    // Thread management
+    private final List<WorkerThread> workerThreads;
+    
     /**
      * Creates a new Leader-Follower thread pool.
      * 
@@ -60,10 +66,11 @@ public class LeaderFollowerPattern<T> {
         this.leaderLock = new ReentrantLock();
         this.followerCondition = leaderLock.newCondition();
         this.currentLeader = null;
-        this.followerQueue = new LinkedBlockingQueue<>();
+        this.followerQueue = new LinkedBlockingQueue<>(threadPoolSize);
         
         this.processedEvents = new AtomicInteger(0);
         this.leaderPromotions = new AtomicInteger(0);
+        this.workerThreads = new ArrayList<>(threadPoolSize);
     }
     
     /**
@@ -75,6 +82,7 @@ public class LeaderFollowerPattern<T> {
         public WorkerThread(int threadId) {
             this.threadId = threadId;
             setName("LeaderFollower-Worker-" + threadId);
+            setDaemon(true); // Make daemon thread to prevent JVM hanging
         }
         
         @Override
@@ -83,18 +91,37 @@ public class LeaderFollowerPattern<T> {
             
             try {
                 while (isRunning.get()) {
-                    if (becomeLeader()) {
-                        // I am the leader, wait for and process events
-                        processAsLeader();
-                    } else {
-                        // I am a follower, wait to be promoted
-                        waitAsFollower();
+                    try {
+                        if (becomeLeader()) {
+                            // I am the leader, wait for and process events
+                            processAsLeader();
+                        } else {
+                            // I am a follower, wait to be promoted
+                            waitAsFollower();
+                        }
+                    } catch (InterruptedException e) {
+                        // Exit if interrupted
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                    
+                    // Check if we should stop
+                    if (!isRunning.get()) {
+                        break;
                     }
                 }
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
             } finally {
                 activeThreads.decrementAndGet();
+                // Remove self from follower queue on exit
+                leaderLock.lock();
+                try {
+                    followerQueue.remove(Thread.currentThread());
+                    if (currentLeader == Thread.currentThread()) {
+                        currentLeader = null;
+                    }
+                } finally {
+                    leaderLock.unlock();
+                }
             }
         }
         
@@ -109,8 +136,10 @@ public class LeaderFollowerPattern<T> {
                     leaderPromotions.incrementAndGet();
                     return true;
                 } else {
-                    // Add self to follower queue
-                    followerQueue.offer(Thread.currentThread());
+                    // Add self to follower queue only if not already there
+                    if (!followerQueue.contains(Thread.currentThread())) {
+                        followerQueue.offer(Thread.currentThread());
+                    }
                     return false;
                 }
             } finally {
@@ -124,7 +153,7 @@ public class LeaderFollowerPattern<T> {
         private void processAsLeader() throws InterruptedException {
             try {
                 while (isRunning.get() && currentLeader == Thread.currentThread()) {
-                    T event = eventQueue.poll(); // Non-blocking poll
+                    T event = eventQueue.poll(100, TimeUnit.MILLISECONDS); // Blocking poll with timeout
                     
                     if (event != null) {
                         // Process the event
@@ -138,15 +167,13 @@ public class LeaderFollowerPattern<T> {
                         // After processing, promote a follower to leader and step down
                         promoteFollowerToLeader();
                         break; // Exit leader role
-                        
-                    } else {
-                        // No event available, brief wait
-                        Thread.sleep(1);
                     }
                 }
             } finally {
                 // Ensure we step down as leader if we're still the leader
-                stepDownAsLeader();
+                if (!isRunning.get()) {
+                    stepDownAsLeader();
+                }
             }
         }
         
@@ -157,7 +184,13 @@ public class LeaderFollowerPattern<T> {
             leaderLock.lock();
             try {
                 while (isRunning.get() && currentLeader != Thread.currentThread()) {
-                    followerCondition.await();
+                    // Wait with timeout to avoid infinite blocking
+                    if (!followerCondition.await(1, TimeUnit.SECONDS)) {
+                        // Check if we're still running
+                        if (!isRunning.get()) {
+                            break;
+                        }
+                    }
                 }
             } finally {
                 leaderLock.unlock();
@@ -170,13 +203,16 @@ public class LeaderFollowerPattern<T> {
         private void promoteFollowerToLeader() {
             leaderLock.lock();
             try {
+                // Step down as current leader
+                if (currentLeader == Thread.currentThread()) {
+                    currentLeader = null;
+                }
+                
                 Thread nextLeader = followerQueue.poll();
                 if (nextLeader != null) {
                     currentLeader = nextLeader;
                     leaderPromotions.incrementAndGet();
                     followerCondition.signalAll(); // Wake up the new leader
-                } else {
-                    currentLeader = null; // No followers available
                 }
             } finally {
                 leaderLock.unlock();
@@ -203,14 +239,25 @@ public class LeaderFollowerPattern<T> {
      */
     public void start() {
         if (isRunning.compareAndSet(false, true)) {
+            // Clear any previous threads
+            workerThreads.clear();
+            
             // Start worker threads
             for (int i = 0; i < threadPoolSize; i++) {
-                new WorkerThread(i).start();
+                WorkerThread thread = new WorkerThread(i);
+                workerThreads.add(thread);
+                thread.start();
             }
             
-            // Wait for threads to initialize
-            while (activeThreads.get() < threadPoolSize) {
-                Thread.yield();
+            // Wait for threads to initialize with timeout
+            long timeout = System.currentTimeMillis() + 5000; // 5 second timeout
+            while (activeThreads.get() < threadPoolSize && System.currentTimeMillis() < timeout) {
+                try {
+                    Thread.sleep(10);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
             }
         }
     }
@@ -255,10 +302,20 @@ public class LeaderFollowerPattern<T> {
             leaderLock.unlock();
         }
         
+        // Interrupt all threads
+        for (WorkerThread thread : workerThreads) {
+            thread.interrupt();
+        }
+        
         // Wait for all threads to finish
         long timeout = System.currentTimeMillis() + 5000; // 5 second timeout
         while (activeThreads.get() > 0 && System.currentTimeMillis() < timeout) {
-            Thread.yield();
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
         }
     }
     
@@ -278,6 +335,11 @@ public class LeaderFollowerPattern<T> {
             followerCondition.signalAll();
         } finally {
             leaderLock.unlock();
+        }
+        
+        // Interrupt all threads immediately
+        for (WorkerThread thread : workerThreads) {
+            thread.interrupt();
         }
     }
     

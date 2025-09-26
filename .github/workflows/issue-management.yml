@@ -1,0 +1,399 @@
+name: Issue and PR Management
+
+on:
+  issues:
+    types: [opened, edited, labeled, unlabeled]
+  pull_request:
+    types: [opened, edited, labeled, unlabeled, ready_for_review, review_requested]
+  issue_comment:
+    types: [created]
+  schedule:
+    # Run every day at 12 PM UTC to check stale issues
+    - cron: '0 12 * * *'
+
+jobs:
+  label-issues:
+    if: github.event_name == 'issues' && github.event.action == 'opened'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+
+    steps:
+    - name: Auto-label issues
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const issue = context.payload.issue;
+          const title = issue.title.toLowerCase();
+          const body = issue.body?.toLowerCase() || '';
+          const labels = [];
+
+          // Auto-label based on title/content
+          if (title.includes('bug') || body.includes('bug') || title.includes('error') || title.includes('exception')) {
+            labels.push('bug');
+          }
+          
+          if (title.includes('feature') || title.includes('enhancement') || body.includes('feature request')) {
+            labels.push('enhancement');
+          }
+          
+          if (title.includes('documentation') || title.includes('docs') || body.includes('documentation')) {
+            labels.push('documentation');
+          }
+          
+          if (title.includes('performance') || body.includes('performance') || title.includes('benchmark')) {
+            labels.push('performance');
+          }
+          
+          if (title.includes('virtual thread') || body.includes('virtual thread')) {
+            labels.push('virtual-threads');
+          }
+          
+          if (title.includes('structured concurrency') || body.includes('structured concurrency')) {
+            labels.push('structured-concurrency');
+          }
+          
+          if (title.includes('test') || body.includes('test')) {
+            labels.push('testing');
+          }
+          
+          if (title.includes('question') || title.includes('help') || title.includes('how to')) {
+            labels.push('question');
+          }
+
+          // Add priority labels based on keywords
+          if (title.includes('urgent') || title.includes('critical') || body.includes('urgent')) {
+            labels.push('priority:high');
+          }
+          
+          if (labels.length > 0) {
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              labels: labels
+            });
+            
+            console.log(`Added labels: ${labels.join(', ')}`);
+          }
+
+    - name: Welcome new contributors
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const issue = context.payload.issue;
+          
+          // Check if this is the user's first issue
+          const issues = await github.rest.issues.listForRepo({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            creator: issue.user.login,
+            state: 'all'
+          });
+          
+          if (issues.data.length === 1) {
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              body: `
+              👋 Welcome to the Java Concurrency Patterns project, @${issue.user.login}!
+              
+              Thank you for opening your first issue. Here are some helpful tips:
+              
+              🔍 **For bugs**: Please include:
+              - Java version you're using
+              - Steps to reproduce the issue
+              - Expected vs actual behavior
+              - Relevant code snippets or stack traces
+              
+              💡 **For feature requests**: Please describe:
+              - The use case or problem you're trying to solve
+              - Your proposed solution or suggestions
+              - Any alternatives you've considered
+              
+              📚 **Questions**: Check our [documentation](https://github.com/${context.repo.owner}/${context.repo.repo}#readme) first, and feel free to ask for clarification!
+              
+              A maintainer will review your issue soon. Thank you for contributing! 🚀
+              `
+            });
+          }
+
+  label-pull-requests:
+    if: github.event_name == 'pull_request' && github.event.action == 'opened'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+
+    steps:
+    - name: Auto-label pull requests
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const pr = context.payload.pull_request;
+          const title = pr.title.toLowerCase();
+          const body = pr.body?.toLowerCase() || '';
+          const labels = [];
+
+          // Auto-label based on title/content
+          if (title.includes('fix') || title.includes('bug')) {
+            labels.push('bug');
+          }
+          
+          if (title.includes('feat') || title.includes('add') || title.includes('new')) {
+            labels.push('enhancement');
+          }
+          
+          if (title.includes('docs') || title.includes('documentation')) {
+            labels.push('documentation');
+          }
+          
+          if (title.includes('test') || title.includes('testing')) {
+            labels.push('testing');
+          }
+          
+          if (title.includes('perf') || title.includes('performance')) {
+            labels.push('performance');
+          }
+          
+          if (title.includes('refactor') || title.includes('cleanup')) {
+            labels.push('refactoring');
+          }
+
+          // Check if it's a breaking change
+          if (title.includes('break') || body.includes('breaking change')) {
+            labels.push('breaking-change');
+          }
+
+          // Add size labels based on changed files
+          const files = await github.rest.pulls.listFiles({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            pull_number: pr.number
+          });
+          
+          const changedFiles = files.data.length;
+          if (changedFiles <= 5) {
+            labels.push('size:small');
+          } else if (changedFiles <= 15) {
+            labels.push('size:medium');
+          } else {
+            labels.push('size:large');
+          }
+
+          if (labels.length > 0) {
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+              labels: labels
+            });
+          }
+
+    - name: Welcome new contributors PR
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const pr = context.payload.pull_request;
+          
+          // Check if this is the user's first PR
+          const prs = await github.rest.pulls.list({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            creator: pr.user.login,
+            state: 'all'
+          });
+          
+          if (prs.data.length === 1) {
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+              body: `
+              🎉 Thank you for your first contribution to Java Concurrency Patterns, @${pr.user.login}!
+              
+              Your pull request will be reviewed by a maintainer soon. Here's what happens next:
+              
+              ✅ **Automated checks** will run to ensure code quality and tests pass
+              📊 **Code coverage** will be calculated and reported  
+              🔍 **Manual review** by maintainers for code quality and design
+              
+              **Tips for a smooth review:**
+              - Make sure all tests pass
+              - Add tests for new functionality
+              - Update documentation if needed
+              - Keep the PR focused on a single feature/fix
+              
+              Thank you for making Java concurrency better! 🚀
+              `
+            });
+          }
+
+  check-pr-requirements:
+    if: github.event_name == 'pull_request' && (github.event.action == 'opened' || github.event.action == 'edited')
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+
+    steps:
+    - name: Check PR requirements
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const pr = context.payload.pull_request;
+          const title = pr.title;
+          const body = pr.body || '';
+          const issues = [];
+          
+          // Check title format
+          if (title.length < 10) {
+            issues.push('- Title should be more descriptive (at least 10 characters)');
+          }
+          
+          // Check for description
+          if (body.length < 30) {
+            issues.push('- Please add a more detailed description of your changes');
+          }
+          
+          // Check for related issue reference
+          if (!body.includes('#') && !body.toLowerCase().includes('fixes') && !body.toLowerCase().includes('closes')) {
+            issues.push('- Consider referencing any related issues (e.g., "Fixes #123")');
+          }
+          
+          // Check for test section
+          if (!body.toLowerCase().includes('test') && !title.toLowerCase().includes('docs')) {
+            issues.push('- Please mention how you tested your changes');
+          }
+          
+          if (issues.length > 0) {
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+              body: `
+              📋 **PR Checklist Reminder**
+              
+              Thank you for your contribution! To help us review your PR more efficiently, please consider addressing these items:
+              
+              ${issues.join('\n')}
+              
+              *This is an automated reminder. Feel free to ignore if not applicable.*
+              `
+            });
+          }
+
+  manage-stale-issues:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+
+    steps:
+    - name: Mark stale issues and PRs
+      uses: actions/stale@v9
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        
+        # Issue settings
+        stale-issue-message: |
+          This issue has been automatically marked as stale because it has not had recent activity. 
+          
+          It will be closed if no further activity occurs within the next 7 days. 
+          
+          If you believe this issue is still relevant, please comment to keep it open.
+          
+          Thank you for your contributions! 🙏
+        
+        close-issue-message: |
+          This issue has been automatically closed due to inactivity. 
+          
+          If you believe this issue should remain open, please reopen it and provide additional context.
+          
+        # PR settings  
+        stale-pr-message: |
+          This pull request has been automatically marked as stale because it has not had recent activity.
+          
+          It will be closed if no further activity occurs within the next 7 days.
+          
+          If this PR is still relevant, please comment or push new commits to keep it open.
+          
+        close-pr-message: |
+          This pull request has been automatically closed due to inactivity.
+          
+          If you'd like to continue working on this, please reopen it and address any feedback.
+          
+        # Timing settings
+        days-before-stale: 60
+        days-before-close: 7
+        
+        # Label settings
+        stale-issue-label: 'stale'
+        stale-pr-label: 'stale'
+        
+        # Exempt settings
+        exempt-issue-labels: 'pinned,security,priority:high'
+        exempt-pr-labels: 'pinned,security,priority:high,work-in-progress'
+        
+        # Operation limits
+        operations-per-run: 30
+
+  manage-labels:
+    if: github.event_name == 'issues' || github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+
+    steps:
+    - name: Ensure required labels exist
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const labels = [
+            { name: 'bug', color: 'd73a4a', description: 'Something isn\'t working' },
+            { name: 'enhancement', color: 'a2eeef', description: 'New feature or request' },
+            { name: 'documentation', color: '0075ca', description: 'Improvements or additions to documentation' },
+            { name: 'question', color: 'd876e3', description: 'Further information is requested' },
+            { name: 'testing', color: '7057ff', description: 'Related to testing' },
+            { name: 'performance', color: 'ff6b35', description: 'Performance related' },
+            { name: 'virtual-threads', color: '00d4aa', description: 'Related to virtual threads' },
+            { name: 'structured-concurrency', color: '00aa55', description: 'Related to structured concurrency' },
+            { name: 'priority:high', color: 'b60205', description: 'High priority issue' },
+            { name: 'priority:medium', color: 'fbca04', description: 'Medium priority issue' },
+            { name: 'priority:low', color: '0e8a16', description: 'Low priority issue' },
+            { name: 'size:small', color: '90ee90', description: 'Small change' },
+            { name: 'size:medium', color: 'ffd700', description: 'Medium change' },
+            { name: 'size:large', color: 'ff6b6b', description: 'Large change' },
+            { name: 'stale', color: '8b8680', description: 'Stale issue or PR' },
+            { name: 'breaking-change', color: 'ff0000', description: 'Contains breaking changes' },
+            { name: 'work-in-progress', color: 'fef2c0', description: 'Work in progress' },
+            { name: 'refactoring', color: 'c5def5', description: 'Code refactoring' }
+          ];
+          
+          const existingLabels = await github.rest.issues.listLabelsForRepo({
+            owner: context.repo.owner,
+            repo: context.repo.repo
+          });
+          
+          const existingLabelNames = existingLabels.data.map(label => label.name);
+          
+          for (const label of labels) {
+            if (!existingLabelNames.includes(label.name)) {
+              try {
+                await github.rest.issues.createLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name: label.name,
+                  color: label.color,
+                  description: label.description
+                });
+                console.log(`Created label: ${label.name}`);
+              } catch (error) {
+                console.log(`Failed to create label ${label.name}: ${error.message}`);
+              }
+            }
+          }
