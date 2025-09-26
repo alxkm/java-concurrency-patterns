@@ -25,6 +25,26 @@ dependencies {
 test {
     useJUnitPlatform()
     finalizedBy jacocoTestReport
+    
+    // Enhanced test reporting
+    testLogging {
+        events "passed", "skipped", "failed", "standardOut", "standardError"
+        exceptionFormat "full"
+        showCauses true
+        showExceptions true
+        showStackTraces true
+        showStandardStreams = true
+    }
+    
+    // Print a summary after test execution
+    afterSuite { desc, result ->
+        if (!desc.parent) { // Only execute this for the overall test suite
+            def output = "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)"
+            def startItem = '|  ', endItem = '  |'
+            def repeatLength = startItem.length() + output.length() + endItem.length()
+            println('\n' + ('-' * repeatLength) + '\n' + startItem + output + endItem + '\n' + ('-' * repeatLength))
+        }
+    }
 }
 
 // JaCoCo Configuration - NON-BREAKING
