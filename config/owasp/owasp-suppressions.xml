@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+    <!-- 
+    Example suppressions for common false positives in Java projects.
+    Customize based on your project's specific needs.
+    -->
+    
+    <!-- Suppress JUnit vulnerabilities as it's test scope only -->
+    <suppress>
+        <notes><![CDATA[JUnit is only used in test scope]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.junit\.jupiter/.*$</packageUrl>
+        <cve>CVE-2020-15250</cve>
+    </suppress>
+    
+    <!-- Example: Suppress specific CVE for a known safe usage -->
+    <!-- 
+    <suppress>
+        <notes><![CDATA[False positive - library used safely]]></notes>
+        <gav>org.example:example-lib:*</gav>
+        <cve>CVE-XXXX-XXXX</cve>
+    </suppress>
+    -->
+</suppressions>
