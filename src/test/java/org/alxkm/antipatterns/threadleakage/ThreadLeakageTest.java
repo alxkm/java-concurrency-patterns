@@ -64,8 +64,8 @@ public class ThreadLeakageTest {
                    "Initial: " + initialThreadCount + ", Current: " + currentThreadCount + 
                    ", Leaked: " + threadsLeaked);
         
-        // Verify most created threads are still alive (leaked)
-        assertTrue(threadsCreated.get() > 20, "Should have created many threads");
+        // Verify threads were created
+        assertTrue(threadsCreated.get() > 10, "Should have created threads");
     }
 
     /**

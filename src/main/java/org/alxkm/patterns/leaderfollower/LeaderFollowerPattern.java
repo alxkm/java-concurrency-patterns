@@ -91,6 +91,11 @@ public class LeaderFollowerPattern<T> {
                         // I am a follower, wait to be promoted
                         waitAsFollower();
                     }
+                    
+                    // Check if we should stop
+                    if (!isRunning.get()) {
+                        break;
+                    }
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -138,12 +143,17 @@ public class LeaderFollowerPattern<T> {
                         
                         // After processing, promote a follower to leader and step down
                         promoteFollowerToLeader();
+                        
+                        // Add self back to follower queue
+                        followerQueue.offer(Thread.currentThread());
                         break; // Exit leader role
                     }
                 }
             } finally {
                 // Ensure we step down as leader if we're still the leader
-                stepDownAsLeader();
+                if (!isRunning.get()) {
+                    stepDownAsLeader();
+                }
             }
         }
         
@@ -154,7 +164,13 @@ public class LeaderFollowerPattern<T> {
             leaderLock.lock();
             try {
                 while (isRunning.get() && currentLeader != Thread.currentThread()) {
-                    followerCondition.await();
+                    // Wait with timeout to avoid infinite blocking
+                    if (!followerCondition.await(1, TimeUnit.SECONDS)) {
+                        // Check if we're still running
+                        if (!isRunning.get()) {
+                            break;
+                        }
+                    }
                 }
             } finally {
                 leaderLock.unlock();
@@ -167,13 +183,16 @@ public class LeaderFollowerPattern<T> {
         private void promoteFollowerToLeader() {
             leaderLock.lock();
             try {
+                // Step down as current leader
+                if (currentLeader == Thread.currentThread()) {
+                    currentLeader = null;
+                }
+                
                 Thread nextLeader = followerQueue.poll();
                 if (nextLeader != null) {
                     currentLeader = nextLeader;
                     leaderPromotions.incrementAndGet();
                     followerCondition.signalAll(); // Wake up the new leader
-                } else {
-                    currentLeader = null; // No followers available
                 }
             } finally {
                 leaderLock.unlock();
