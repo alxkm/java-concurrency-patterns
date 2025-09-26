@@ -1,5 +1,8 @@
 plugins {
     id 'java'
+    id 'jacoco'
+    id 'checkstyle'
+    id 'pmd'
 }
 
 group 'org.alxkm'
@@ -21,4 +24,37 @@ dependencies {
 
 test {
     useJUnitPlatform()
+    finalizedBy jacocoTestReport
+}
+
+// JaCoCo Configuration - NON-BREAKING
+jacoco {
+    toolVersion = "0.8.11"
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
+// Checkstyle Configuration - NON-BREAKING
+checkstyle {
+    toolVersion = '10.12.7'
+    configFile = rootProject.file('config/checkstyle/checkstyle.xml')
+    ignoreFailures = true  // 🛡️ WON'T BREAK BUILD
+}
+
+// PMD Configuration - NON-BREAKING  
+pmd {
+    consoleOutput = true
+    toolVersion = '7.0.0'
+    ignoreFailures = true  // 🛡️ WON'T BREAK BUILD
+    ruleSets = [
+        'category/java/errorprone.xml',
+        'category/java/bestpractices.xml',
+        'category/java/multithreading.xml'
+    ]
 }

@@ -1,0 +1,261 @@
+name: Performance Benchmarks
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'src/main/**'
+      - 'src/test/**'
+      - 'build.gradle'
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'src/main/**'
+      - 'src/test/**'
+      - 'build.gradle'
+  schedule:
+    # Run benchmarks weekly on Sunday at 2 AM UTC
+    - cron: '0 2 * * 0'
+  workflow_dispatch:
+    inputs:
+      benchmark_duration:
+        description: 'Benchmark duration in minutes'
+        required: false
+        default: '5'
+        type: string
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@417ae3ccd767c252f5661f1ace9f835f9654f2b5
+
+    - name: Make gradlew executable
+      run: chmod +x ./gradlew
+
+    - name: Run concurrency pattern benchmarks
+      timeout-minutes: 30
+      run: |
+        # Create a simple performance test runner
+        mkdir -p src/test/java/org/alxkm/benchmark
+        cat > src/test/java/org/alxkm/benchmark/ConcurrencyBenchmark.java << 'EOF'
+        package org.alxkm.benchmark;
+        
+        import org.junit.jupiter.api.Test;
+        import org.junit.jupiter.api.Timeout;
+        import java.time.Duration;
+        import java.time.Instant;
+        import java.util.concurrent.ExecutorService;
+        import java.util.concurrent.Executors;
+        import java.util.concurrent.TimeUnit;
+        import java.util.concurrent.atomic.AtomicLong;
+        
+        public class ConcurrencyBenchmark {
+            
+            @Test
+            @Timeout(value = 10, unit = TimeUnit.MINUTES)
+            public void benchmarkVirtualThreadsVsPlatformThreads() throws InterruptedException {
+                System.out.println("=== Virtual Threads vs Platform Threads Benchmark ===");
+                
+                final int numTasks = 10000;
+                final int sleepTimeMs = 10;
+                
+                // Benchmark Platform Threads
+                Instant start = Instant.now();
+                try (ExecutorService platformExecutor = Executors.newFixedThreadPool(200)) {
+                    AtomicLong platformCounter = new AtomicLong();
+                    
+                    for (int i = 0; i < numTasks; i++) {
+                        platformExecutor.submit(() -> {
+                            try {
+                                Thread.sleep(sleepTimeMs);
+                                platformCounter.incrementAndGet();
+                            } catch (InterruptedException e) {
+                                Thread.currentThread().interrupt();
+                            }
+                        });
+                    }
+                    
+                    platformExecutor.shutdown();
+                    platformExecutor.awaitTermination(5, TimeUnit.MINUTES);
+                }
+                Duration platformTime = Duration.between(start, Instant.now());
+                
+                // Benchmark Virtual Threads
+                start = Instant.now();
+                try (ExecutorService virtualExecutor = Executors.newVirtualThreadPerTaskExecutor()) {
+                    AtomicLong virtualCounter = new AtomicLong();
+                    
+                    for (int i = 0; i < numTasks; i++) {
+                        virtualExecutor.submit(() -> {
+                            try {
+                                Thread.sleep(sleepTimeMs);
+                                virtualCounter.incrementAndGet();
+                            } catch (InterruptedException e) {
+                                Thread.currentThread().interrupt();
+                            }
+                        });
+                    }
+                    
+                    virtualExecutor.shutdown();
+                    virtualExecutor.awaitTermination(5, TimeUnit.MINUTES);
+                }
+                Duration virtualTime = Duration.between(start, Instant.now());
+                
+                System.out.printf("Platform Threads: %d ms%n", platformTime.toMillis());
+                System.out.printf("Virtual Threads: %d ms%n", virtualTime.toMillis());
+                System.out.printf("Virtual threads are %.2fx faster%n", 
+                    (double) platformTime.toMillis() / virtualTime.toMillis());
+            }
+        }
+        EOF
+
+    - name: Run benchmark tests
+      run: ./gradlew test --tests "*Benchmark*" -i
+
+    - name: System performance info
+      run: |
+        echo "## System Information" >> benchmark-results.md
+        echo "- **CPU**: $(nproc) cores" >> benchmark-results.md
+        echo "- **Memory**: $(free -h | grep '^Mem:' | awk '{print $2}')" >> benchmark-results.md
+        echo "- **Java Version**: $(java -version 2>&1 | head -n1)" >> benchmark-results.md
+        echo "- **OS**: $(uname -a)" >> benchmark-results.md
+        echo "- **Date**: $(date)" >> benchmark-results.md
+        echo "" >> benchmark-results.md
+
+    - name: Memory usage analysis
+      run: |
+        echo "## Memory Usage Analysis" >> benchmark-results.md
+        echo "\`\`\`" >> benchmark-results.md
+        # Run a memory-intensive test and capture memory usage
+        ./gradlew test --tests "*VirtualThreads*" -Xmx2g -XX:+PrintGCDetails 2>&1 | grep -E "(GC|Memory|Heap)" | head -20 >> benchmark-results.md || true
+        echo "\`\`\`" >> benchmark-results.md
+        echo "" >> benchmark-results.md
+
+    - name: Thread performance comparison
+      run: |
+        echo "## Thread Performance Comparison" >> benchmark-results.md
+        echo "Comparing different concurrency patterns performance..." >> benchmark-results.md
+        echo "" >> benchmark-results.md
+        
+        # Create and run a simple thread comparison test
+        timeout 300 ./gradlew test --tests "*ConcurrencyBenchmark*" -i | tee -a benchmark-results.md || true
+
+    - name: Upload benchmark results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: benchmark-results-${{ github.sha }}
+        path: |
+          benchmark-results.md
+          build/reports/tests/
+          build/test-results/
+
+    - name: Comment benchmark results on PR
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          let benchmarkResults = '';
+          try {
+            benchmarkResults = fs.readFileSync('benchmark-results.md', 'utf8');
+          } catch (error) {
+            benchmarkResults = 'Benchmark results not available.';
+          }
+          
+          const body = `
+          ## 🚀 Performance Benchmark Results
+          
+          ${benchmarkResults}
+          
+          *Benchmark run on commit ${context.sha.substring(0, 7)}*
+          `;
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: body
+          });
+
+    - name: Update benchmark summary
+      if: always()
+      run: |
+        echo "# Performance Benchmark Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        if [ -f "benchmark-results.md" ]; then
+          cat benchmark-results.md >> $GITHUB_STEP_SUMMARY
+        else
+          echo "Benchmark results not available." >> $GITHUB_STEP_SUMMARY
+        fi
+
+  stress-test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@417ae3ccd767c252f5661f1ace9f835f9654f2b5
+
+    - name: Make gradlew executable
+      run: chmod +x ./gradlew
+
+    - name: Run stress tests
+      timeout-minutes: 15
+      run: |
+        echo "Running stress tests for concurrency patterns..."
+        
+        # Run all tests with increased load
+        ./gradlew test -Dtest.stress=true -Xmx4g -XX:+UseG1GC -i || true
+
+    - name: Analyze test results
+      if: always()
+      run: |
+        echo "## Stress Test Results" > stress-test-results.md
+        echo "" >> stress-test-results.md
+        
+        # Count test results
+        if [ -d "build/test-results/test" ]; then
+          PASSED=$(find build/test-results/test -name "*.xml" -exec grep -l 'failures="0"' {} \; | wc -l)
+          FAILED=$(find build/test-results/test -name "*.xml" -exec grep -l 'failures="[1-9]' {} \; | wc -l)
+          echo "- **Passed**: $PASSED" >> stress-test-results.md
+          echo "- **Failed**: $FAILED" >> stress-test-results.md
+        fi
+        
+        echo "" >> stress-test-results.md
+        echo "Stress test completed at $(date)" >> stress-test-results.md
+
+    - name: Upload stress test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: stress-test-results-${{ github.sha }}
+        path: |
+          stress-test-results.md
+          build/reports/tests/
+          build/test-results/

@@ -1,0 +1,445 @@
+name: Documentation Generation
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'src/main/**'
+      - 'README.md'
+      - 'docs/**'
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'src/main/**'
+      - 'README.md'
+      - 'docs/**'
+  workflow_dispatch:
+
+jobs:
+  generate-javadoc:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@417ae3ccd767c252f5661f1ace9f835f9654f2b5
+
+    - name: Make gradlew executable
+      run: chmod +x ./gradlew
+
+    - name: Generate Javadoc
+      run: ./gradlew javadoc
+
+    - name: Create documentation structure
+      run: |
+        mkdir -p docs-build
+        
+        # Copy Javadoc
+        if [ -d "build/docs/javadoc" ]; then
+          cp -r build/docs/javadoc docs-build/api
+        fi
+        
+        # Create main documentation page
+        cat > docs-build/index.html << 'EOF'
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Java Concurrency Patterns Documentation</title>
+            <style>
+                body {
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                    line-height: 1.6;
+                    margin: 0;
+                    padding: 20px;
+                    background-color: #f5f5f5;
+                }
+                .container {
+                    max-width: 1200px;
+                    margin: 0 auto;
+                    background: white;
+                    padding: 20px;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                }
+                .header {
+                    text-align: center;
+                    border-bottom: 2px solid #007acc;
+                    padding-bottom: 20px;
+                    margin-bottom: 30px;
+                }
+                .header h1 {
+                    color: #007acc;
+                    margin: 0;
+                }
+                .section {
+                    margin: 30px 0;
+                }
+                .section h2 {
+                    color: #333;
+                    border-bottom: 1px solid #ddd;
+                    padding-bottom: 10px;
+                }
+                .pattern-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                    gap: 20px;
+                    margin: 20px 0;
+                }
+                .pattern-card {
+                    background: #f8f9fa;
+                    padding: 20px;
+                    border-radius: 6px;
+                    border-left: 4px solid #007acc;
+                }
+                .pattern-card h3 {
+                    margin-top: 0;
+                    color: #007acc;
+                }
+                .pattern-card p {
+                    margin: 10px 0;
+                    color: #666;
+                }
+                .nav-links {
+                    text-align: center;
+                    margin: 30px 0;
+                }
+                .nav-links a {
+                    display: inline-block;
+                    margin: 10px;
+                    padding: 12px 24px;
+                    background: #007acc;
+                    color: white;
+                    text-decoration: none;
+                    border-radius: 6px;
+                    transition: background 0.3s;
+                }
+                .nav-links a:hover {
+                    background: #005c99;
+                }
+                .footer {
+                    text-align: center;
+                    margin-top: 50px;
+                    padding-top: 20px;
+                    border-top: 1px solid #ddd;
+                    color: #666;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>Java Concurrency Patterns</h1>
+                    <p>A comprehensive collection of concurrency patterns and anti-patterns for Java</p>
+                </div>
+
+                <div class="nav-links">
+                    <a href="api/index.html">📚 API Documentation</a>
+                    <a href="https://github.com/alxkm/java-concurrency-patterns">📖 GitHub Repository</a>
+                    <a href="coverage/index.html">📊 Test Coverage</a>
+                </div>
+
+                <div class="section">
+                    <h2>🎯 Overview</h2>
+                    <p>This library provides a comprehensive collection of concurrency patterns and anti-patterns implemented in Java 21+. 
+                    It includes both traditional concurrency mechanisms and modern features like Virtual Threads and Structured Concurrency.</p>
+                </div>
+
+                <div class="section">
+                    <h2>🚀 Featured Patterns</h2>
+                    <div class="pattern-grid">
+                        <div class="pattern-card">
+                            <h3>Virtual Threads</h3>
+                            <p>Lightweight threads (Project Loom) for massive concurrency with minimal overhead.</p>
+                        </div>
+                        <div class="pattern-card">
+                            <h3>Structured Concurrency</h3>
+                            <p>Treats groups of related tasks as a single unit of work with streamlined error handling.</p>
+                        </div>
+                        <div class="pattern-card">
+                            <h3>Leader-Follower Pattern</h3>
+                            <p>Efficient thread pool where one leader waits for events while followers wait to be promoted.</p>
+                        </div>
+                        <div class="pattern-card">
+                            <h3>Thread-Safe Builder</h3>
+                            <p>Safe construction of objects in concurrent environments with proper synchronization.</p>
+                        </div>
+                        <div class="pattern-card">
+                            <h3>Object Pool Pattern</h3>
+                            <p>Thread-safe object pool for managing reusable resources efficiently.</p>
+                        </div>
+                        <div class="pattern-card">
+                            <h3>Producer-Consumer Variations</h3>
+                            <p>Multiple implementations using different blocking queue types.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>⚠️ Anti-Patterns</h2>
+                    <p>Learn from common concurrency mistakes and their solutions:</p>
+                    <ul>
+                        <li><strong>Race Conditions</strong> - Uncontrolled access to shared resources</li>
+                        <li><strong>Deadlocks</strong> - Circular dependencies in resource acquisition</li>
+                        <li><strong>Thread Leakage</strong> - Unmanaged thread lifecycle</li>
+                        <li><strong>Busy Waiting</strong> - Inefficient polling mechanisms</li>
+                        <li><strong>Forgotten Synchronization</strong> - Missing thread safety</li>
+                    </ul>
+                </div>
+
+                <div class="section">
+                    <h2>🔧 Requirements</h2>
+                    <ul>
+                        <li><strong>Java 21 or higher</strong> - For modern features like Virtual Threads</li>
+                        <li><strong>Java 8 or higher</strong> - For basic patterns only</li>
+                    </ul>
+                </div>
+
+                <div class="footer">
+                    <p>Generated on $(date) | Java Concurrency Patterns Library</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        EOF
+
+    - name: Create pattern documentation
+      run: |
+        # Create individual pattern documentation
+        mkdir -p docs-build/patterns
+        
+        # Generate pattern list from source code
+        find src/main/java -name "*.java" -type f | while read file; do
+          pattern_name=$(basename "$file" .java)
+          package_path=$(dirname "$file" | sed 's|src/main/java/||' | tr '/' '.')
+          
+          # Extract class documentation
+          if grep -q "^/\*\*" "$file"; then
+            echo "Documenting pattern: $pattern_name"
+            
+            cat > "docs-build/patterns/${pattern_name}.md" << EOF
+        # $pattern_name
+        
+        **Package:** \`$package_path\`
+        
+        ## Documentation
+        
+        \`\`\`java
+        $(sed -n '/^\/\*\*/,/^\*\//p' "$file" | sed 's/^[[:space:]]*\*[[:space:]]*//' | sed '/^\/\*\*/d' | sed '/^\*\/$/d')
+        \`\`\`
+        
+        ## Source Code
+        
+        [View on GitHub](https://github.com/alxkm/java-concurrency-patterns/blob/main/$file)
+        
+        ## Usage Example
+        
+        See the main method in the source file for usage examples.
+        EOF
+          fi
+        done
+
+    - name: Copy test coverage report
+      if: always()
+      run: |
+        # Generate coverage report if not exists
+        ./gradlew jacocoTestReport || true
+        
+        # Copy coverage report if available
+        if [ -d "build/jacocoHtml" ]; then
+          cp -r build/jacocoHtml docs-build/coverage
+        fi
+
+    - name: Upload documentation artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: documentation
+        path: docs-build/
+
+    - name: Setup Pages (only on main branch)
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      uses: actions/configure-pages@v4
+
+    - name: Upload to GitHub Pages (only on main branch)
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: docs-build/
+
+    - name: Deploy to GitHub Pages (only on main branch)
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      id: deployment
+      uses: actions/deploy-pages@v4
+
+  validate-documentation:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@417ae3ccd767c252f5661f1ace9f835f9654f2b5
+
+    - name: Make gradlew executable
+      run: chmod +x ./gradlew
+
+    - name: Validate Javadoc
+      run: |
+        ./gradlew javadoc 2>&1 | tee javadoc-output.log
+        
+        # Check for Javadoc warnings/errors
+        if grep -q "warning" javadoc-output.log; then
+          echo "⚠️  Javadoc warnings found:"
+          grep "warning" javadoc-output.log
+        fi
+        
+        if grep -q "error" javadoc-output.log; then
+          echo "❌ Javadoc errors found:"
+          grep "error" javadoc-output.log
+          exit 1
+        fi
+        
+        echo "✅ Javadoc validation completed successfully"
+
+    - name: Check documentation coverage
+      run: |
+        echo "## Documentation Coverage Analysis" > doc-coverage.md
+        echo "" >> doc-coverage.md
+        
+        # Count Java files
+        TOTAL_JAVA_FILES=$(find src/main/java -name "*.java" | wc -l)
+        echo "- **Total Java files**: $TOTAL_JAVA_FILES" >> doc-coverage.md
+        
+        # Count files with Javadoc comments
+        DOCUMENTED_FILES=$(find src/main/java -name "*.java" -exec grep -l "^[[:space:]]*\/\*\*" {} \; | wc -l)
+        echo "- **Documented files**: $DOCUMENTED_FILES" >> doc-coverage.md
+        
+        # Calculate coverage percentage
+        if [ $TOTAL_JAVA_FILES -gt 0 ]; then
+          COVERAGE_PERCENT=$((DOCUMENTED_FILES * 100 / TOTAL_JAVA_FILES))
+          echo "- **Documentation coverage**: ${COVERAGE_PERCENT}%" >> doc-coverage.md
+        fi
+        
+        echo "" >> doc-coverage.md
+        echo "### Files missing documentation:" >> doc-coverage.md
+        find src/main/java -name "*.java" | while read file; do
+          if ! grep -q "^[[:space:]]*\/\*\*" "$file"; then
+            echo "- \`$file\`" >> doc-coverage.md
+          fi
+        done
+
+    - name: Upload documentation analysis
+      uses: actions/upload-artifact@v4
+      with:
+        name: documentation-analysis
+        path: |
+          doc-coverage.md
+          javadoc-output.log
+
+    - name: Comment documentation status on PR
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          let docCoverage = '';
+          try {
+            docCoverage = fs.readFileSync('doc-coverage.md', 'utf8');
+          } catch (error) {
+            docCoverage = 'Documentation analysis not available.';
+          }
+          
+          const body = `
+          ## 📚 Documentation Status
+          
+          ${docCoverage}
+          
+          ---
+          *Documentation check for commit ${context.sha.substring(0, 7)}*
+          `;
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: body
+          });
+
+  check-links:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Check README links
+      run: |
+        echo "Checking links in README.md..."
+        
+        # Extract markdown links
+        grep -oE '\[.*\]\([^)]+\)' README.md | while read link; do
+          url=$(echo "$link" | sed -n 's/.*(\(.*\)).*/\1/p')
+          
+          # Skip relative links starting with ./src (they're file paths)
+          if [[ "$url" == ./src* ]]; then
+            # Check if file exists
+            file_path="${url#./}"
+            if [ ! -f "$file_path" ]; then
+              echo "❌ File not found: $file_path"
+            else
+              echo "✅ File exists: $file_path"
+            fi
+          elif [[ "$url" == http* ]]; then
+            # Check HTTP links
+            if curl -sf "$url" > /dev/null; then
+              echo "✅ URL accessible: $url"
+            else
+              echo "⚠️  URL may be inaccessible: $url"
+            fi
+          fi
+        done
+
+    - name: Validate internal file links
+      run: |
+        echo "## Link Validation Results" > link-check.md
+        echo "" >> link-check.md
+        
+        # Check all Java file references in README
+        grep -oE '\./src/[^)]+\.java' README.md | sort | uniq | while read file_ref; do
+          file_path="${file_ref#./}"
+          if [ -f "$file_path" ]; then
+            echo "✅ $file_path" >> link-check.md
+          else
+            echo "❌ Missing: $file_path" >> link-check.md
+          fi
+        done
+
+    - name: Upload link check results
+      uses: actions/upload-artifact@v4
+      with:
+        name: link-check-results
+        path: link-check.md

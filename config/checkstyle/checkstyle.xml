@@ -1,0 +1,126 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC
+          "-//Puppy Crawl//DTD Check Configuration 1.3//EN"
+          "https://www.puppycrawl.com/dtds/configuration_1_3.dtd">
+
+<!--
+    Checkstyle Configuration for Java Concurrency Patterns
+    
+    This is a LENIENT configuration that focuses on:
+    - Basic code style consistency
+    - Common error prevention
+    - Non-breaking checks only
+    
+    All violations are reported as WARNINGS, not errors.
+-->
+<module name="Checker">
+    <property name="charset" value="UTF-8"/>
+    <property name="severity" value="warning"/>
+    <property name="fileExtensions" value="java"/>
+
+    <!-- Allow suppression comments -->
+    <module name="SuppressWarningsFilter" />
+    
+    <!-- Excludes all 'module-info.java' files -->
+    <module name="BeforeExecutionExclusionFileFilter">
+        <property name="fileNamePattern" value="module\-info\.java$"/>
+    </module>
+
+    <!-- Basic file checks -->
+    <module name="FileLength">
+        <property name="max" value="2000"/>
+        <property name="severity" value="info"/>
+    </module>
+
+    <module name="TreeWalker">
+        <!-- Allow suppression annotations -->
+        <module name="SuppressWarningsHolder" />
+        
+        <!-- BASIC NAMING CONVENTIONS - Very lenient -->
+        <module name="TypeName">
+            <property name="severity" value="info"/>
+        </module>
+        
+        <module name="MethodName">
+            <property name="severity" value="info"/>
+        </module>
+        
+        <module name="ConstantName">
+            <property name="severity" value="info"/>
+        </module>
+
+        <!-- IMPORTS - Only check for unused imports -->
+        <module name="UnusedImports">
+            <property name="severity" value="info"/>
+        </module>
+        
+        <module name="RedundantImport">
+            <property name="severity" value="info"/>
+        </module>
+
+        <!-- SIZE VIOLATIONS - Very lenient limits -->
+        <module name="MethodLength">
+            <property name="max" value="200"/>
+            <property name="severity" value="info"/>
+        </module>
+        
+        <module name="ParameterNumber">
+            <property name="max" value="10"/>
+            <property name="severity" value="info"/>
+        </module>
+
+        <!-- WHITESPACE - Basic formatting -->
+        <module name="WhitespaceAfter">
+            <property name="severity" value="info"/>
+            <property name="tokens" value="COMMA, SEMI"/>
+        </module>
+        
+        <module name="WhitespaceAround">
+            <property name="severity" value="info"/>
+            <property name="allowEmptyConstructors" value="true"/>
+            <property name="allowEmptyMethods" value="true"/>
+            <property name="allowEmptyTypes" value="true"/>
+        </module>
+
+        <!-- BLOCKS - Basic structure -->
+        <module name="NeedBraces">
+            <property name="severity" value="info"/>
+        </module>
+        
+        <module name="LeftCurly">
+            <property name="severity" value="info"/>
+        </module>
+
+        <!-- COMMON CODING PROBLEMS - Info level only -->
+        <module name="EmptyStatement">
+            <property name="severity" value="info"/>
+        </module>
+        
+        <module name="SimplifyBooleanExpression">
+            <property name="severity" value="info"/>
+        </module>
+        
+        <module name="SimplifyBooleanReturn">
+            <property name="severity" value="info"/>
+        </module>
+
+        <!-- CONCURRENCY SPECIFIC CHECKS -->
+        <module name="InnerAssignment">
+            <property name="severity" value="info"/>
+        </module>
+        
+        <!-- Allow TODO comments (common in development) -->
+        <module name="TodoComment">
+            <property name="severity" value="ignore"/>
+        </module>
+        
+        <!-- MISCELLANEOUS -->
+        <module name="ArrayTypeStyle">
+            <property name="severity" value="info"/>
+        </module>
+        
+        <module name="UpperEll">
+            <property name="severity" value="info"/>
+        </module>
+    </module>
+</module>
