@@ -22,7 +22,7 @@ public class ExchangerExampleTest {
         example = new ExchangerExample();
     }
 
-    //@Test
+    @Test
     public void testExchanger() throws InterruptedException {
         // This test indirectly verifies the exchange process by starting the producer and consumer threads
         example.start();

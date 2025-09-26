@@ -21,7 +21,7 @@ public class SemaphorePrintQueueExampleTest {
         semaphorePrintQueueExample = new SemaphorePrintQueueExample(3); // Initialize with 3 permits
     }
 
-    //@Test
+    @Test
     public void testPrintJob() throws InterruptedException {
         ExecutorService executorService = Executors.newFixedThreadPool(10);
 
