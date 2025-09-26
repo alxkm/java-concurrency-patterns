@@ -40,30 +40,49 @@ jobs:
       run: ./gradlew build --info
 
     - name: Run tests with detailed output
+      id: run_tests
       run: ./gradlew test --info --continue --stacktrace
-      continue-on-error: false
+      continue-on-error: true
 
     - name: Print detailed test failures
-      if: failure()
+      if: always()
       run: |
-        echo "🔍 ANALYZING TEST FAILURES..."
+        echo "🔍 ANALYZING TEST RESULTS..."
         echo ""
         
-        # Run custom Gradle task to print failed tests
-        ./gradlew printFailedTests || true
-        
-        echo ""
-        echo "📊 ADDITIONAL FAILURE DETAILS:"
-        
-        # Extract failed tests from XML reports with more details
-        find build/test-results -name "*.xml" -exec grep -l "failures=\"[1-9]" {} \; | while read file; do
-          echo "📁 From $file:"
-          grep -A 10 -B 2 '<failure' "$file" | sed 's/^/  /' || true
+        # Check if there were test failures
+        if [ -d "build/test-results/test" ]; then
+          # Run custom Gradle task to print failed tests
+          echo "📋 RUNNING CUSTOM FAILURE ANALYSIS:"
+          ./gradlew printFailedTests || true
+          
           echo ""
-        done
-        
-        echo "📊 TEST REPORTS AVAILABLE:"
-        find build/reports/tests -name "index.html" -exec echo "  📄 {}" \; || true
+          echo "📊 EXTRACTING FAILURE DETAILS FROM XML:"
+          
+          # Extract failed tests from XML reports with more details
+          find build/test-results -name "*.xml" -exec grep -l "failures=\"[1-9]" {} \; | while read file; do
+            echo "📁 From $file:"
+            echo "  Failed test cases:"
+            grep -A 15 -B 2 '<failure' "$file" | sed 's/^/    /' || true
+            echo ""
+          done
+          
+          echo "📊 TEST REPORTS AVAILABLE:"
+          find build/reports/tests -name "index.html" -exec echo "  📄 {}" \; || true
+          
+          # Count failures
+          FAILURES=$(find build/test-results -name "*.xml" -exec grep -c "failures=\"[1-9]" {} \; 2>/dev/null | awk '{sum+=$1} END {print sum+0}')
+          echo ""
+          echo "🔢 TOTAL FAILED TEST CLASSES: $FAILURES"
+        else
+          echo "ℹ️  No test results directory found"
+        fi
+
+    - name: Fail if tests failed
+      if: steps.run_tests.outcome == 'failure'
+      run: |
+        echo "❌ Tests failed - failing the workflow"
+        exit 1
 
     - name: Upload test reports
       uses: actions/upload-artifact@v4

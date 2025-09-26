@@ -26,8 +26,9 @@ test {
     useJUnitPlatform()
     finalizedBy jacocoTestReport
     
-    // Enhanced test reporting - focus on failures
+    // Enhanced test reporting - simple and effective
     testLogging {
+        // Always show these events regardless of log level
         events "failed", "skipped"
         exceptionFormat "full"
         showCauses true
@@ -35,15 +36,16 @@ test {
         showStackTraces true
         showStandardStreams = false
         
-        // Only show details for failed tests
+        // More details when running with --info
         info {
-            events "failed", "skipped"
+            events "started", "passed", "failed", "skipped"
             exceptionFormat "full"
         }
         
-        // Quiet mode but still show failures
-        quiet {
-            events "failed", "skipped"
+        // Debug level for complete output
+        debug {
+            events "started", "passed", "skipped", "failed", "standardOut", "standardError"
+            exceptionFormat "full"
         }
     }
     
@@ -64,17 +66,34 @@ test {
         }
     }
     
+    // Track test execution (optional - can be removed if too verbose)
+    beforeTest { desc ->
+        if (logger.isInfoEnabled()) {
+            println("🧪 Running: ${desc.className}.${desc.name}")
+        }
+    }
+    
     // Print details for each failed test
     afterTest { desc, result ->
         if (result.resultType == TestResult.ResultType.FAILURE) {
-            println("\n❌ FAILED: ${desc.className}.${desc.name}")
+            def border = "=" * 80
+            println("\n${border}")
+            println("❌ FAILED TEST: ${desc.className}.${desc.name}")
+            println("   Duration: ${result.endTime - result.startTime}ms")
             if (result.exception) {
                 println("   Exception: ${result.exception.class.simpleName}")
                 println("   Message: ${result.exception.message}")
                 if (result.exception.cause) {
                     println("   Cause: ${result.exception.cause.message}")
                 }
+                if (result.exception.stackTrace) {
+                    println("   Stack Trace:")
+                    result.exception.stackTrace.take(5).each { trace ->
+                        println("     at ${trace}")
+                    }
+                }
             }
+            println("${border}")
         }
     }
 }
