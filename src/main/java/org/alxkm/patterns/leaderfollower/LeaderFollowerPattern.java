@@ -2,6 +2,7 @@ package org.alxkm.patterns.leaderfollower;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
@@ -124,7 +125,7 @@ public class LeaderFollowerPattern<T> {
         private void processAsLeader() throws InterruptedException {
             try {
                 while (isRunning.get() && currentLeader == Thread.currentThread()) {
-                    T event = eventQueue.poll(); // Non-blocking poll
+                    T event = eventQueue.poll(100, TimeUnit.MILLISECONDS); // Blocking poll with timeout
                     
                     if (event != null) {
                         // Process the event
@@ -138,10 +139,6 @@ public class LeaderFollowerPattern<T> {
                         // After processing, promote a follower to leader and step down
                         promoteFollowerToLeader();
                         break; // Exit leader role
-                        
-                    } else {
-                        // No event available, brief wait
-                        Thread.sleep(1);
                     }
                 }
             } finally {
@@ -208,9 +205,15 @@ public class LeaderFollowerPattern<T> {
                 new WorkerThread(i).start();
             }
             
-            // Wait for threads to initialize
-            while (activeThreads.get() < threadPoolSize) {
-                Thread.yield();
+            // Wait for threads to initialize with timeout
+            long timeout = System.currentTimeMillis() + 5000; // 5 second timeout
+            while (activeThreads.get() < threadPoolSize && System.currentTimeMillis() < timeout) {
+                try {
+                    Thread.sleep(10);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
             }
         }
     }
@@ -258,7 +261,12 @@ public class LeaderFollowerPattern<T> {
         // Wait for all threads to finish
         long timeout = System.currentTimeMillis() + 5000; // 5 second timeout
         while (activeThreads.get() > 0 && System.currentTimeMillis() < timeout) {
-            Thread.yield();
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
         }
     }
     
