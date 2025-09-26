@@ -207,6 +207,9 @@ public class VirtualThreadsExample {
                     }
                 } catch (ExecutionException e) {
                     System.err.println("Request failed: " + e.getMessage());
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    System.err.println("Request interrupted: " + e.getMessage());
                 }
             }
             
