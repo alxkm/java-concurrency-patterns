@@ -2,13 +2,13 @@ name: Performance Benchmarks
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "master" ]
     paths:
       - 'src/main/**'
       - 'src/test/**'
       - 'build.gradle'
   pull_request:
-    branches: [ "main" ]
+    branches: [ "master" ]
     paths:
       - 'src/main/**'
       - 'src/test/**'
