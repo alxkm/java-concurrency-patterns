@@ -42,18 +42,26 @@ jobs:
         echo "Changed files:"
         cat changed-files.txt
         
-        # Categorize changes
-        JAVA_CHANGES=$(grep -c "\.java$" changed-files.txt || echo "0")
-        TEST_CHANGES=$(grep -c "src/test/" changed-files.txt || echo "0")
-        MAIN_CHANGES=$(grep -c "src/main/" changed-files.txt || echo "0")
-        DOC_CHANGES=$(grep -c -E "\.(md|txt|html)$" changed-files.txt || echo "0")
-        BUILD_CHANGES=$(grep -c -E "(build\.gradle|\.yml|\.yaml)$" changed-files.txt || echo "0")
+        # Categorize changes (ensure proper numeric values)
+        JAVA_CHANGES=$(grep -c "\.java$" changed-files.txt || true)
+        TEST_CHANGES=$(grep -c "src/test/" changed-files.txt || true)
+        MAIN_CHANGES=$(grep -c "src/main/" changed-files.txt || true)
+        DOC_CHANGES=$(grep -c -E "\.(md|txt|html)$" changed-files.txt || true)
+        BUILD_CHANGES=$(grep -c -E "(build\.gradle|\.yml|\.yaml)$" changed-files.txt || true)
         
-        echo "java_changes=$JAVA_CHANGES" >> $GITHUB_OUTPUT
-        echo "test_changes=$TEST_CHANGES" >> $GITHUB_OUTPUT
-        echo "main_changes=$MAIN_CHANGES" >> $GITHUB_OUTPUT
-        echo "doc_changes=$DOC_CHANGES" >> $GITHUB_OUTPUT
-        echo "build_changes=$BUILD_CHANGES" >> $GITHUB_OUTPUT
+        # Ensure numeric values
+        JAVA_CHANGES=${JAVA_CHANGES:-0}
+        TEST_CHANGES=${TEST_CHANGES:-0}
+        MAIN_CHANGES=${MAIN_CHANGES:-0}
+        DOC_CHANGES=${DOC_CHANGES:-0}
+        BUILD_CHANGES=${BUILD_CHANGES:-0}
+        
+        # Set outputs using the new format
+        echo "java_changes=${JAVA_CHANGES}" >> $GITHUB_OUTPUT
+        echo "test_changes=${TEST_CHANGES}" >> $GITHUB_OUTPUT
+        echo "main_changes=${MAIN_CHANGES}" >> $GITHUB_OUTPUT
+        echo "doc_changes=${DOC_CHANGES}" >> $GITHUB_OUTPUT
+        echo "build_changes=${BUILD_CHANGES}" >> $GITHUB_OUTPUT
 
     - name: Validate test coverage for new code
       if: steps.changes.outputs.main_changes > 0
