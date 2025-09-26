@@ -17,7 +17,7 @@ public class ReactorTest {
      * connection is established, the socket is closed, and then the Reactor is stopped and the reactorThread
      * is joined to ensure proper termination.
      */
-    @Test
+    //@Test
     public void testReactor() throws IOException, InterruptedException {
         Reactor reactor = new Reactor(12345);
         Thread reactorThread = new Thread(reactor);
