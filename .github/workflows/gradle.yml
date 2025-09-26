@@ -37,7 +37,31 @@ jobs:
       run: chmod +x ./gradlew
 
     - name: Build with Gradle Wrapper
-      run: ./gradlew build
+      run: ./gradlew build --info
+
+    - name: Run tests with detailed output
+      run: ./gradlew test --info --continue --stacktrace
+      continue-on-error: false
+
+    - name: Print test results on failure
+      if: failure()
+      run: |
+        echo "=== Test Failures ==="
+        find . -name "TEST-*.xml" -exec echo "File: {}" \; -exec cat {} \; || true
+        echo "=== Build Reports ==="
+        find build/reports/tests -name "index.html" -exec echo "Test report location: {}" \; || true
+        echo "=== Test Stdout/Stderr ==="
+        find build/test-results -name "*.xml" -exec echo "=== {} ===" \; -exec cat {} \; || true
+
+    - name: Upload test reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-reports
+        path: |
+          build/reports/tests/
+          build/test-results/
+        retention-days: 30
 
     - name: Run quality checks (non-breaking)
       run: ./gradlew check -x test
