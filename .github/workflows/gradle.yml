@@ -43,15 +43,27 @@ jobs:
       run: ./gradlew test --info --continue --stacktrace
       continue-on-error: false
 
-    - name: Print test results on failure
+    - name: Print detailed test failures
       if: failure()
       run: |
-        echo "=== Test Failures ==="
-        find . -name "TEST-*.xml" -exec echo "File: {}" \; -exec cat {} \; || true
-        echo "=== Build Reports ==="
-        find build/reports/tests -name "index.html" -exec echo "Test report location: {}" \; || true
-        echo "=== Test Stdout/Stderr ==="
-        find build/test-results -name "*.xml" -exec echo "=== {} ===" \; -exec cat {} \; || true
+        echo "🔍 ANALYZING TEST FAILURES..."
+        echo ""
+        
+        # Run custom Gradle task to print failed tests
+        ./gradlew printFailedTests || true
+        
+        echo ""
+        echo "📊 ADDITIONAL FAILURE DETAILS:"
+        
+        # Extract failed tests from XML reports with more details
+        find build/test-results -name "*.xml" -exec grep -l "failures=\"[1-9]" {} \; | while read file; do
+          echo "📁 From $file:"
+          grep -A 10 -B 2 '<failure' "$file" | sed 's/^/  /' || true
+          echo ""
+        done
+        
+        echo "📊 TEST REPORTS AVAILABLE:"
+        find build/reports/tests -name "index.html" -exec echo "  📄 {}" \; || true
 
     - name: Upload test reports
       uses: actions/upload-artifact@v4
