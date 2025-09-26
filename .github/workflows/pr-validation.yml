@@ -37,7 +37,7 @@ jobs:
       id: changes
       run: |
         # Get list of changed files
-        git diff --name-only origin/main...HEAD > changed-files.txt
+        git diff --name-only origin/master...HEAD > changed-files.txt
         
         echo "Changed files:"
         cat changed-files.txt
@@ -272,7 +272,7 @@ jobs:
         echo "" >> breaking-changes.md
         
         # Get changed Java files
-        git diff --name-only origin/main...HEAD | grep "\.java$" > changed-java-files.txt || touch changed-java-files.txt
+        git diff --name-only origin/master...HEAD | grep "\.java$" > changed-java-files.txt || touch changed-java-files.txt
         
         if [ -s changed-java-files.txt ]; then
           echo "### Checking for potential breaking changes:" >> breaking-changes.md
@@ -283,7 +283,7 @@ jobs:
               echo "Analyzing $file..." >> breaking-changes.md
               
               # Check for method signature changes
-              git show origin/main:"$file" 2>/dev/null | grep -E "public.*\(" > old-methods.tmp || touch old-methods.tmp
+              git show origin/master:"$file" 2>/dev/null | grep -E "public.*\(" > old-methods.tmp || touch old-methods.tmp
               grep -E "public.*\(" "$file" > new-methods.tmp || touch new-methods.tmp
               
               # Compare methods

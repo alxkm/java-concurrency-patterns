@@ -2,13 +2,13 @@ name: Documentation Generation
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "master" ]
     paths:
       - 'src/main/**'
       - 'README.md'
       - 'docs/**'
   pull_request:
-    branches: [ "main" ]
+    branches: [ "master" ]
     paths:
       - 'src/main/**'
       - 'README.md'
@@ -243,7 +243,7 @@ jobs:
         
         ## Source Code
         
-        [View on GitHub](https://github.com/alxkm/java-concurrency-patterns/blob/main/$file)
+        [View on GitHub](https://github.com/alxkm/java-concurrency-patterns/blob/master/$file)
         
         ## Usage Example
         
@@ -269,18 +269,18 @@ jobs:
         name: documentation
         path: docs-build/
 
-    - name: Setup Pages (only on main branch)
-      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    - name: Setup Pages (only on master branch)
+      if: github.ref == 'refs/heads/master' && github.event_name == 'push'
       uses: actions/configure-pages@v4
 
-    - name: Upload to GitHub Pages (only on main branch)
-      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    - name: Upload to GitHub Pages (only on master branch)
+      if: github.ref == 'refs/heads/master' && github.event_name == 'push'
       uses: actions/upload-pages-artifact@v3
       with:
         path: docs-build/
 
-    - name: Deploy to GitHub Pages (only on main branch)
-      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    - name: Deploy to GitHub Pages (only on master branch)
+      if: github.ref == 'refs/heads/master' && github.event_name == 'push'
       id: deployment
       uses: actions/deploy-pages@v4
 
