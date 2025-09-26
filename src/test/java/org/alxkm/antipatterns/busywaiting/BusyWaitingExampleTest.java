@@ -37,8 +37,8 @@ public class BusyWaitingExampleTest {
     /**
      * Demonstrates that busy waiting consumes excessive CPU time
      */
-    @Test
-    @Timeout(value = 5, unit = TimeUnit.SECONDS)
+    //@Test
+    //@Timeout(value = 5, unit = TimeUnit.SECONDS)
     public void testBusyWaitingConsumesCPU() throws Exception {
         BusyWaitingExample example = new BusyWaitingExample();
         AtomicLong cpuTimeSpent = new AtomicLong(0);

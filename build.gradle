@@ -1,5 +1,8 @@
 plugins {
     id 'java'
+    id 'jacoco'
+    id 'checkstyle'
+    id 'pmd'
 }
 
 group 'org.alxkm'
@@ -21,4 +24,143 @@ dependencies {
 
 test {
     useJUnitPlatform()
+    finalizedBy jacocoTestReport
+    
+    // Enhanced test reporting - simple and effective
+    testLogging {
+        // Always show these events regardless of log level
+        events "failed", "skipped"
+        exceptionFormat "full"
+        showCauses true
+        showExceptions true
+        showStackTraces true
+        showStandardStreams = false
+        
+        // More details when running with --info
+        info {
+            events "started", "passed", "failed", "skipped"
+            exceptionFormat "full"
+        }
+        
+        // Debug level for complete output
+        debug {
+            events "started", "passed", "skipped", "failed", "standardOut", "standardError"
+            exceptionFormat "full"
+        }
+    }
+    
+    // Print a summary after test execution
+    afterSuite { desc, result ->
+        if (!desc.parent) { // Only execute this for the overall test suite
+            def output = "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)"
+            def startItem = '|  ', endItem = '  |'
+            def repeatLength = startItem.length() + output.length() + endItem.length()
+            println('\n' + ('-' * repeatLength) + '\n' + startItem + output + endItem + '\n' + ('-' * repeatLength))
+            
+            // Print additional failure details if any failures occurred
+            if (result.failedTestCount > 0) {
+                println("\n🔴 FAILED TESTS DETECTED! Check the detailed output above for specific test failures.")
+                println("📊 Test Reports will be available in: build/reports/tests/test/index.html")
+                println("📁 Test Results XML: build/test-results/test/")
+            }
+        }
+    }
+    
+    // Track test execution (optional - can be removed if too verbose)
+    beforeTest { desc ->
+        if (logger.isInfoEnabled()) {
+            println("🧪 Running: ${desc.className}.${desc.name}")
+        }
+    }
+    
+    // Print details for each failed test
+    afterTest { desc, result ->
+        if (result.resultType == TestResult.ResultType.FAILURE) {
+            def border = "=" * 80
+            println("\n${border}")
+            println("❌ FAILED TEST: ${desc.className}.${desc.name}")
+            println("   Duration: ${result.endTime - result.startTime}ms")
+            if (result.exception) {
+                println("   Exception: ${result.exception.class.simpleName}")
+                println("   Message: ${result.exception.message}")
+                if (result.exception.cause) {
+                    println("   Cause: ${result.exception.cause.message}")
+                }
+                if (result.exception.stackTrace) {
+                    println("   Stack Trace:")
+                    result.exception.stackTrace.take(5).each { trace ->
+                        println("     at ${trace}")
+                    }
+                }
+            }
+            println("${border}")
+        }
+    }
+}
+
+// Custom task to print failed test details
+task printFailedTests {
+    doLast {
+        def testResultsDir = file("$buildDir/test-results/test")
+        if (testResultsDir.exists()) {
+            testResultsDir.listFiles().findAll { it.name.endsWith('.xml') }.each { file ->
+                def xml = new XmlSlurper().parse(file)
+                xml.testcase.each { testcase ->
+                    if (testcase.failure.size() > 0) {
+                        println("\n💥 FAILED TEST: ${testcase.@classname}.${testcase.@name}")
+                        println("   Time: ${testcase.@time}s")
+                        testcase.failure.each { failure ->
+                            println("   Type: ${failure.@type}")
+                            println("   Message: ${failure.@message}")
+                            if (failure.text()) {
+                                println("   Details:")
+                                failure.text().split('\n').take(10).each { line ->
+                                    println("     ${line}")
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// JaCoCo Configuration - NON-BREAKING
+jacoco {
+    toolVersion = "0.8.11"
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
+// Checkstyle Configuration - NON-BREAKING
+checkstyle {
+    toolVersion = '10.12.7'
+    configFile = rootProject.file('config/checkstyle/checkstyle.xml')
+    ignoreFailures = true  // 🛡️ WON'T BREAK BUILD
+}
+
+// Fix Guava dependency conflict
+configurations.checkstyle {
+    resolutionStrategy.capabilitiesResolution.withCapability("com.google.collections:google-collections") {
+        select("com.google.guava:guava:0")
+    }
+}
+
+// PMD Configuration - NON-BREAKING  
+pmd {
+    consoleOutput = true
+    toolVersion = '7.0.0'
+    ignoreFailures = true  // 🛡️ WON'T BREAK BUILD
+    ruleSets = [
+        'category/java/errorprone.xml',
+        'category/java/bestpractices.xml',
+        'category/java/multithreading.xml'
+    ]
 }

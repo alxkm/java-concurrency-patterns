@@ -9,9 +9,9 @@ name: Java CI with Gradle
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "master" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "master" ]
 
 jobs:
   build:
@@ -37,7 +37,66 @@ jobs:
       run: chmod +x ./gradlew
 
     - name: Build with Gradle Wrapper
-      run: ./gradlew build
+      run: ./gradlew build --info
+
+    - name: Run tests with detailed output
+      id: run_tests
+      run: ./gradlew test --info --continue --stacktrace
+      continue-on-error: true
+
+    - name: Print detailed test failures
+      if: always()
+      run: |
+        echo "🔍 ANALYZING TEST RESULTS..."
+        echo ""
+        
+        # Check if there were test failures
+        if [ -d "build/test-results/test" ]; then
+          # Run custom Gradle task to print failed tests
+          echo "📋 RUNNING CUSTOM FAILURE ANALYSIS:"
+          ./gradlew printFailedTests || true
+          
+          echo ""
+          echo "📊 EXTRACTING FAILURE DETAILS FROM XML:"
+          
+          # Extract failed tests from XML reports with more details
+          find build/test-results -name "*.xml" -exec grep -l "failures=\"[1-9]" {} \; | while read file; do
+            echo "📁 From $file:"
+            echo "  Failed test cases:"
+            grep -A 15 -B 2 '<failure' "$file" | sed 's/^/    /' || true
+            echo ""
+          done
+          
+          echo "📊 TEST REPORTS AVAILABLE:"
+          find build/reports/tests -name "index.html" -exec echo "  📄 {}" \; || true
+          
+          # Count failures
+          FAILURES=$(find build/test-results -name "*.xml" -exec grep -c "failures=\"[1-9]" {} \; 2>/dev/null | awk '{sum+=$1} END {print sum+0}')
+          echo ""
+          echo "🔢 TOTAL FAILED TEST CLASSES: $FAILURES"
+        else
+          echo "ℹ️  No test results directory found"
+        fi
+
+    - name: Fail if tests failed
+      if: steps.run_tests.outcome == 'failure'
+      run: |
+        echo "❌ Tests failed - failing the workflow"
+        exit 1
+
+    - name: Upload test reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-reports
+        path: |
+          build/reports/tests/
+          build/test-results/
+        retention-days: 30
+
+    - name: Run quality checks (non-breaking)
+      run: ./gradlew check -x test
+      continue-on-error: true
 
     # NOTE: The Gradle Wrapper is the default and recommended way to run Gradle (https://docs.gradle.org/current/userguide/gradle_wrapper.html).
     # If your project does not have the Gradle Wrapper configured, you can use the following configuration to run Gradle with a specified version.
