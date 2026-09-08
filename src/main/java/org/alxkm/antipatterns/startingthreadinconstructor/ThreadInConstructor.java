@@ -17,6 +17,9 @@ public class ThreadInConstructor extends Thread {
      *
      * @param message the message to be printed by the thread.
      */
+    // javac's -Xlint:this-escape flags this constructor, which is exactly the defect being
+    // demonstrated: start() publishes `this` to a new thread before the object is fully built.
+    @SuppressWarnings("this-escape")
     public ThreadInConstructor(String message) {
         this.message = message;
         start(); // Starting thread in the constructor

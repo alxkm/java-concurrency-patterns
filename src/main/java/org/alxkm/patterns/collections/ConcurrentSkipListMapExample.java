@@ -17,7 +17,7 @@ public class ConcurrentSkipListMapExample {
      * We start both threads and wait for them to finish using the join() method.
      * Finally, we print the final state of the map after the threads have finished executing.
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         // Create a ConcurrentSkipListMap
         ConcurrentSkipListMap<Integer, String> skipListMap = new ConcurrentSkipListMap<>();
 
@@ -43,13 +43,9 @@ public class ConcurrentSkipListMapExample {
         thread1.start();
         thread2.start();
 
-        try {
-            // Wait for threads to finish
-            thread1.join();
-            thread2.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        // Wait for threads to finish
+        thread1.join();
+        thread2.join();
 
         // Print the final map
         System.out.println("Final Map: " + skipListMap);

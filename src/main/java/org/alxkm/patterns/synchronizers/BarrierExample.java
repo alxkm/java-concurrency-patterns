@@ -30,8 +30,12 @@ public class BarrierExample {
                 System.out.println(Thread.currentThread().getName() + " passed the barrier");
 
                 // More work after passing the barrier
-            } catch (InterruptedException | BrokenBarrierException e) {
-                e.printStackTrace();
+            } catch (InterruptedException e) {
+                // Restore the flag so the thread's caller can still see it was interrupted.
+                Thread.currentThread().interrupt();
+            } catch (BrokenBarrierException e) {
+                // Another party abandoned the barrier, so this one can never complete.
+                System.out.println(Thread.currentThread().getName() + " left a broken barrier");
             }
         };
 

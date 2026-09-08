@@ -18,10 +18,14 @@ public class AtomicExample {
         AtomicBoolean atomicBoolean = new AtomicBoolean(true);
         System.out.println("Initial value of AtomicBoolean: " + atomicBoolean.get());
 
-        // Atomic compare-and-set operation
+        // Atomic get-and-set operation (returns the previous value)
         boolean oldValue = atomicBoolean.getAndSet(false);
-        System.out.println("Old value of AtomicBoolean: " + oldValue);
+        System.out.println("Old value of AtomicBoolean (from getAndSet): " + oldValue);
         System.out.println("New value of AtomicBoolean: " + atomicBoolean.get());
+
+        // Compare-and-set (CAS): change from false to true if currently false
+        boolean cas = atomicBoolean.compareAndSet(false, true);
+        System.out.println("CAS from false->true applied: " + cas + ", current: " + atomicBoolean.get());
     }
 
     /**
@@ -32,8 +36,16 @@ public class AtomicExample {
         System.out.println("Initial value of AtomicInteger: " + atomicInteger.get());
 
         // Atomic increment operation
-        int newValue = atomicInteger.incrementAndGet();
-        System.out.println("New value after increment: " + newValue);
+        int afterInc = atomicInteger.incrementAndGet();
+        System.out.println("Value after incrementAndGet(): " + afterInc);
+
+        // Atomic add operation
+        int afterAdd = atomicInteger.addAndGet(5);
+        System.out.println("Value after addAndGet(5): " + afterAdd);
+
+        // Compare-and-set (only changes if the expected value matches)
+        boolean cas = atomicInteger.compareAndSet(16, 42);
+        System.out.println("compareAndSet(16->42) applied: " + cas + ", current: " + atomicInteger.get());
     }
 
     /**
@@ -44,8 +56,12 @@ public class AtomicExample {
         System.out.println("Initial value of AtomicLong: " + atomicLong.get());
 
         // Atomic decrement operation
-        long newValue = atomicLong.decrementAndGet();
-        System.out.println("New value after decrement: " + newValue);
+        long afterDec = atomicLong.decrementAndGet();
+        System.out.println("Value after decrementAndGet(): " + afterDec);
+
+        // Atomic update with a function (Java 8+)
+        long updated = atomicLong.updateAndGet(v -> v * 2);
+        System.out.println("Value after updateAndGet(v -> v * 2): " + updated);
     }
 
     /**
@@ -57,8 +73,13 @@ public class AtomicExample {
         System.out.println("Initial values of AtomicIntegerArray: " + atomicIntegerArray);
 
         // Atomic add operation to a specific index
-        atomicIntegerArray.getAndAdd(1, 5);
+        int prev = atomicIntegerArray.getAndAdd(1, 5);
+        System.out.println("Previous value at index 1: " + prev);
         System.out.println("Updated values of AtomicIntegerArray: " + atomicIntegerArray);
+
+        // CAS at index 0
+        boolean cas = atomicIntegerArray.compareAndSet(0, 1, 10);
+        System.out.println("CAS at index 0 (1->10) applied: " + cas + ", values: " + atomicIntegerArray);
     }
 
     /**
@@ -74,8 +95,14 @@ public class AtomicExample {
         if (updated) {
             System.out.println("Updated values of AtomicLongArray: " + atomicLongArray);
         } else {
-            System.out.println("Value was not updated");
+            System.out.println("Value at index 1 was not updated");
         }
+
+        // Increment all elements
+        for (int i = 0; i < atomicLongArray.length(); i++) {
+            atomicLongArray.incrementAndGet(i);
+        }
+        System.out.println("After incrementing all elements: " + atomicLongArray);
     }
 
     public static void main(String[] args) {

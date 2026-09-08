@@ -40,7 +40,7 @@ public class OptimizedCounter {
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         OptimizedCounter counter = new OptimizedCounter();
 
         // Create threads to perform operations on the counter
@@ -75,14 +75,10 @@ public class OptimizedCounter {
         decrementThread2.start();
 
         // Wait for all threads to complete
-        try {
-            incrementThread1.join();
-            incrementThread2.join();
-            decrementThread1.join();
-            decrementThread2.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        incrementThread1.join();
+        incrementThread2.join();
+        decrementThread1.join();
+        decrementThread2.join();
 
         // Print the final count
         System.out.println("Final count: " + counter.getCount());

@@ -9,8 +9,10 @@ package org.alxkm.antipatterns.threadsinsteadoftasks;
 public class DirectThreadManagement {
     /**
      * A simple task that prints the thread name.
+     *
+     * @throws InterruptedException if the current thread is interrupted while joining the workers.
      */
-    public void performTask() {
+    public void performTask() throws InterruptedException {
         Runnable task = () -> {
             System.out.println("Task executed by: " + Thread.currentThread().getName());
         };
@@ -22,15 +24,11 @@ public class DirectThreadManagement {
         thread1.start();
         thread2.start();
 
-        try {
-            thread1.join();
-            thread2.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        thread1.join();
+        thread2.join();
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         DirectThreadManagement manager = new DirectThreadManagement();
         manager.performTask();
     }

@@ -2,42 +2,45 @@ package org.alxkm.patterns.philosopher;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
-public class PhilosopherWithSemaphoreTest {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+class PhilosopherWithSemaphoreTest {
+    private static final int PHILOSOPHERS = 5;
+    private static final int PERMITS = PHILOSOPHERS - 1;
 
     /**
-     * This test method verifies the behavior of the PhilosopherWithSemaphore class, which implements
-     * the Dining Philosophers problem solution using semaphores. It creates a certain number of philosopher
-     * threads (in this case, 5) and initializes a semaphore with the maximum allowed number of concurrent
-     * philosophers minus one (to avoid deadlock). Each philosopher thread represents a philosopher in the
-     * dining philosophers scenario. The test runs the simulation for a specified time duration (e.g., 2 seconds)
-     * to allow the philosophers to attempt to acquire forks and eat. After the simulation period, all philosopher
-     * threads are interrupted to stop the simulation. This test checks whether the Dining Philosophers problem
-     * solution using semaphores works as expected and avoids deadlock and starvation scenarios.
+     * Seating one fewer philosopher than there are seats is the classic way to keep the table
+     * deadlock-free: with at most four of five philosophers competing, someone can always finish.
+     * <p>
+     * The test asserts the consequence -- every philosopher eventually eats, every thread
+     * terminates, and every permit comes back. The previous version asserted nothing whatsoever: it
+     * slept two seconds, interrupted the threads and passed no matter what happened, so it could not
+     * have detected starvation, a deadlock, or a leaked permit.
      */
     @Test
-    public void testPhilosophersWithSemaphore() {
-        int numOfPhilosophers = 5;
-        Semaphore semaphore = new Semaphore(numOfPhilosophers - 1);
+    void everyPhilosopherEatsAndEveryPermitIsReturned() throws InterruptedException {
+        Semaphore semaphore = new Semaphore(PERMITS);
+        PhilosopherWithSemaphore[] philosophers = new PhilosopherWithSemaphore[PHILOSOPHERS];
 
-        PhilosopherWithSemaphore[] philosophers = new PhilosopherWithSemaphore[numOfPhilosophers];
-
-        for (int i = 0; i < numOfPhilosophers; i++) {
+        for (int i = 0; i < PHILOSOPHERS; i++) {
             philosophers[i] = new PhilosopherWithSemaphore(semaphore, "Philosopher " + (i + 1));
             philosophers[i].start();
         }
 
-        try {
-            // Let the simulation run for a certain time (e.g., 2 seconds) in the test
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        for (PhilosopherWithSemaphore philosopher : philosophers) {
+            philosopher.join(TimeUnit.SECONDS.toMillis(10));
+            assertFalse(philosopher.isAlive(),
+                    philosopher.getName() + " never finished, which suggests it is stuck waiting for a permit");
         }
 
-        // Interrupt all philosophers to stop the simulation after a certain time
-        for (PhilosopherWithSemaphore philosopher : philosophers) {
-            philosopher.interrupt();
-        }
+        assertTrue(Arrays.stream(philosophers).allMatch(PhilosopherWithSemaphore::isFull),
+                "some philosopher was starved and never ate");
+        assertEquals(PERMITS, semaphore.availablePermits(), "permits were leaked or invented");
     }
 }

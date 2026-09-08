@@ -3,6 +3,7 @@ package org.alxkm.patterns.synchronizers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -11,51 +12,72 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Unit tests for the PrintQueue class.
+ * Unit tests for the print queue.
  */
-public class SemaphorePrintQueueExampleTest {
-    private SemaphorePrintQueueExample semaphorePrintQueueExample;
+class SemaphorePrintQueueExampleTest {
+    private static final int PERMITS = 3;
+    private static final int JOBS = 10;
+
+    private SemaphorePrintQueueExample printQueue;
 
     @BeforeEach
-    public void setUp() {
-        semaphorePrintQueueExample = new SemaphorePrintQueueExample(3); // Initialize with 3 permits
+    void setUp() {
+        printQueue = new SemaphorePrintQueueExample(PERMITS);
     }
 
     @Test
-    public void testPrintJob() throws InterruptedException {
-        ExecutorService executorService = Executors.newFixedThreadPool(10);
+    void allJobsComplete() throws InterruptedException {
+        submitJobs(JOBS);
 
-        // Submit 10 print jobs to the print queue
-        for (int i = 0; i < 10; i++) {
-            executorService.submit(() -> {
-                String jobName = "Job-" + Thread.currentThread().getId();
-                semaphorePrintQueueExample.printJob(jobName);
-            });
-        }
-
-        executorService.shutdown();
-        boolean finished = executorService.awaitTermination(1, TimeUnit.MINUTES);
-        assertTrue(finished, "Print jobs did not finish in time");
+        assertEquals(PERMITS, printQueue.getSemaphore().availablePermits(),
+                "every job should have returned its permit");
     }
 
-    //@Test
-    public void testSemaphoreLimits() throws InterruptedException {
-        ExecutorService executorService = Executors.newFixedThreadPool(10);
+    /**
+     * The queue must never print more jobs at once than it has permits.
+     * <p>
+     * The previous version of this test sampled {@code availablePermits()} from the submitting
+     * thread as it queued the jobs, so it recorded the initial permit count and asserted that it
+     * equalled the initial permit count -- true regardless of how the queue behaved. It then slept a
+     * second after taking the measurement it had already used. Read the high-water mark the queue
+     * records from inside the guarded section instead.
+     */
+    @Test
+    void neverPrintsMoreJobsThanPermits() throws InterruptedException {
+        submitJobs(JOBS);
 
-        // Submit 10 print jobs to the print queue
-        int max = 0;
-        for (int i = 0; i < 3; i++) {
-            executorService.submit(() -> {
-                String jobName = "Job-" + Thread.currentThread().getId();
-                semaphorePrintQueueExample.printJob(jobName);
-            });
-            max = Math.max(max, semaphorePrintQueueExample.getSemaphore().availablePermits());
+        int peak = printQueue.getPeakConcurrentJobs();
+        assertTrue(peak <= PERMITS,
+                "printed " + peak + " jobs at once, above the limit of " + PERMITS);
+        assertTrue(peak > 1, "expected jobs to overlap, but peak concurrency was " + peak);
+    }
+
+    /**
+     * Submits the given number of jobs, releasing them together so that they contend for permits,
+     * and waits for the pool to drain.
+     */
+    private void submitJobs(int jobs) throws InterruptedException {
+        CountDownLatch startGate = new CountDownLatch(1);
+        ExecutorService executorService = Executors.newFixedThreadPool(jobs);
+
+        try {
+            for (int i = 0; i < jobs; i++) {
+                int jobId = i;
+                executorService.execute(() -> {
+                    try {
+                        startGate.await();
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        return;
+                    }
+                    printQueue.printJob("Job-" + jobId);
+                });
+            }
+            startGate.countDown();
+        } finally {
+            executorService.shutdown();
+            assertTrue(executorService.awaitTermination(1, TimeUnit.MINUTES),
+                    "print jobs did not finish in time");
         }
-
-        Thread.sleep(1000); // Short delay to allow some jobs to start
-        assertEquals(3, max, "There should be 3 permits in use");
-
-        executorService.shutdown();
-        executorService.awaitTermination(1, TimeUnit.MINUTES);
     }
 }

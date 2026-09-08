@@ -25,10 +25,19 @@ public class ReentrantLockCounter {
 
     /**
      * Retrieves the current value of the counter.
+     * <p>
+     * Reading under the lock is not optional. An unguarded read of a field written by other threads
+     * carries no visibility guarantee, so it can return a stale value however carefully the
+     * increment was synchronized -- the lock must be held on both sides to establish happens-before.
      *
      * @return The current value of the counter.
      */
     public int getCounter() {
-        return counter; // Return the current value of the counter
+        lock.lock(); // Read under the same lock that guards the writes
+        try {
+            return counter; // Return the current value of the counter
+        } finally {
+            lock.unlock();
+        }
     }
 }

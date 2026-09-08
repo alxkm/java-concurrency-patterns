@@ -55,7 +55,7 @@ public class RaceConditionTest {
         
         // The actual amount should be less than or equal to expected
         // Race condition may or may not occur depending on timing
-        int actualAmount = account.getAmount();
+        int actualAmount = account.getUnsafeAmount();
         assertTrue(actualAmount <= EXPECTED_TOTAL, 
                    "Amount should not exceed expected total. Expected at most " + 
                    EXPECTED_TOTAL + " but got " + actualAmount);
@@ -87,7 +87,7 @@ public class RaceConditionTest {
         doneLatch.await();
         executor.shutdown();
         
-        assertEquals(EXPECTED_TOTAL, account.getAmount(), 
+        assertEquals(EXPECTED_TOTAL, account.getSynchronizedAmount(), 
                      "Synchronized increment should be thread-safe");
     }
 
@@ -117,7 +117,7 @@ public class RaceConditionTest {
         doneLatch.await();
         executor.shutdown();
         
-        assertEquals(EXPECTED_TOTAL, account.getAmount(), 
+        assertEquals(EXPECTED_TOTAL, account.getLockAmount(), 
                      "Lock-based increment should be thread-safe");
     }
 
@@ -147,7 +147,7 @@ public class RaceConditionTest {
         doneLatch.await();
         executor.shutdown();
         
-        assertEquals(EXPECTED_TOTAL, account.getAtomicInteger().get(), 
+        assertEquals(EXPECTED_TOTAL, account.getAtomicAmount(), 
                      "Atomic increment should be thread-safe");
     }
 
@@ -190,7 +190,7 @@ public class RaceConditionTest {
                     startLatch.await();
                     int lastValue = -1;
                     for (int j = 0; j < OPERATIONS; j++) {
-                        int currentValue = account.getAmount();
+                        int currentValue = account.getUnsafeAmount();
                         if (currentValue < lastValue) {
                             inconsistentReads.incrementAndGet();
                         }
@@ -210,7 +210,7 @@ public class RaceConditionTest {
         
         // Race condition may or may not cause lost updates
         // The test should verify that amount doesn't exceed expected value
-        assertTrue(account.getAmount() <= WRITERS * OPERATIONS, 
+        assertTrue(account.getUnsafeAmount() <= WRITERS * OPERATIONS, 
                    "Amount should not exceed expected total");
     }
 }

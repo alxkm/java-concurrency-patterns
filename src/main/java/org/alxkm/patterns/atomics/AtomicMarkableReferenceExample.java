@@ -36,7 +36,7 @@ public class AtomicMarkableReferenceExample {
      * Both threads run concurrently.
      * After both threads have completed, the main thread prints the final state of the shared resource along with its mark.
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         SharedResource initialResource = new SharedResource("Initial Data");
         AtomicMarkableReference<SharedResource> atomicMarkableReference = new AtomicMarkableReference<>(initialResource, false);
 
@@ -60,12 +60,8 @@ public class AtomicMarkableReferenceExample {
         readerThread.start();
 
         // Wait for worker threads to complete
-        try {
-            updaterThread.join();
-            readerThread.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        updaterThread.join();
+        readerThread.join();
 
         // Final result
         boolean[] mark = {false};

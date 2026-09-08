@@ -32,7 +32,7 @@ public class ThreadLocalExample {
         return THREAD_LOCAL.get();
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         ThreadLocalExample example = new ThreadLocalExample();
 
         Runnable task = () -> {
@@ -42,7 +42,8 @@ public class ThreadLocalExample {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                Thread.currentThread().interrupt();
+                return;
             }
             // Not removing the value can cause memory leaks
         };
@@ -53,11 +54,7 @@ public class ThreadLocalExample {
         thread1.start();
         thread2.start();
 
-        try {
-            thread1.join();
-            thread2.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        thread1.join();
+        thread2.join();
     }
 }

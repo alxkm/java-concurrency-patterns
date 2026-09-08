@@ -45,7 +45,7 @@ public class StampedLockExample {
         return currentCounter;
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         StampedLockExample stampedLockExample = new StampedLockExample();
 
         Runnable task = () -> {
@@ -60,12 +60,8 @@ public class StampedLockExample {
         thread1.start();
         thread2.start();
 
-        try {
-            thread1.join();
-            thread2.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        thread1.join();
+        thread2.join();
 
         System.out.println("Final counter value: " + stampedLockExample.getCounter());
     }

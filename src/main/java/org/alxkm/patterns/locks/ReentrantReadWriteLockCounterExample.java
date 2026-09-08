@@ -31,7 +31,8 @@ public class ReentrantReadWriteLockCounterExample {
                 thread.join(); // Wait for each thread to finish
             }
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            Thread.currentThread().interrupt();
+            return;
         }
 
         // Retrieve the final value of the counter and print it

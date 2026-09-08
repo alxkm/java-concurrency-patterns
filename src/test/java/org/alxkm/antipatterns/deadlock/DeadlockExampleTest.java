@@ -5,9 +5,12 @@ import org.junit.jupiter.api.Timeout;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
+import java.util.Arrays;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -114,7 +117,9 @@ public class DeadlockExampleTest {
         
         // Wait for both threads to start and acquire their first locks
         bothThreadsStarted.await();
-        Thread.sleep(200); // Give time for deadlock to occur
+        // Both threads hold their first lock, but the JVM has not necessarily registered the cycle
+        // yet. Poll for it rather than guessing how long that takes.
+        awaitDeadlockAmong(2, t1, t2);
         
         // Verify both threads are stuck
         assertTrue(t1.isAlive());
@@ -128,9 +133,8 @@ public class DeadlockExampleTest {
         assertTrue(t1State == Thread.State.BLOCKED || t2State == Thread.State.BLOCKED,
                    "At least one thread should be BLOCKED. T1: " + t1State + ", T2: " + t2State);
         
-        // Verify deadlock using ThreadMXBean
-        ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
-        long[] deadlockedThreadIds = threadMXBean.findDeadlockedThreads();
+        // Verify deadlock using ThreadMXBean, counting only the two threads this test started.
+        long[] deadlockedThreadIds = deadlockedAmong(t1, t2);
         assertNotNull(deadlockedThreadIds, "Deadlocked threads should be detected");
         assertTrue(deadlockedThreadIds.length >= 2, "At least 2 threads should be deadlocked");
         
@@ -186,12 +190,13 @@ public class DeadlockExampleTest {
             t.start();
         }
         
-        // Wait a bit for deadlocks to form
-        Thread.sleep(500);
+        // Wait for every pair to close its cycle. A flat sleep here made the test flaky: on a loaded
+        // machine 500ms is not always enough for all six threads to reach their second monitor.
+        awaitDeadlockAmong(NUM_PAIRS * 2, threads);
         
-        // Check for deadlocks
-        ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
-        long[] deadlockedThreadIds = threadMXBean.findDeadlockedThreads();
+        // Count only the threads this test started -- findDeadlockedThreads() is JVM-wide, and the
+        // other methods here leak deadlocked threads that stay blocked for the rest of the run.
+        long[] deadlockedThreadIds = deadlockedAmong(threads);
         
         assertNotNull(deadlockedThreadIds, "Deadlocked threads should be detected");
         assertTrue(deadlockedThreadIds.length >= NUM_PAIRS * 2, 
@@ -201,6 +206,54 @@ public class DeadlockExampleTest {
         // Clean up
         for (Thread t : threads) {
             t.interrupt();
+        }
+    }
+
+    /**
+     * Returns the ids of the given threads that the JVM reports as deadlocked, or null if none are.
+     * <p>
+     * {@link ThreadMXBean#findDeadlockedThreads()} scans every thread in the JVM, and several tests
+     * here deliberately leave threads deadlocked for good -- a thread blocked entering a monitor
+     * cannot be interrupted out of it. Filtering to the threads a test actually started keeps its
+     * assertions about its own behaviour.
+     *
+     * @param threads the threads to consider.
+     * @return the deadlocked subset of their ids, or null if none of them are deadlocked.
+     */
+    private static long[] deadlockedAmong(Thread... threads) {
+        long[] deadlocked = ManagementFactory.getThreadMXBean().findDeadlockedThreads();
+        if (deadlocked == null) {
+            return null;
+        }
+        Set<Long> ours = Arrays.stream(threads).map(Thread::threadId).collect(Collectors.toSet());
+        long[] mine = Arrays.stream(deadlocked).filter(ours::contains).toArray();
+        return mine.length == 0 ? null : mine;
+    }
+
+    /**
+     * Polls until at least {@code expected} of the given threads are deadlocked, or the deadline passes.
+     * <p>
+     * Deadlock formation is not instantaneous: each thread has to be scheduled, take its first monitor
+     * and then block on the second. Waiting for the condition rather than sleeping a guessed interval
+     * keeps the test both fast and reliable under load.
+     * <p>
+     * The poll interval is deliberately not tight. {@link ThreadMXBean#findDeadlockedThreads()} walks
+     * every thread in the JVM, so calling it in a hot loop is expensive once a full suite run has
+     * accumulated threads -- enough to exhaust the caller's own {@code @Timeout} before the cycle is
+     * ever reported. The budget likewise stays well inside that timeout.
+     *
+     * @param expected how many of the threads should end up deadlocked.
+     * @param threads  the threads to watch.
+     * @throws InterruptedException if this thread is interrupted while polling.
+     */
+    private static void awaitDeadlockAmong(int expected, Thread... threads) throws InterruptedException {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(2);
+        while (System.nanoTime() < deadline) {
+            long[] deadlocked = deadlockedAmong(threads);
+            if (deadlocked != null && deadlocked.length >= expected) {
+                return;
+            }
+            Thread.sleep(50);
         }
     }
 }

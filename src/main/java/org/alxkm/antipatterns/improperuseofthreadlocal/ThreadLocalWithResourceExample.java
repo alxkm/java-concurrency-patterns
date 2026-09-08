@@ -37,7 +37,10 @@ public class ThreadLocalWithResourceExample {
         return THREAD_LOCAL.get();
     }
 
-    public static void main(String[] args) {
+    // The cleaner is never referenced in the try body on purpose: it is held solely so that its
+    // close() runs the ThreadLocal.remove() on the way out, which is what -Xlint:try warns about.
+    @SuppressWarnings("try")
+    public static void main(String[] args) throws InterruptedException {
         ThreadLocalWithResourceExample example = new ThreadLocalWithResourceExample();
 
         Runnable task = () -> {
@@ -47,7 +50,8 @@ public class ThreadLocalWithResourceExample {
                 // Simulating work
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                Thread.currentThread().interrupt();
+                return;
             }
         };
 
@@ -57,12 +61,8 @@ public class ThreadLocalWithResourceExample {
         thread1.start();
         thread2.start();
 
-        try {
-            thread1.join();
-            thread2.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        thread1.join();
+        thread2.join();
     }
 }
 

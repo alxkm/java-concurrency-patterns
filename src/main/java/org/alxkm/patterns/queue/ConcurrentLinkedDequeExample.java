@@ -31,7 +31,8 @@ public class ConcurrentLinkedDequeExample {
                 try {
                     Thread.sleep(1000); // Simulate production time
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    Thread.currentThread().interrupt();
+                    return;
                 }
             }
         });
@@ -43,7 +44,8 @@ public class ConcurrentLinkedDequeExample {
                 try {
                     Thread.sleep(1000); // Simulate production time
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    Thread.currentThread().interrupt();
+                    return;
                 }
             }
         });
@@ -56,7 +58,8 @@ public class ConcurrentLinkedDequeExample {
                 try {
                     Thread.sleep(2000); // Simulate consumption time
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    Thread.currentThread().interrupt();
+                    return;
                 }
             }
         });
@@ -68,7 +71,8 @@ public class ConcurrentLinkedDequeExample {
                 try {
                     Thread.sleep(2000); // Simulate consumption time
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    Thread.currentThread().interrupt();
+                    return;
                 }
             }
         });

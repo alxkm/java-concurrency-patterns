@@ -36,7 +36,7 @@ public class LockContentionExample {
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         LockContentionExample lockContentionExample = new LockContentionExample();
 
         Runnable task = () -> {
@@ -51,12 +51,8 @@ public class LockContentionExample {
         thread1.start();
         thread2.start();
 
-        try {
-            thread1.join();
-            thread2.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        thread1.join();
+        thread2.join();
 
         System.out.println("Final counter value: " + lockContentionExample.getCounter());
     }

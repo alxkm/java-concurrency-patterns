@@ -23,7 +23,7 @@ public class AtomicLongFieldUpdaterExample {
      * Both threads run concurrently.
      * After both threads have completed, the main thread prints the final state of the field.
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         // Create an AtomicLongFieldUpdater for the 'value' field of MyClass
         AtomicLongFieldUpdater<MyClass> updater = AtomicLongFieldUpdater.newUpdater(MyClass.class, "value");
 
@@ -48,12 +48,8 @@ public class AtomicLongFieldUpdaterExample {
         readerThread.start();
 
         // Wait for worker threads to complete
-        try {
-            updaterThread.join();
-            readerThread.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        updaterThread.join();
+        readerThread.join();
     }
 }
 

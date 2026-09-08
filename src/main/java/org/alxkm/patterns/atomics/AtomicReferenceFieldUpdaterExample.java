@@ -23,7 +23,7 @@ public class AtomicReferenceFieldUpdaterExample {
      * Both threads run concurrently.
      * After both threads have completed, the main thread prints the final state of the field.
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         // Create an AtomicReferenceFieldUpdater for the 'value' field of MyClass
         AtomicReferenceFieldUpdater<MyClass, String> updater =
                 AtomicReferenceFieldUpdater.newUpdater(MyClass.class, String.class, "value");
@@ -49,12 +49,8 @@ public class AtomicReferenceFieldUpdaterExample {
         readerThread.start();
 
         // Wait for worker threads to complete
-        try {
-            updaterThread.join();
-            readerThread.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        updaterThread.join();
+        readerThread.join();
     }
 }
 

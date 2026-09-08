@@ -33,7 +33,7 @@ public class SingletonInitializationOnDemand {
     }
 
     public void showMessage() {
-        System.out.println("Singleton instance method called.");
+        System.out.println("SingletonInitializationOnDemand instance method called.");
     }
 
     public static void main(String[] args) {

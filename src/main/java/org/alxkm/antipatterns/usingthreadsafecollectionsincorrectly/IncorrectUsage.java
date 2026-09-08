@@ -22,6 +22,7 @@ public class IncorrectUsage implements BaseListUsage<String> {
      *
      * @param element the element to add to the list.
      */
+    @Override
     public void addIfAbsent(String element) {
         if (!list.contains(element)) {
             list.add(element);
@@ -33,6 +34,7 @@ public class IncorrectUsage implements BaseListUsage<String> {
      *
      * @return the number of elements in the list.
      */
+    @Override
     public int size() {
         return list.size();
     }

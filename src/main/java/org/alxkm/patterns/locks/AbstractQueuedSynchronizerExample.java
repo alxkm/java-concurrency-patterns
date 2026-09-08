@@ -11,6 +11,8 @@ public class AbstractQueuedSynchronizerExample {
 
     // Define a custom synchronizer extending AbstractQueuedSynchronizer
     static class CustomSynchronizer extends AbstractQueuedSynchronizer {
+        private static final long serialVersionUID = 1L;
+
 
         // Override the tryAcquire method to acquire the lock
         @Override
@@ -36,7 +38,7 @@ public class AbstractQueuedSynchronizerExample {
      * Both threads run concurrently.
      * After both threads have completed, the main thread prints the final status.
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         // Create an instance of CustomSynchronizer
         CustomSynchronizer synchronizer = new CustomSynchronizer();
 
@@ -64,11 +66,7 @@ public class AbstractQueuedSynchronizerExample {
         tryLockThread.start();
 
         // Wait for worker threads to complete
-        try {
-            lockThread.join();
-            tryLockThread.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        lockThread.join();
+        tryLockThread.join();
     }
 }

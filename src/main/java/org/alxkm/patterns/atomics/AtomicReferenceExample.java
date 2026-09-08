@@ -37,7 +37,7 @@ public class AtomicReferenceExample {
      * After both threads have completed, the main thread prints the final state of the shared resource.
      *
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         SharedResource initialResource = new SharedResource("Initial Data");
         AtomicReference<SharedResource> atomicReference = new AtomicReference<>(initialResource);
 
@@ -58,12 +58,8 @@ public class AtomicReferenceExample {
         readerThread.start();
 
         // Wait for worker threads to complete
-        try {
-            writerThread.join();
-            readerThread.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        writerThread.join();
+        readerThread.join();
 
         // Final result
         SharedResource finalResource = atomicReference.get();

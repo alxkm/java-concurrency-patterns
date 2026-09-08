@@ -5,7 +5,10 @@ import org.junit.jupiter.api.Test;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class DoubleCheckedLockingSingletonTest {
 
@@ -22,19 +25,35 @@ public class DoubleCheckedLockingSingletonTest {
     @Test
     public void testSingletonMultithreaded() throws InterruptedException {
         ExecutorService executor = Executors.newFixedThreadPool(THREAD_COUNT);
-        CountDownLatch latch = new CountDownLatch(THREAD_COUNT);
+        // A start gate makes every thread reach getInstance() at once. Without it the pool ramps up
+        // gradually and the first thread has usually published the instance before the last one
+        // starts, so the initialisation race the test exists to stress never happens.
+        CountDownLatch startGate = new CountDownLatch(1);
+        CountDownLatch finished = new CountDownLatch(THREAD_COUNT);
         DoubleCheckedLockingSingleton[] instances = new DoubleCheckedLockingSingleton[THREAD_COUNT];
 
-        for (int i = 0; i < THREAD_COUNT; i++) {
-            int index = i;
-            executor.execute(() -> {
-                instances[index] = DoubleCheckedLockingSingleton.getInstance();
-                latch.countDown();
-            });
-        }
+        try {
+            for (int i = 0; i < THREAD_COUNT; i++) {
+                int index = i;
+                executor.execute(() -> {
+                    try {
+                        startGate.await();
+                        instances[index] = DoubleCheckedLockingSingleton.getInstance();
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    } finally {
+                        finished.countDown();
+                    }
+                });
+            }
 
-        latch.await();
-        executor.shutdown();
+            startGate.countDown();
+            // Bounded, so a hang fails the build with a clear message instead of waiting forever.
+            assertTrue(finished.await(30, TimeUnit.SECONDS), "threads did not finish in time");
+        } finally {
+            executor.shutdownNow();
+            assertTrue(executor.awaitTermination(10, TimeUnit.SECONDS), "executor did not terminate");
+        }
 
         for (int i = 1; i < THREAD_COUNT; i++) {
             assertSame(instances[0], instances[i], "All instances should be the same");

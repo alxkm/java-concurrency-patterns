@@ -1,37 +1,52 @@
 package org.alxkm.patterns.threadlocal;
 
+import org.alxkm.testsupport.Concurrently;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class ThreadLocalExampleTest {
+class ThreadLocalExampleTest {
 
     /**
-     * This test method verifies the usage of ThreadLocal to maintain thread-specific
-     * storage in the ThreadSpecificStorageExample class. It creates two threads, t1 and t2,
-     * each of which sets a different value to the ThreadLocal variable in the example object.
-     * The test asserts that each thread sees its own value when accessing the ThreadLocal
-     * variable, ensuring that the values are maintained separately for each thread.
+     * Verifies that ThreadLocal really does give every thread its own copy: each of the threads below writes
+     * a distinct value and then reads the variable back, and every one of them must see what it wrote rather
+     * than another thread's value.
+     * <p>
+     * The values are returned to the test thread rather than asserted inside the worker threads. An
+     * AssertionError thrown on a worker only kills that worker -- JUnit never sees it -- so a test that
+     * asserts in the threads it spawns passes whether the code is right or wrong.
      */
     @Test
-    public void testThreadLocalStorage() throws InterruptedException {
-        ThreadLocalExample example = new ThreadLocalExample();
+    void eachThreadSeesOnlyItsOwnValue() throws Exception {
+        int threads = 8;
+        AtomicInteger nextValue = new AtomicInteger();
 
-        Thread t1 = new Thread(() -> {
-            example.THREAD_LOCAL.set(1);
-            assertEquals(1, example.THREAD_LOCAL.get());
+        List<Integer> observed = Concurrently.collect(threads, () -> {
+            int mine = nextValue.incrementAndGet();
+            ThreadLocalExample.THREAD_LOCAL.set(mine);
+            Thread.yield(); // give the other threads every chance to clobber the value
+            int seen = ThreadLocalExample.THREAD_LOCAL.get();
+            return seen == mine ? mine : -1;
         });
 
-        Thread t2 = new Thread(() -> {
-            example.THREAD_LOCAL.set(2);
-            assertEquals(2, example.THREAD_LOCAL.get());
-        });
+        assertEquals(threads, observed.size());
+        assertEquals(threads, observed.stream().filter(value -> value > 0).count(),
+                "every thread must read back the value it wrote, but some saw another thread's");
+        assertEquals(threads, observed.stream().distinct().count(),
+                "each thread should have written a distinct value");
+    }
 
-        t1.start();
-        t2.start();
+    /**
+     * A thread that never writes sees the initial value supplied to {@code ThreadLocal.withInitial}, not
+     * whatever the previous user of that thread left behind.
+     */
+    @Test
+    void unwrittenThreadSeesTheInitialValue() throws Exception {
+        List<Integer> observed = Concurrently.collect(4, ThreadLocalExample.THREAD_LOCAL::get);
 
-        t1.join();
-        t2.join();
+        assertEquals(List.of(0, 0, 0, 0), observed);
     }
 }
-
