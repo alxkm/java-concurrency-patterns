@@ -15,8 +15,11 @@ public class AbstractOwnableSynchronizerExample {
      * Custom synchronizer that extends AbstractOwnableSynchronizer.
      */
     static class CustomSynchronizer extends AbstractOwnableSynchronizer {
+        private static final long serialVersionUID = 1L;
 
-        private final Lock lock = new ReentrantLock(); // Internal lock
+        // AbstractOwnableSynchronizer is Serializable but a Lock is not, and this synchronizer is
+        // never actually serialised, so the lock is transient.
+        private final transient Lock lock = new ReentrantLock(); // Internal lock
 
         /**
          * Acquires the lock.
@@ -59,7 +62,7 @@ public class AbstractOwnableSynchronizerExample {
      * After both threads have completed, the main thread prints the final status.
      */
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         // Create an instance of CustomSynchronizer
         CustomSynchronizer synchronizer = new CustomSynchronizer();
 
@@ -87,11 +90,7 @@ public class AbstractOwnableSynchronizerExample {
         tryLockThread.start();
 
         // Wait for worker threads to complete
-        try {
-            lockThread.join();
-            tryLockThread.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        lockThread.join();
+        tryLockThread.join();
     }
 }

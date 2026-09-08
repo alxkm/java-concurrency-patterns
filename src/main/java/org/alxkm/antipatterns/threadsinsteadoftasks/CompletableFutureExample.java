@@ -14,20 +14,19 @@ import java.util.concurrent.ExecutionException;
 public class CompletableFutureExample {
     /**
      * A simple task that prints the thread name.
+     *
+     * @throws InterruptedException if the current thread is interrupted while awaiting the tasks.
+     * @throws ExecutionException   if either task completed with an exception.
      */
-    public void performTask() {
+    public void performTask() throws InterruptedException, ExecutionException {
         CompletableFuture<Void> task1 = CompletableFuture.runAsync(() -> System.out.println("Task executed by: " + Thread.currentThread().getName()));
         CompletableFuture<Void> task2 = CompletableFuture.runAsync(() -> System.out.println("Task executed by: " + Thread.currentThread().getName()));
 
         // Wait for all tasks to complete
-        try {
-            CompletableFuture.allOf(task1, task2).get();
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
-        }
+        CompletableFuture.allOf(task1, task2).get();
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException, ExecutionException {
         CompletableFutureExample manager = new CompletableFutureExample();
         manager.performTask();
     }

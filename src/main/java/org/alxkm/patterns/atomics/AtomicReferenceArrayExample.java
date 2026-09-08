@@ -14,7 +14,7 @@ public class AtomicReferenceArrayExample {
      * Both threads run concurrently.
      * After both threads have completed, the main thread prints the final state of the array.
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         // Create an AtomicReferenceArray with initial values
         AtomicReferenceArray<String> array = new AtomicReferenceArray<>(3);
         array.set(0, "Value 1");
@@ -39,12 +39,8 @@ public class AtomicReferenceArrayExample {
         readerThread.start();
 
         // Wait for worker threads to complete
-        try {
-            updaterThread.join();
-            readerThread.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        updaterThread.join();
+        readerThread.join();
     }
 }
 

@@ -36,7 +36,7 @@ public class ExcessiveSyncCounter {
         return count;
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         ExcessiveSyncCounter counter = new ExcessiveSyncCounter();
 
         // Create threads to perform operations on the counter
@@ -71,14 +71,10 @@ public class ExcessiveSyncCounter {
         decrementThread2.start();
 
         // Wait for all threads to complete
-        try {
-            incrementThread1.join();
-            incrementThread2.join();
-            decrementThread1.join();
-            decrementThread2.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        incrementThread1.join();
+        incrementThread2.join();
+        decrementThread1.join();
+        decrementThread2.join();
 
         // Print the final count
         System.out.println("Final count: " + counter.getCount());

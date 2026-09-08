@@ -19,6 +19,7 @@ public class OptimizedUsage implements BaseListUsage<String> {
      *
      * @param element the element to add to the set.
      */
+    @Override
     public void addIfAbsent(String element) {
         set.add(element);
     }
@@ -28,6 +29,7 @@ public class OptimizedUsage implements BaseListUsage<String> {
      *
      * @return the number of elements in the set.
      */
+    @Override
     public int size() {
         return set.size();
     }

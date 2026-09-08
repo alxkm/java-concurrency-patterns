@@ -26,16 +26,13 @@ public class IgnoringInterruptedException implements Runnable {
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         Thread thread = new Thread(new IgnoringInterruptedException());
         thread.start();
 
-        // Interrupt the thread after 3 seconds
-        try {
-            Thread.sleep(3000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        // Interrupt the thread after 3 seconds. Note that it keeps running regardless: run()
+        // discards the InterruptedException, so nothing ever observes the request to stop.
+        Thread.sleep(3000);
         thread.interrupt();
     }
 }

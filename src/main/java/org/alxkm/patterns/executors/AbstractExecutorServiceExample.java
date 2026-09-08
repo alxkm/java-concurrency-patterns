@@ -117,7 +117,7 @@ public class AbstractExecutorServiceExample extends AbstractExecutorService {
         return isTerminated();
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         // Create an instance of AbstractExecutorServiceExample
         AbstractExecutorServiceExample executor = new AbstractExecutorServiceExample();
 
@@ -135,18 +135,18 @@ public class AbstractExecutorServiceExample extends AbstractExecutorService {
         executor.shutdown();
 
         // Wait for termination
-        try {
-            executor.awaitTermination(10, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        executor.awaitTermination(10, TimeUnit.SECONDS);
 
         // Retrieve results
         for (Future<Integer> future : futures) {
             try {
                 System.out.println("Task result: " + future.get());
-            } catch (InterruptedException | ExecutionException e) {
-                e.printStackTrace();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
+            } catch (ExecutionException e) {
+                // One task failing should not cost us the results of the others.
+                System.out.println("Task failed: " + e.getCause());
             }
         }
     }

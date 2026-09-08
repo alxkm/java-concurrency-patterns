@@ -41,7 +41,7 @@ public class AtomicStampedReferenceExample {
      * Both threads run concurrently.
      * After both threads have completed, the main thread prints the final state of the shared resource along with its stamp.
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         SharedResource initialResource = new SharedResource("Initial Data");
         AtomicStampedReference<SharedResource> atomicStampedReference = new AtomicStampedReference<>(initialResource, 0);
 
@@ -64,12 +64,8 @@ public class AtomicStampedReferenceExample {
         readerThread.start();
 
         // Wait for worker threads to complete
-        try {
-            updaterThread.join();
-            readerThread.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        updaterThread.join();
+        readerThread.join();
 
         // Final result
         int[] stamp = {0};

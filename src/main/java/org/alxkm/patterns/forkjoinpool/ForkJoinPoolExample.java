@@ -26,7 +26,9 @@ public class ForkJoinPoolExample {
 }
 
 class MyRecursiveTask extends RecursiveTask<Integer> {
-    private int workload;
+    private static final long serialVersionUID = 1L;
+
+    private final int workload;
 
     MyRecursiveTask(int workload) {
         this.workload = workload;

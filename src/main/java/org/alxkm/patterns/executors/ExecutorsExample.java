@@ -88,7 +88,8 @@ public class ExecutorsExample {
                 try {
                     Thread.sleep(1000); // Simulate task execution time
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    Thread.currentThread().interrupt();
+                    return;
                 }
             });
         }
@@ -109,8 +110,10 @@ public class ExecutorsExample {
                 executor.shutdownNow();
             }
         } catch (InterruptedException e) {
-            // Handle interruption
-            e.printStackTrace();
+            // Interrupted while waiting: cancel the stragglers and hand the interrupt on, rather
+            // than returning as though the pool had drained.
+            executor.shutdownNow();
+            Thread.currentThread().interrupt();
         }
     }
 }

@@ -23,7 +23,7 @@ public class AtomicIntegerFieldUpdaterExample {
      * Both threads run concurrently.
      * After both threads have completed, the main thread prints the final state of the field.
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         // Create an AtomicIntegerFieldUpdater for the 'value' field of MyClass
         AtomicIntegerFieldUpdater<MyClass> updater = AtomicIntegerFieldUpdater.newUpdater(MyClass.class, "value");
 
@@ -48,11 +48,7 @@ public class AtomicIntegerFieldUpdaterExample {
         readerThread.start();
 
         // Wait for worker threads to complete
-        try {
-            updaterThread.join();
-            readerThread.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        updaterThread.join();
+        readerThread.join();
     }
 }

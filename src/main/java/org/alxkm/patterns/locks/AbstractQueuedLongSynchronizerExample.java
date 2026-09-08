@@ -11,6 +11,8 @@ public class AbstractQueuedLongSynchronizerExample {
 
     // Define a custom synchronizer extending AbstractQueuedLongSynchronizer
     static class CustomSynchronizer extends AbstractQueuedLongSynchronizer {
+        private static final long serialVersionUID = 1L;
+
 
         // Define state constants
         private static final long LOCKED = 1;
@@ -41,7 +43,7 @@ public class AbstractQueuedLongSynchronizerExample {
      * Both threads run concurrently.
      * After both threads have completed, the main thread prints the final status.
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         // Create an instance of CustomSynchronizer
         CustomSynchronizer synchronizer = new CustomSynchronizer();
 
@@ -69,11 +71,7 @@ public class AbstractQueuedLongSynchronizerExample {
         tryLockThread.start();
 
         // Wait for worker threads to complete
-        try {
-            lockThread.join();
-            tryLockThread.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        lockThread.join();
+        tryLockThread.join();
     }
 }

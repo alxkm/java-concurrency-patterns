@@ -16,8 +16,10 @@ import java.util.concurrent.TimeUnit;
 public class ExecutorFrameworkExample {
     /**
      * A simple task that prints the thread name.
+     *
+     * @throws InterruptedException if the current thread is interrupted while awaiting termination.
      */
-    public void performTask() {
+    public void performTask() throws InterruptedException {
         Runnable task = () -> {
             System.out.println("Task executed by: " + Thread.currentThread().getName());
         };
@@ -28,16 +30,16 @@ public class ExecutorFrameworkExample {
         executor.submit(task);
         executor.submit(task);
 
-        // Shutdown the executor and wait for tasks to finish
+        // Shutdown the executor and wait for tasks to finish. awaitTermination returns whether the
+        // pool actually drained in time; ignoring that answer is how a "graceful" shutdown quietly
+        // abandons still-running tasks, so escalate to shutdownNow() when it reports false.
         executor.shutdown();
-        try {
-            executor.awaitTermination(1, TimeUnit.MINUTES);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        if (!executor.awaitTermination(1, TimeUnit.MINUTES)) {
+            executor.shutdownNow();
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         ExecutorFrameworkExample manager = new ExecutorFrameworkExample();
         manager.performTask();
     }

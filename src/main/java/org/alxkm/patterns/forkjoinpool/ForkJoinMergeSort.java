@@ -1,5 +1,6 @@
 package org.alxkm.patterns.forkjoinpool;
 
+import java.util.Arrays;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveAction;
 
@@ -18,8 +19,7 @@ public class ForkJoinMergeSort {
      */
     public static void main(String[] args) {
         int[] array = {38, 27, 43, 3, 9, 82, 10};
-        ForkJoinPool pool = new ForkJoinPool();
-        pool.invoke(new MergeSortTask(array, 0, array.length - 1));
+        sort(array);
 
         for (int i : array) {
             System.out.print(i + " ");
@@ -27,13 +27,40 @@ public class ForkJoinMergeSort {
     }
 
     /**
+     * Sorts the given array in place using the common {@link ForkJoinPool}.
+     * <p>
+     * Reusing the common pool rather than constructing one per call matters: a ForkJoinPool owns
+     * worker threads, and creating one per sort leaks a pool's worth of them every time.
+     *
+     * @param array The array to sort. An empty or single-element array is left untouched.
+     */
+    public static void sort(int[] array) {
+        if (array.length < 2) {
+            return;
+        }
+        ForkJoinPool.commonPool().invoke(new MergeSortTask(array, 0, array.length - 1));
+    }
+
+    /**
      * The MergeSortTask class extends RecursiveAction and represents a task
      * that performs merge sort on a portion of the array in parallel.
      */
     static class MergeSortTask extends RecursiveAction {
-        private int[] array;
-        private int left;
-        private int right;
+        private static final long serialVersionUID = 1L;
+
+        /**
+         * Ranges at or below this size are sorted in place instead of being split further.
+         * <p>
+         * A threshold is the part of Fork/Join that is easy to leave out and expensive to omit.
+         * Splitting all the way down to single elements creates roughly two tasks per element, and
+         * the bookkeeping for each one costs far more than the comparison it saves; the sequential
+         * cutoff is what makes the parallelism pay for itself.
+         */
+        private static final int SEQUENTIAL_THRESHOLD = 1 << 13;
+
+        private final int[] array;
+        private final int left;
+        private final int right;
 
         /**
          * Constructs a MergeSortTask with the given array and the range to sort.
@@ -51,20 +78,28 @@ public class ForkJoinMergeSort {
         /**
          * The compute method performs the merge sort operation recursively.
          * It divides the array into two halves, creates subtasks for each half,
-         * and merges the sorted halves.
+         * and merges the sorted halves -- unless the range is small enough to sort directly.
          */
         @Override
         protected void compute() {
-            if (left < right) {
-                int mid = (left + right) / 2;
-
-                MergeSortTask leftTask = new MergeSortTask(array, left, mid);
-                MergeSortTask rightTask = new MergeSortTask(array, mid + 1, right);
-
-                invokeAll(leftTask, rightTask);
-
-                merge(array, left, mid, right);
+            if (left >= right) {
+                return;
             }
+            if (right - left + 1 <= SEQUENTIAL_THRESHOLD) {
+                Arrays.sort(array, left, right + 1);
+                return;
+            }
+
+            // (left + right) / 2 overflows once the indices exceed half of Integer.MAX_VALUE;
+            // the shifted form cannot.
+            int mid = left + ((right - left) >>> 1);
+
+            MergeSortTask leftTask = new MergeSortTask(array, left, mid);
+            MergeSortTask rightTask = new MergeSortTask(array, mid + 1, right);
+
+            invokeAll(leftTask, rightTask);
+
+            merge(array, left, mid, right);
         }
 
         /**

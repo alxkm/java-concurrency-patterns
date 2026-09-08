@@ -4,9 +4,14 @@ import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 
 /**
- * The Barrier class provides a synchronization mechanism that allows threads to synchronize at a certain
- * point to ensure all threads reach that point before proceeding. It encapsulates a CyclicBarrier instance
- * and provides a method for threads to await the barrier.
+ * A minimal facade over {@link CyclicBarrier}, holding threads at a rendezvous point until all
+ * parties arrive and then running an optional barrier action.
+ * <p>
+ * This class adds no behaviour of its own; it exists to name the barrier concept and to keep the
+ * example's call sites readable. Reach for {@link CyclicBarrier} directly in real code -- it also
+ * offers timed waits, {@code getNumberWaiting()} and {@code reset()}, none of which are exposed here.
+ * For a barrier built from first principles, see the synchronizer examples under
+ * {@code org.alxkm.patterns.locks}.
  */
 public class Barrier {
     private final CyclicBarrier barrier;

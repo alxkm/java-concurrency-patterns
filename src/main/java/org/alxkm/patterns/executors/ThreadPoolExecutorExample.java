@@ -1,5 +1,6 @@
 package org.alxkm.patterns.executors;
 
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -15,7 +16,7 @@ public class ThreadPoolExecutorExample {
      */
     public static void main(String[] args) {
         // Create a ThreadPoolExecutor with a core pool size of 2, maximum pool size of 4, and a queue capacity of 10
-        ThreadPoolExecutor executor = new ThreadPoolExecutor(2, 4, 0L, TimeUnit.MILLISECONDS, new java.util.concurrent.LinkedBlockingQueue<>(10));
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(2, 4, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(10));
 
         try {
             // Submit tasks to the executor
@@ -26,8 +27,10 @@ public class ThreadPoolExecutorExample {
                     try {
                         Thread.sleep(1000); // Simulate task execution time
                     } catch (InterruptedException e) {
+                        // Restore the flag and stop: an interrupt is a request to abandon this task.
                         Thread.currentThread().interrupt();
                         System.err.println("Task " + taskId + " was interrupted");
+                        return;
                     }
                 });
             }

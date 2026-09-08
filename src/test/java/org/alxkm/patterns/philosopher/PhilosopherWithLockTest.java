@@ -1,48 +1,104 @@
 package org.alxkm.patterns.philosopher;
 
+import org.alxkm.testsupport.Await;
 import org.junit.jupiter.api.Test;
 
+import java.lang.management.ManagementFactory;
+import java.util.Arrays;
+import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
-public class PhilosopherWithLockTest {
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+class PhilosopherWithLockTest {
+    private static final int PHILOSOPHERS = 5;
+    private static final long JOIN_TIMEOUT_MILLIS = 5_000;
 
     /**
-     * This test method verifies the behavior of the PhilosopherWithLock class, which implements
-     * the Dining Philosophers problem solution using locks (ReentrantLocks). It creates a certain
-     * number of philosopher threads (in this case, 5) and initializes an array of locks to represent
-     * the forks on the table. Each philosopher thread represents a philosopher in the dining philosophers
-     * scenario and is initialized with the corresponding left and right forks. The test runs the simulation
-     * for a specified time duration (e.g., 5 seconds) to allow the philosophers to attempt to acquire forks
-     * and eat. After the simulation period, all philosopher threads are interrupted to stop the simulation.
-     * This test checks whether the Dining Philosophers problem solution using locks works as expected and
-     * avoids deadlock and starvation scenarios.
+     * Demanding many meals rather than one keeps the table contended long enough that a cyclic
+     * lock order would actually close its cycle. Requiring a single meal each is satisfied within
+     * milliseconds, before a deadlock has any chance to form, so it would pass against the broken
+     * left-then-right version too.
+     */
+    private static final int MEALS_REQUIRED = 50;
+
+    /**
+     * Verifies that the lock-ordered solution to the dining philosophers problem makes progress and
+     * shuts down cleanly.
+     * <p>
+     * Deadlock-freedom is not directly observable, but its consequence is: if the philosophers were
+     * deadlocked, none of them would ever finish a meal. So the test waits for every philosopher to
+     * eat at least once, which a deadlocked table can never satisfy, and then confirms that all the
+     * forks come back unlocked -- proving no thread died holding one.
+     * <p>
+     * The previous version of this test asserted nothing at all. It slept five seconds, interrupted
+     * the threads and passed unconditionally, including against a table that deadlocked instantly.
      */
     @Test
-    public void testDiningPhilosophers() {
-        int numOfPhilosophers = 5;
-        PhilosopherWithLock[] philosopherWithLocks = new PhilosopherWithLock[numOfPhilosophers];
-        Lock[] forks = new Lock[numOfPhilosophers];
+    void everyPhilosopherEatsAndAllForksAreReleased() throws InterruptedException {
+        Lock[] forks = new Lock[PHILOSOPHERS];
+        Arrays.setAll(forks, i -> new ReentrantLock());
 
-        for (int i = 0; i < numOfPhilosophers; i++) {
-            forks[i] = new ReentrantLock();
+        PhilosopherWithLock[] philosophers = new PhilosopherWithLock[PHILOSOPHERS];
+        for (int i = 0; i < PHILOSOPHERS; i++) {
+            // Philosopher i sits between fork i and fork (i + 1) % PHILOSOPHERS, closing the ring.
+            philosophers[i] = new PhilosopherWithLock(i, i, (i + 1) % PHILOSOPHERS, forks);
         }
-
-        for (int i = 0; i < numOfPhilosophers; i++) {
-            philosopherWithLocks[i] = new PhilosopherWithLock(i, forks[i], forks[(i + 1) % numOfPhilosophers]);
-            philosopherWithLocks[i].start();
+        for (PhilosopherWithLock philosopher : philosophers) {
+            philosopher.start();
         }
 
         try {
-            // Let the simulation run for a certain time (e.g., 5 seconds) in the test
-            Thread.sleep(5000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+            Await.until("every philosopher to eat " + MEALS_REQUIRED + " meals",
+                    () -> Arrays.stream(philosophers)
+                            .allMatch(p -> p.getMealsEaten() >= MEALS_REQUIRED)
+                            || deadlockedPhilosophers(philosophers) != null);
+
+            // Ask the JVM directly: this reports any cycle of threads blocked on each other's
+            // monitors or ownable synchronizers, which is exactly what fork ordering prevents.
+            assertNull(deadlockedPhilosophers(philosophers), "the philosophers deadlocked");
+            assertTrue(Arrays.stream(philosophers).allMatch(p -> p.getMealsEaten() >= MEALS_REQUIRED),
+                    "philosophers stopped making progress");
+        } finally {
+            for (PhilosopherWithLock philosopher : philosophers) {
+                philosopher.interrupt();
+            }
+            for (PhilosopherWithLock philosopher : philosophers) {
+                philosopher.join(JOIN_TIMEOUT_MILLIS);
+            }
         }
 
-        // Interrupt all philosophers to stop the simulation after a certain time
-        for (PhilosopherWithLock philosopherWithLock : philosopherWithLocks) {
-            philosopherWithLock.interrupt();
+        for (PhilosopherWithLock philosopher : philosophers) {
+            assertFalse(philosopher.isAlive(), "philosopher did not stop when interrupted");
         }
+        for (int i = 0; i < PHILOSOPHERS; i++) {
+            ReentrantLock fork = (ReentrantLock) forks[i];
+            assertFalse(fork.isLocked(), "fork " + i + " was left locked");
+        }
+    }
+
+    /**
+     * Reports the philosophers at this table that are deadlocked, or null if none are.
+     * <p>
+     * {@link java.lang.management.ThreadMXBean#findDeadlockedThreads()} scans the entire JVM, and the
+     * antipattern suite deliberately deadlocks threads that then stay blocked for the rest of the run.
+     * Asserting on the unfiltered result would make this test fail because of a deadlock some other
+     * test created on purpose, so restrict it to the threads this test started.
+     *
+     * @param philosophers the philosophers under test.
+     * @return the ids of the deadlocked philosophers, or null if none of them are deadlocked.
+     */
+    private static long[] deadlockedPhilosophers(PhilosopherWithLock[] philosophers) {
+        long[] deadlocked = ManagementFactory.getThreadMXBean().findDeadlockedThreads();
+        if (deadlocked == null) {
+            return null;
+        }
+        Set<Long> ours = Arrays.stream(philosophers).map(Thread::threadId).collect(Collectors.toSet());
+        long[] mine = Arrays.stream(deadlocked).filter(ours::contains).toArray();
+        return mine.length == 0 ? null : mine;
     }
 }

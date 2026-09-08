@@ -25,7 +25,7 @@ public class SingletonWithVolatile {
      */
     public static SingletonWithVolatile getInstance() {
         if (instance == null) { // First check (not synchronized)
-            synchronized (Singleton.class) {
+            synchronized (SingletonWithVolatile.class) {
                 if (instance == null) { // Second check (synchronized)
                     instance = new SingletonWithVolatile();
                 }
@@ -35,7 +35,7 @@ public class SingletonWithVolatile {
     }
 
     public void showMessage() {
-        System.out.println("Singleton instance method called.");
+        System.out.println("SingletonWithVolatile instance method called.");
     }
 
     public static void main(String[] args) {
