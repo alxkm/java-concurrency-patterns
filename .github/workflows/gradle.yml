@@ -92,21 +92,13 @@ jobs:
         path: |
           build/reports/tests/
           build/test-results/
+          build/reports/jacoco/
+        if-no-files-found: ignore
         retention-days: 30
 
     - name: Run quality checks (non-breaking)
       run: ./gradlew check -x test
       continue-on-error: true
-
-    - name: Upload test and coverage reports
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: test-reports
-        path: |
-          build/reports/tests/
-          build/reports/jacoco/
-        if-no-files-found: ignore
 
     # NOTE: The Gradle Wrapper is the default and recommended way to run Gradle (https://docs.gradle.org/current/userguide/gradle_wrapper.html).
     # If your project does not have the Gradle Wrapper configured, you can use the following configuration to run Gradle with a specified version.
