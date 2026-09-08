@@ -9,8 +9,9 @@ group 'org.alxkm'
 version '1.0-SNAPSHOT'
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
 }
 
 repositories {
@@ -18,12 +19,25 @@ repositories {
 }
 
 dependencies {
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.1'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.1'
+    testImplementation platform('org.junit:junit-bom:5.11.3')
+    testImplementation 'org.junit.jupiter:junit-jupiter-api'
+    testImplementation 'org.junit.jupiter:junit-jupiter-params'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.compilerArgs << '-Xlint:all'
 }
 
 test {
     useJUnitPlatform()
+
+    // A bug in a concurrency example is far more likely to hang than to fail an assertion. Without a
+    // default timeout a deadlock regression would stall CI until the job is killed, with no clue as to
+    // which test caused it; with one, the offending test fails by name.
+    systemProperty 'junit.jupiter.execution.timeout.default', '60s'
     finalizedBy jacocoTestReport
     
     // Enhanced test reporting - simple and effective
