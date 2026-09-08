@@ -1,0 +1,22 @@
+# Normalise everything Git detects as text to LF in the repository.
+* text=auto
+
+# gradlew is a shell script: CRLF makes it unrunnable on Linux and macOS, which is
+# exactly where CI runs it. Pin it to LF regardless of the contributor's platform.
+gradlew         text eol=lf
+*.sh            text eol=lf
+
+# Batch files need CRLF to be safe on Windows.
+gradlew.bat     text eol=crlf
+*.bat           text eol=crlf
+
+*.java          text diff=java
+*.gradle        text
+*.md            text diff=markdown
+*.yml           text
+*.properties    text
+
+*.png           binary
+*.jpg           binary
+*.jpeg          binary
+*.jar           binary
