@@ -26,6 +26,44 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
+// jcstress -- the OpenJDK harness for Java Memory Model races.
+//
+// Kept in its own source set, off the main build, on purpose. A jcstress run forks a JVM per test and
+// hammers each one for seconds at a time, so a full run takes minutes; wiring it into `check` would make
+// every build slow for a result that only changes when the memory-model examples change. Run it with:
+//
+//     ./gradlew jcstress
+//
+// The tests here exist because these races cannot be demonstrated by an ordinary unit test: lining two
+// threads up needs synchronisation, and that synchronisation is itself a barrier that hides the effect.
+sourceSets {
+    jcstress {
+        java.srcDir 'src/jcstress/java'
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+}
+
+dependencies {
+    jcstressImplementation 'org.openjdk.jcstress:jcstress-core:0.16'
+    jcstressAnnotationProcessor 'org.openjdk.jcstress:jcstress-core:0.16'
+}
+
+tasks.register('jcstress', JavaExec) {
+    group = 'verification'
+    description = 'Runs the Java Memory Model stress tests (minutes, not seconds).'
+    classpath = sourceSets.jcstress.runtimeClasspath
+    mainClass = 'org.openjdk.jcstress.Main'
+
+    // Default mode, not sanity: sanity collects a few dozen samples per test, and the reordering
+    // these tests exist to demonstrate shows up in roughly 4% of samples -- far too rare to appear.
+    // A full run is a few minutes. Pass -PjcstressArgs=... to override, e.g.
+    //     ./gradlew jcstress -PjcstressArgs="-t PlainFields -m quick"
+    def extra = (project.findProperty('jcstressArgs') ?: '').toString()
+    args(extra.isEmpty() ? ['-v', '-r', "${layout.buildDirectory.get()}/reports/jcstress"]
+                         : extra.split('\s+').toList())
+}
+
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
     options.compilerArgs << '-Xlint:all'
