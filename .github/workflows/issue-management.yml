@@ -21,7 +21,7 @@ jobs:
 
     steps:
     - name: Auto-label issues
-      uses: actions/github-script@v7
+      uses: actions/github-script@v9
       with:
         script: |
           const issue = context.payload.issue;
@@ -79,7 +79,7 @@ jobs:
           }
 
     - name: Welcome new contributors
-      uses: actions/github-script@v7
+      uses: actions/github-script@v9
       with:
         script: |
           const issue = context.payload.issue;
@@ -129,7 +129,7 @@ jobs:
 
     steps:
     - name: Auto-label pull requests
-      uses: actions/github-script@v7
+      uses: actions/github-script@v9
       with:
         script: |
           const pr = context.payload.pull_request;
@@ -193,7 +193,7 @@ jobs:
           }
 
     - name: Welcome new contributors PR
-      uses: actions/github-script@v7
+      uses: actions/github-script@v9
       with:
         script: |
           const pr = context.payload.pull_request;
@@ -240,7 +240,7 @@ jobs:
 
     steps:
     - name: Check PR requirements
-      uses: actions/github-script@v7
+      uses: actions/github-script@v9
       with:
         script: |
           const pr = context.payload.pull_request;
@@ -350,7 +350,7 @@ jobs:
 
     steps:
     - name: Ensure required labels exist
-      uses: actions/github-script@v7
+      uses: actions/github-script@v9
       with:
         script: |
           const labels = [
