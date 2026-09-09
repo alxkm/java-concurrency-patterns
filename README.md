@@ -15,6 +15,7 @@ classes that assert the concurrency property in question instead of sleeping and
 
 - [Getting started](#getting-started)
 - [Repository layout](#repository-layout)
+- [Memory model](#memory-model) — the rules everything else depends on
 - [Patterns](#patterns) — the example catalogue, by topic
 - [Antipatterns](#antipatterns) — each one with its description, its fix, and runnable examples
 - [java.util.concurrent.\*](#javautilconcurrent) — a reference guide to the package:
@@ -72,6 +73,72 @@ src/test/java/org/alxkm/
 └── testsupport/     Await and Concurrently — helpers for writing tests that assert
                      concurrency properties deterministically, without Thread.sleep
 ```
+
+## Memory model
+
+Every other section here shows a mechanism — a lock, a queue, an atomic. This one shows the rules those
+mechanisms exist to satisfy. Without them, "double-checked locking needs `volatile`" is a recipe to
+memorise rather than something you can reason about.
+
+The model is defined in terms of **happens-before**: an ordering between actions in different threads.
+If a write happens-before a read, the read must see that write. If no such edge exists, the read may see
+the write, may see a stale value, or may see actions in a different order than the source lists them —
+and the compiler, JIT and CPU are all free to exploit that freedom.
+
+- [VisibilityExample.java](./src/main/java/org/alxkm/memorymodel/VisibilityExample.java): a write another
+  thread never sees, and the one word that fixes it. Reproduces on every run.
+- [HappensBeforeExample.java](./src/main/java/org/alxkm/memorymodel/HappensBeforeExample.java): the four
+  edges you get for free — `Thread.start()`, `Thread.join()`, a volatile write/read pair, and a lock.
+- [SafePublicationExample.java](./src/main/java/org/alxkm/memorymodel/SafePublicationExample.java): handing
+  a new object to another thread so it cannot observe it half-built.
+- [FalseSharingExample.java](./src/main/java/org/alxkm/memorymodel/FalseSharingExample.java): correctness
+  is not the only cost — two unrelated fields on one cache line run about 3x slower.
+
+### Why `volatile`, concretely
+
+Run the visibility example and the answer stops being abstract:
+
+```
+$ java -cp build/classes/java/main org.alxkm.memorymodel.VisibilityExample
+plain field    -> reader observed the write: false
+volatile field -> reader observed the write: true
+```
+
+The reader spins on a flag another thread sets. With a plain field it spins forever: nothing in the loop
+writes the flag, so the JIT may hoist the read out and turn `while (!flag)` into `if (!flag) while (true)`.
+That is legal precisely because no happens-before edge exists between the writer's store and the reader's
+load. One `volatile` creates the edge and the loop exits.
+
+### Stress tests: what a unit test cannot show
+
+Some of these races cannot be demonstrated by an ordinary test, and it is worth being precise about why.
+Lining two threads up requires synchronisation, and that synchronisation is itself a memory barrier that
+drains the store buffer producing the effect. Measured here, the textbook Dekker probe found **zero**
+reorderings in 20,000 thread-pair runs and **zero** in 500,000 barrier-synchronised iterations.
+
+[jcstress](https://github.com/openjdk/jcstress), the OpenJDK harness built for this, spins the actors
+without synchronisation and shuffles JIT decisions between forks. Given the same idiom:
+
+```
+RESULT       SAMPLES     FREQ       EXPECT  DESCRIPTION
+  0, 0     9,914,377    3.74%  Interesting  Reordering: neither load saw the other store
+  0, 1   126,435,416   47.65%   Acceptable  actor1 ran first
+  1, 0   128,998,594   48.61%   Acceptable  actor2 ran first
+```
+
+That gap — zero by hand, millions under jcstress — is the lesson. These bugs do not fail loudly in
+testing; they fail in production, rarely, on someone else's hardware.
+
+The same suite marks the *safe* variants `FORBIDDEN`, so a run fails if a guarantee is ever violated:
+volatile fields must never produce `0, 0`, and a final field must never be observed at its default.
+
+```bash
+./gradlew jcstress                                          # full run, a few minutes
+./gradlew jcstress -PjcstressArgs="-t PlainFields -m quick"  # one test, faster
+```
+
+`./gradlew build` compiles these tests but does not run them — a full pass takes minutes, which does not
+belong in every build. Reports land in `build/reports/jcstress`.
 
 ## Patterns
 

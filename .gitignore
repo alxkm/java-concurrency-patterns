@@ -251,3 +251,7 @@ perf.data*
 
 # Core dumps
 core.*
+
+# jcstress writes its run artifacts into the working directory
+results/
+jcstress-results-*.bin.gz
