@@ -47,7 +47,7 @@ public class BusyWaitingExampleTest {
 
         Thread busyWaitThread = new Thread(() -> {
             ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
-            long threadId = Thread.currentThread().getId();
+            long threadId = Thread.currentThread().threadId();
             threadStarted.countDown();
             
             // Measure CPU time before busy waiting

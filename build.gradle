@@ -5,8 +5,8 @@ plugins {
     id 'pmd'
 }
 
-group 'org.alxkm'
-version '1.0-SNAPSHOT'
+group = 'org.alxkm'
+version = '1.0-SNAPSHOT'
 
 java {
     toolchain {
@@ -40,85 +40,61 @@ test {
     systemProperty 'junit.jupiter.execution.timeout.default', '60s'
     finalizedBy jacocoTestReport
     
-    // Enhanced test reporting - simple and effective
+    // Report failures as they happen, with enough detail to diagnose them from a CI log.
     testLogging {
-        // Always show these events regardless of log level
-        events "failed", "skipped"
-        exceptionFormat "full"
-        showCauses true
-        showExceptions true
-        showStackTraces true
+        events 'failed', 'skipped'
+        exceptionFormat = 'full'
+        showCauses = true
+        showExceptions = true
+        showStackTraces = true
         showStandardStreams = false
-        
-        // More details when running with --info
+
         info {
-            events "started", "passed", "failed", "skipped"
-            exceptionFormat "full"
+            events 'started', 'passed', 'failed', 'skipped'
+            exceptionFormat = 'full'
         }
-        
-        // Debug level for complete output
+
         debug {
-            events "started", "passed", "skipped", "failed", "standardOut", "standardError"
-            exceptionFormat "full"
+            events 'started', 'passed', 'skipped', 'failed', 'standardOut', 'standardError'
+            exceptionFormat = 'full'
         }
     }
-    
-    // Print a summary after test execution
-    afterSuite { desc, result ->
-        if (!desc.parent) { // Only execute this for the overall test suite
-            def output = "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)"
-            def startItem = '|  ', endItem = '  |'
-            def repeatLength = startItem.length() + output.length() + endItem.length()
-            println('\n' + ('-' * repeatLength) + '\n' + startItem + output + endItem + '\n' + ('-' * repeatLength))
-            
-            // Print additional failure details if any failures occurred
+
+    // A one-line tally once the run finishes. The afterSuite/beforeTest/afterTest closures this
+    // replaces are deprecated and go away in Gradle 10; addTestListener is their replacement.
+    addTestListener(new TestListener() {
+        @Override void beforeSuite(TestDescriptor suite) {}
+        @Override void beforeTest(TestDescriptor test) {}
+        @Override void afterTest(TestDescriptor test, TestResult result) {}
+
+        @Override
+        void afterSuite(TestDescriptor suite, TestResult result) {
+            if (suite.parent != null) {
+                return // only the root suite carries the totals
+            }
+            def summary = "Results: ${result.resultType} (${result.testCount} tests, " +
+                    "${result.successfulTestCount} successes, ${result.failedTestCount} failures, " +
+                    "${result.skippedTestCount} skipped)"
+            def rule = '-' * (summary.length() + 6)
+            println()
+            println(rule)
+            println("|  ${summary}  |")
+            println(rule)
             if (result.failedTestCount > 0) {
-                println("\n🔴 FAILED TESTS DETECTED! Check the detailed output above for specific test failures.")
-                println("📊 Test Reports will be available in: build/reports/tests/test/index.html")
-                println("📁 Test Results XML: build/test-results/test/")
+                println()
+                println('Failed tests are listed above. Reports: build/reports/tests/test/index.html')
             }
         }
-    }
-    
-    // Track test execution (optional - can be removed if too verbose)
-    beforeTest { desc ->
-        if (logger.isInfoEnabled()) {
-            println("🧪 Running: ${desc.className}.${desc.name}")
-        }
-    }
-    
-    // Print details for each failed test
-    afterTest { desc, result ->
-        if (result.resultType == TestResult.ResultType.FAILURE) {
-            def border = "=" * 80
-            println("\n${border}")
-            println("❌ FAILED TEST: ${desc.className}.${desc.name}")
-            println("   Duration: ${result.endTime - result.startTime}ms")
-            if (result.exception) {
-                println("   Exception: ${result.exception.class.simpleName}")
-                println("   Message: ${result.exception.message}")
-                if (result.exception.cause) {
-                    println("   Cause: ${result.exception.cause.message}")
-                }
-                if (result.exception.stackTrace) {
-                    println("   Stack Trace:")
-                    result.exception.stackTrace.take(5).each { trace ->
-                        println("     at ${trace}")
-                    }
-                }
-            }
-            println("${border}")
-        }
-    }
+    })
 }
 
 // Custom task to print failed test details
 task printFailedTests {
     doLast {
-        def testResultsDir = file("$buildDir/test-results/test")
+        def testResultsDir = layout.buildDirectory.dir('test-results/test').get().asFile
         if (testResultsDir.exists()) {
             testResultsDir.listFiles().findAll { it.name.endsWith('.xml') }.each { file ->
-                def xml = new XmlSlurper().parse(file)
+                def xml = new groovy.xml.XmlSlurper().parse(file)
                 xml.testcase.each { testcase ->
                     if (testcase.failure.size() > 0) {
                         println("\n💥 FAILED TEST: ${testcase.@classname}.${testcase.@name}")
