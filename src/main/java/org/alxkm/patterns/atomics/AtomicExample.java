@@ -13,8 +13,10 @@ public class AtomicExample {
 
     /**
      * Demonstrates the usage of AtomicBoolean.
+     *
+     * @return the value left in the AtomicBoolean once the sequence above has run.
      */
-    public static void atomicBooleanExample() {
+    public static boolean atomicBooleanExample() {
         AtomicBoolean atomicBoolean = new AtomicBoolean(true);
         System.out.println("Initial value of AtomicBoolean: " + atomicBoolean.get());
 
@@ -26,12 +28,16 @@ public class AtomicExample {
         // Compare-and-set (CAS): change from false to true if currently false
         boolean cas = atomicBoolean.compareAndSet(false, true);
         System.out.println("CAS from false->true applied: " + cas + ", current: " + atomicBoolean.get());
+
+        return atomicBoolean.get();
     }
 
     /**
      * Demonstrates the usage of AtomicInteger.
+     *
+     * @return the value left in the AtomicInteger once the sequence above has run.
      */
-    public static void atomicIntegerExample() {
+    public static int atomicIntegerExample() {
         AtomicInteger atomicInteger = new AtomicInteger(10);
         System.out.println("Initial value of AtomicInteger: " + atomicInteger.get());
 
@@ -46,12 +52,16 @@ public class AtomicExample {
         // Compare-and-set (only changes if the expected value matches)
         boolean cas = atomicInteger.compareAndSet(16, 42);
         System.out.println("compareAndSet(16->42) applied: " + cas + ", current: " + atomicInteger.get());
+
+        return atomicInteger.get();
     }
 
     /**
      * Demonstrates the usage of AtomicLong.
+     *
+     * @return the value left in the AtomicLong once the sequence above has run.
      */
-    public static void atomicLongExample() {
+    public static long atomicLongExample() {
         AtomicLong atomicLong = new AtomicLong(100);
         System.out.println("Initial value of AtomicLong: " + atomicLong.get());
 
@@ -62,12 +72,16 @@ public class AtomicExample {
         // Atomic update with a function (Java 8+)
         long updated = atomicLong.updateAndGet(v -> v * 2);
         System.out.println("Value after updateAndGet(v -> v * 2): " + updated);
+
+        return atomicLong.get();
     }
 
     /**
      * Demonstrates the usage of AtomicIntegerArray.
+     *
+     * @return the array contents once the sequence above has run.
      */
-    public static void atomicIntegerArrayExample() {
+    public static int[] atomicIntegerArrayExample() {
         int[] values = {1, 2, 3};
         AtomicIntegerArray atomicIntegerArray = new AtomicIntegerArray(values);
         System.out.println("Initial values of AtomicIntegerArray: " + atomicIntegerArray);
@@ -80,12 +94,20 @@ public class AtomicExample {
         // CAS at index 0
         boolean cas = atomicIntegerArray.compareAndSet(0, 1, 10);
         System.out.println("CAS at index 0 (1->10) applied: " + cas + ", values: " + atomicIntegerArray);
+
+        int[] result = new int[atomicIntegerArray.length()];
+        for (int i = 0; i < result.length; i++) {
+            result[i] = atomicIntegerArray.get(i);
+        }
+        return result;
     }
 
     /**
      * Demonstrates the usage of AtomicLongArray.
+     *
+     * @return the array contents once the sequence above has run.
      */
-    public static void atomicLongArrayExample() {
+    public static long[] atomicLongArrayExample() {
         long[] values = {100, 200, 300};
         AtomicLongArray atomicLongArray = new AtomicLongArray(values);
         System.out.println("Initial values of AtomicLongArray: " + atomicLongArray);
@@ -103,6 +125,12 @@ public class AtomicExample {
             atomicLongArray.incrementAndGet(i);
         }
         System.out.println("After incrementing all elements: " + atomicLongArray);
+
+        long[] result = new long[atomicLongArray.length()];
+        for (int i = 0; i < result.length; i++) {
+            result[i] = atomicLongArray.get(i);
+        }
+        return result;
     }
 
     public static void main(String[] args) {
