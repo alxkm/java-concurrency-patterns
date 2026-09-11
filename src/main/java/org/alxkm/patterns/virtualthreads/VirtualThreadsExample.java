@@ -14,6 +14,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
@@ -26,16 +27,32 @@ import java.util.stream.IntStream;
  */
 public class VirtualThreadsExample {
 
+    /** Task count used by the no-argument demo overloads and by main. */
+    private static final int DEMO_TASKS = 10_000;
+
+    /** How long each demo task blocks for, in milliseconds. */
+    private static final int DEMO_SLEEP_MILLIS = 100;
+
+    /** Item count for the producer-consumer demo. */
+    private static final int DEMO_ITEMS = 1000;
+
+    /** Task count for the massive-concurrency demo. */
+    private static final int DEMO_MASSIVE_TASKS = 100_000;
+
     /**
      * Basic virtual thread creation and execution.
+     *
+     * @return true if the work really ran on a virtual thread.
      */
-    public static void basicVirtualThreadExample() {
+    public static boolean basicVirtualThreadExample() {
+        AtomicBoolean ranOnVirtualThread = new AtomicBoolean();
         System.out.println("=== Basic Virtual Thread Example ===");
         
         // Create and start a virtual thread
         Thread virtualThread = Thread.ofVirtual()
                 .name("virtual-worker")
                 .start(() -> {
+                    ranOnVirtualThread.set(Thread.currentThread().isVirtual());
                     System.out.println("Running in virtual thread: " + Thread.currentThread());
                     try {
                         Thread.sleep(1000); // Simulate I/O operation
@@ -50,16 +67,41 @@ public class VirtualThreadsExample {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
+        return ranOnVirtualThread.get();
     }
 
     /**
-     * Comparing platform threads vs virtual threads performance.
+     * How long the same batch of blocking tasks took on each kind of thread.
+     *
+     * @param platformMillis elapsed time using a fixed pool of platform threads.
+     * @param virtualMillis  elapsed time using one virtual thread per task.
      */
-    public static void performanceComparison() {
+    public record Timings(long platformMillis, long virtualMillis) {
+    }
+
+    /**
+     * Comparing platform threads vs virtual threads on blocking work, at the demo size.
+     *
+     * @return the two timings.
+     */
+    public static Timings performanceComparison() {
+        return performanceComparison(DEMO_TASKS, DEMO_SLEEP_MILLIS);
+    }
+
+    /**
+     * Comparing platform threads vs virtual threads on blocking work.
+     *
+     * The gap comes from what blocking costs. A platform thread parked in sleep holds an OS thread, so
+     * the fixed pool keeps only 200 tasks in flight at a time. A virtual thread parked in sleep releases
+     * its carrier, so every task is in flight at once.
+     *
+     * @param numTasks      how many tasks to run on each kind of thread.
+     * @param sleepDuration how long each task blocks, in milliseconds.
+     * @return the two timings.
+     */
+    public static Timings performanceComparison(int numTasks, int sleepDuration) {
         System.out.println("\n=== Performance Comparison ===");
         
-        final int numTasks = 10_000;
-        final int sleepDuration = 100; // milliseconds
 
         // Test with platform threads
         Instant start = Instant.now();
@@ -80,8 +122,10 @@ public class VirtualThreadsExample {
             for (Future<?> future : futures) {
                 try {
                     future.get();
-                } catch (InterruptedException | ExecutionException e) {
-                    e.printStackTrace();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                } catch (ExecutionException e) {
+                    throw new IllegalStateException("platform task failed", e);
                 }
             }
         }
@@ -106,8 +150,10 @@ public class VirtualThreadsExample {
             for (Future<?> future : futures) {
                 try {
                     future.get();
-                } catch (InterruptedException | ExecutionException e) {
-                    e.printStackTrace();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                } catch (ExecutionException e) {
+                    throw new IllegalStateException("virtual task failed", e);
                 }
             }
         }
@@ -116,19 +162,32 @@ public class VirtualThreadsExample {
         System.out.printf("Platform threads time: %d ms%n", platformTime.toMillis());
         System.out.printf("Virtual threads time: %d ms%n", virtualTime.toMillis());
         System.out.printf("Virtual threads are %.2fx faster%n", 
-            (double) platformTime.toMillis() / virtualTime.toMillis());
+            (double) platformTime.toMillis() / Math.max(1, virtualTime.toMillis()));
+
+        return new Timings(platformTime.toMillis(), virtualTime.toMillis());
+    }
+
+    /**
+     * Producer-Consumer pattern with virtual threads, at the demo size.
+     *
+     * @return the number of items consumed.
+     */
+    public static int producerConsumerWithVirtualThreads() {
+        return producerConsumerWithVirtualThreads(DEMO_ITEMS);
     }
 
     /**
      * Producer-Consumer pattern with virtual threads.
+     *
+     * @param totalItems how many items the producer publishes.
+     * @return the number of items consumed, which should equal totalItems.
      */
-    public static void producerConsumerWithVirtualThreads() {
+    public static int producerConsumerWithVirtualThreads(int totalItems) {
         System.out.println("\n=== Producer-Consumer with Virtual Threads ===");
         
         BlockingQueue<String> queue = new LinkedBlockingQueue<>(100);
         AtomicInteger produced = new AtomicInteger(0);
         AtomicInteger consumed = new AtomicInteger(0);
-        final int totalItems = 1000;
 
         // Create virtual thread producer
         Thread producer = Thread.ofVirtual()
@@ -179,6 +238,7 @@ public class VirtualThreadsExample {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
+        return consumed.get();
     }
 
     /**
@@ -245,7 +305,7 @@ public class VirtualThreadsExample {
     /**
      * Demonstrates virtual thread pools and task execution.
      */
-    public static void virtualThreadPoolExample() {
+    public static int virtualThreadPoolExample() {
         System.out.println("\n=== Virtual Thread Pool Example ===");
         
         // Create a custom virtual thread factory
@@ -282,19 +342,22 @@ public class VirtualThreadsExample {
             for (Future<Integer> future : futures) {
                 try {
                     totalResult += future.get();
-                } catch (InterruptedException | ExecutionException e) {
-                    e.printStackTrace();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                } catch (ExecutionException e) {
+                    throw new IllegalStateException("pooled task failed", e);
                 }
             }
-            
+
             System.out.println("Total result from all tasks: " + totalResult);
+            return totalResult;
         }
     }
 
     /**
      * Demonstrates virtual threads with CompletableFuture.
      */
-    public static void virtualThreadsWithCompletableFuture() {
+    public static String virtualThreadsWithCompletableFuture() {
         System.out.println("\n=== Virtual Threads with CompletableFuture ===");
         
         try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
@@ -329,21 +392,36 @@ public class VirtualThreadsExample {
                     }, executor);
             
             try {
-                String finalResult = result.get(1, TimeUnit.SECONDS);
+                String finalResult = result.get(10, TimeUnit.SECONDS);
                 System.out.println("CompletableFuture result: " + finalResult);
-            } catch (TimeoutException | ExecutionException | InterruptedException e) {
-                System.err.println("CompletableFuture failed: " + e.getMessage());
+                return finalResult;
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException("interrupted while composing the chain", e);
+            } catch (TimeoutException | ExecutionException e) {
+                throw new IllegalStateException("CompletableFuture chain failed", e);
             }
         }
     }
 
     /**
-     * Demonstrates massive concurrency with virtual threads.
+     * Demonstrates massive concurrency with virtual threads, at the demo size.
+     *
+     * @return the number of tasks that completed.
      */
-    public static void massiveConcurrencyExample() {
+    public static int massiveConcurrencyExample() {
+        return massiveConcurrencyExample(DEMO_MASSIVE_TASKS);
+    }
+
+    /**
+     * Demonstrates massive concurrency with virtual threads.
+     *
+     * @param numTasks how many tasks to run concurrently.
+     * @return the number of tasks that completed, which should equal numTasks.
+     */
+    public static int massiveConcurrencyExample(int numTasks) {
         System.out.println("\n=== Massive Concurrency Example ===");
         
-        final int numTasks = 100_000;
         AtomicInteger completedTasks = new AtomicInteger(0);
         
         Instant start = Instant.now();
@@ -374,17 +452,21 @@ public class VirtualThreadsExample {
             for (Future<?> future : futures) {
                 try {
                     future.get();
-                } catch (InterruptedException | ExecutionException e) {
-                    e.printStackTrace();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                } catch (ExecutionException e) {
+                    throw new IllegalStateException("task failed", e);
                 }
             }
         }
-        
+
         Duration totalTime = Duration.between(start, Instant.now());
         System.out.printf("Completed %d virtual threads in %d ms%n", 
             completedTasks.get(), totalTime.toMillis());
-        System.out.printf("Average time per task: %.3f ms%n", 
+        System.out.printf("Average time per task: %.3f ms%n",
             (double) totalTime.toMillis() / numTasks);
+
+        return completedTasks.get();
     }
 
     /**

@@ -1,217 +1,80 @@
 package org.alxkm.antipatterns.threadleakage;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Timeout;
 
-import java.lang.management.ManagementFactory;
-import java.lang.management.ThreadMXBean;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.RejectedExecutionException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class ThreadLeakageTest {
+/**
+ * Tests for {@link ThreadLeakageExample} and {@link ThreadLeakageResolution}.
+ * <p>
+ * The antipattern is not "threads are bad", it is that thread count grows with the amount of work
+ * instead of staying flat. Both classes report how many distinct threads actually ran their tasks, so
+ * that growth is the thing measured here rather than something the reader has to take on trust.
+ */
+class ThreadLeakageTest {
 
-    /**
-     * Demonstrates that creating threads without limit causes thread leakage
-     */
+    private static final int POOL_SIZE = 10;
+
     @Test
-    @Timeout(value = 10, unit = TimeUnit.SECONDS)
-    public void testThreadLeakage() throws InterruptedException {
-        ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
-        int initialThreadCount = threadMXBean.getThreadCount();
-        
-        AtomicInteger threadsCreated = new AtomicInteger(0);
-        AtomicBoolean stopCreating = new AtomicBoolean(false);
-        
-        // Modified version that we can control
-        Thread leakingThread = new Thread(() -> {
-            while (!stopCreating.get() && threadsCreated.get() < 50) {
-                new Thread(() -> {
-                    try {
-                        Thread.sleep(5000); // Keep threads alive longer
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                    }
-                }).start();
-                threadsCreated.incrementAndGet();
-                
-                try {
-                    Thread.sleep(50); // Small delay between thread creation
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    break;
-                }
-            }
-        });
-        
-        leakingThread.start();
-        
-        // Let it create some threads
-        Thread.sleep(1000);
-        stopCreating.set(true);
-        leakingThread.join();
-        
-        // Check thread count increased significantly
-        int currentThreadCount = threadMXBean.getThreadCount();
-        int threadsLeaked = currentThreadCount - initialThreadCount;
-        
-        assertTrue(threadsLeaked > 10, 
-                   "Thread leakage should cause increase in thread count. " +
-                   "Initial: " + initialThreadCount + ", Current: " + currentThreadCount + 
-                   ", Leaked: " + threadsLeaked);
-        
-        // Verify threads were created
-        assertTrue(threadsCreated.get() > 10, "Should have created threads");
+    void unpooledWorkCostsOneThreadPerTask() throws InterruptedException {
+        int tasks = 50;
+
+        int threadsUsed = new ThreadLeakageExample().startThreads(tasks);
+
+        assertEquals(tasks, threadsUsed,
+                "a fresh thread per task means thread count tracks workload, which is the leak");
+    }
+
+    @Test
+    void pooledWorkReusesAFixedSetOfThreads() throws InterruptedException {
+        int tasks = 50;
+
+        int threadsUsed = new ThreadLeakageResolution().startThreads(tasks);
+
+        assertTrue(threadsUsed <= POOL_SIZE,
+                "a fixed pool must not exceed its size, but used " + threadsUsed + " threads");
+        assertTrue(threadsUsed > 0, "the tasks should have run somewhere");
     }
 
     /**
-     * Demonstrates memory impact of thread leakage
+     * The same comparison with five times the work. The unpooled count rises with it; the pooled count
+     * does not move. That difference is the whole point of the pattern.
      */
     @Test
-    @Timeout(value = 10, unit = TimeUnit.SECONDS)
-    public void testThreadLeakageMemoryImpact() throws InterruptedException {
-        Runtime runtime = Runtime.getRuntime();
-        runtime.gc(); // Request garbage collection
-        Thread.sleep(100);
-        
-        long initialMemory = runtime.totalMemory() - runtime.freeMemory();
-        AtomicBoolean stopCreating = new AtomicBoolean(false);
-        AtomicInteger threadsCreated = new AtomicInteger(0);
-        
-        // Create threads with larger stack allocations
-        Thread leakingThread = new Thread(() -> {
-            while (!stopCreating.get() && threadsCreated.get() < 30) {
-                Thread t = new Thread(() -> {
-                    byte[] data = new byte[1024 * 10]; // 10KB per thread
-                    try {
-                        Thread.sleep(10000); // Keep alive for measurement
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                    }
-                });
-                t.start();
-                threadsCreated.incrementAndGet();
-                
-                try {
-                    Thread.sleep(50);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    break;
-                }
-            }
-        });
-        
-        leakingThread.start();
-        Thread.sleep(2000);
-        stopCreating.set(true);
-        leakingThread.join();
-        
-        runtime.gc();
-        Thread.sleep(100);
-        long currentMemory = runtime.totalMemory() - runtime.freeMemory();
-        long memoryIncrease = currentMemory - initialMemory;
-        
-        // Memory may or may not increase significantly due to GC
-        // Just verify we created threads without errors
-        assertTrue(threadsCreated.get() > 0, 
-                   "Should have created threads. Created: " + threadsCreated.get());
+    void onlyTheUnpooledThreadCountGrowsWithTheWorkload() throws InterruptedException {
+        int small = 20;
+        int large = 100;
+
+        int unpooledSmall = new ThreadLeakageExample().startThreads(small);
+        int unpooledLarge = new ThreadLeakageExample().startThreads(large);
+        int pooledSmall = new ThreadLeakageResolution().startThreads(small);
+        int pooledLarge = new ThreadLeakageResolution().startThreads(large);
+
+        assertEquals(small, unpooledSmall);
+        assertEquals(large, unpooledLarge);
+        assertTrue(pooledSmall <= POOL_SIZE && pooledLarge <= POOL_SIZE,
+                "pooled runs used " + pooledSmall + " and " + pooledLarge + " threads, both should be <= "
+                        + POOL_SIZE);
     }
 
     /**
-     * Demonstrates that leaked threads prevent JVM shutdown
+     * A pool is single use here: startThreads shuts it down on the way out, so a second call is
+     * rejected outright rather than quietly starting threads again.
+     * <p>
+     * The rejection comes from the default AbortPolicy. Worth knowing, because the alternative
+     * policies fail much more quietly: DiscardPolicy drops the task without a word, and
+     * CallerRunsPolicy runs it on the calling thread.
      */
     @Test
-    @Timeout(value = 5, unit = TimeUnit.SECONDS)
-    public void testLeakedThreadsPreventShutdown() throws InterruptedException {
-        AtomicInteger nonDaemonThreadsCreated = new AtomicInteger(0);
-        CountDownLatch threadCreated = new CountDownLatch(1);
-        
-        // Create a non-daemon thread that would prevent JVM shutdown
-        Thread leaker = new Thread(() -> {
-            Thread nonDaemonThread = new Thread(() -> {
-                try {
-                    Thread.sleep(60000); // Sleep for a long time
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            });
-            nonDaemonThread.setDaemon(false); // Non-daemon thread
-            nonDaemonThread.start();
-            nonDaemonThreadsCreated.incrementAndGet();
-            threadCreated.countDown();
-        });
-        
-        leaker.start();
-        leaker.join();
-        threadCreated.await();
-        
-        // Verify non-daemon thread was created
-        assertEquals(1, nonDaemonThreadsCreated.get(), 
-                     "Should have created a non-daemon thread");
-        
-        // In a real application, this thread would prevent JVM shutdown
-        // For testing, we just verify it was created
-    }
+    void poolRejectsWorkOnceShutDown() throws InterruptedException {
+        ThreadLeakageResolution resolution = new ThreadLeakageResolution();
+        resolution.startThreads(5);
 
-    /**
-     * Demonstrates resource exhaustion from thread leakage
-     */
-    @Test
-    @Timeout(value = 10, unit = TimeUnit.SECONDS)
-    public void testResourceExhaustion() {
-        AtomicInteger threadsCreated = new AtomicInteger(0);
-        AtomicBoolean outOfResourcesDetected = new AtomicBoolean(false);
-        AtomicBoolean stopCreating = new AtomicBoolean(false);
-        
-        Thread leaker = new Thread(() -> {
-            while (!stopCreating.get() && !outOfResourcesDetected.get()) {
-                try {
-                    Thread t = new Thread(() -> {
-                        try {
-                            Thread.sleep(30000); // Keep threads alive
-                        } catch (InterruptedException e) {
-                            Thread.currentThread().interrupt();
-                        }
-                    });
-                    t.start();
-                    threadsCreated.incrementAndGet();
-                    
-                    // Stop after creating many threads to avoid system issues
-                    if (threadsCreated.get() >= 100) {
-                        break;
-                    }
-                } catch (OutOfMemoryError e) {
-                    // This might happen if too many threads are created
-                    outOfResourcesDetected.set(true);
-                    break;
-                }
-                
-                try {
-                    Thread.sleep(10);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    break;
-                }
-            }
-        });
-        
-        leaker.start();
-        
-        try {
-            leaker.join(5000); // Wait max 5 seconds
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        
-        stopCreating.set(true);
-        
-        // Verify significant number of threads were created
-        assertTrue(threadsCreated.get() > 50 || outOfResourcesDetected.get(), 
-                   "Should have created many threads or detected resource exhaustion. " +
-                   "Created: " + threadsCreated.get());
+        assertThrows(RejectedExecutionException.class, () -> resolution.startThreads(5),
+                "submitting to a shut-down pool should be rejected, not silently accepted");
     }
 }

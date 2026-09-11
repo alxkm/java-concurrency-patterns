@@ -1,5 +1,7 @@
 package org.alxkm.antipatterns.threadleakage;
 
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -16,6 +18,9 @@ public class ThreadLeakageResolution {
     private static final int POOL_SIZE = 10;
     private static final int TASK_COUNT = 100;
 
+    /** Matches {@link ThreadLeakageExample} so the two can be compared directly. */
+    private static final long WORK_MILLIS = 50;
+
     private final ExecutorService executorService;
 
     /**
@@ -28,9 +33,9 @@ public class ThreadLeakageResolution {
 
     public static void main(String[] args) throws InterruptedException {
         ThreadLeakageResolution example = new ThreadLeakageResolution();
-        example.startThreads(TASK_COUNT);
+        int threadsUsed = example.startThreads(TASK_COUNT);
 
-        System.out.println("Ran " + TASK_COUNT + " tasks on at most " + POOL_SIZE + " threads.");
+        System.out.println("Ran " + TASK_COUNT + " tasks on " + threadsUsed + " distinct threads.");
     }
 
     /**
@@ -38,14 +43,18 @@ public class ThreadLeakageResolution {
      * waits for the tasks already accepted to finish.
      *
      * @param taskCount how many tasks to submit
+     * @return the number of distinct threads that ran the tasks, never more than {@value #POOL_SIZE}
      * @throws InterruptedException if this thread is interrupted while waiting for the pool to drain
      */
-    public void startThreads(int taskCount) throws InterruptedException {
+    public int startThreads(int taskCount) throws InterruptedException {
+        Set<Long> threadIds = ConcurrentHashMap.newKeySet();
+
         for (int i = 0; i < taskCount; i++) {
             executorService.submit(() -> {
+                threadIds.add(Thread.currentThread().threadId());
                 // Simulate some work with a sleep
                 try {
-                    Thread.sleep(1000);
+                    Thread.sleep(WORK_MILLIS);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
@@ -57,5 +66,6 @@ public class ThreadLeakageResolution {
         if (!executorService.awaitTermination(1, TimeUnit.MINUTES)) {
             executorService.shutdownNow();
         }
+        return threadIds.size();
     }
 }

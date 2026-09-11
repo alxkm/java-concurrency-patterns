@@ -1,10 +1,12 @@
 package org.alxkm.patterns.producerconsumer;
 
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Basic Producer-Consumer pattern implementation using ArrayBlockingQueue.
@@ -18,32 +20,60 @@ public class BasicProducerConsumerExample {
     private static final int NUM_CONSUMERS = 3;
     private static final int ITEMS_PER_PRODUCER = 5;
 
+    /**
+     * What a run of the pattern produced and consumed.
+     *
+     * @param produced how many items the producers put on the queue.
+     * @param consumed how many items the consumers took off it.
+     */
+    public record Result(int produced, int consumed) {
+    }
+
     public static void main(String[] args) throws InterruptedException {
+        Result result = run(NUM_PRODUCERS, NUM_CONSUMERS, ITEMS_PER_PRODUCER);
+        System.out.printf("Produced: %d, Consumed: %d%n", result.produced(), result.consumed());
+    }
+
+    /**
+     * Runs the pattern and returns once every produced item has been consumed.
+     *
+     * Waiting on a latch rather than sleeping a fixed interval is what makes the outcome meaningful:
+     * a sleep either cuts the run short on a slow machine or wastes time on a fast one, and either way
+     * the counts it reports depend on the clock rather than on the code.
+     *
+     * @param producers        how many producer tasks to run.
+     * @param consumers        how many consumer tasks to run.
+     * @param itemsPerProducer how many items each producer publishes.
+     * @return the produced and consumed counts, which should be equal.
+     * @throws InterruptedException if this thread is interrupted while waiting.
+     */
+    public static Result run(int producers, int consumers, int itemsPerProducer) throws InterruptedException {
         BlockingQueue<String> queue = new ArrayBlockingQueue<>(QUEUE_CAPACITY);
-        ExecutorService executor = Executors.newFixedThreadPool(NUM_PRODUCERS + NUM_CONSUMERS);
+        AtomicInteger produced = new AtomicInteger();
+        AtomicInteger consumed = new AtomicInteger();
+        CountDownLatch allConsumed = new CountDownLatch(producers * itemsPerProducer);
+        ExecutorService executor = Executors.newFixedThreadPool(producers + consumers);
 
         try {
-            // Start producers
-            for (int i = 0; i < NUM_PRODUCERS; i++) {
-                final int producerId = i;
-                executor.submit(new Producer(queue, producerId, ITEMS_PER_PRODUCER));
+            for (int i = 0; i < producers; i++) {
+                executor.submit(new Producer(queue, i, itemsPerProducer, produced));
+            }
+            for (int i = 0; i < consumers; i++) {
+                executor.submit(new Consumer(queue, i, consumed, allConsumed));
             }
 
-            // Start consumers
-            for (int i = 0; i < NUM_CONSUMERS; i++) {
-                final int consumerId = i;
-                executor.submit(new Consumer(queue, consumerId));
+            if (!allConsumed.await(30, TimeUnit.SECONDS)) {
+                throw new IllegalStateException(
+                        "timed out with " + consumed.get() + " of " + (producers * itemsPerProducer)
+                                + " items consumed");
             }
-
-            // Let the system run for a while
-            Thread.sleep(5000);
-
         } finally {
-            executor.shutdown();
+            executor.shutdownNow();
             if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
-                executor.shutdownNow();
+                throw new IllegalStateException("executor did not terminate");
             }
         }
+        return new Result(produced.get(), consumed.get());
     }
 
     /**
@@ -53,11 +83,14 @@ public class BasicProducerConsumerExample {
         private final BlockingQueue<String> queue;
         private final int producerId;
         private final int itemCount;
+        private final AtomicInteger producedCount;
 
-        public Producer(BlockingQueue<String> queue, int producerId, int itemCount) {
+        public Producer(BlockingQueue<String> queue, int producerId, int itemCount,
+                        AtomicInteger producedCount) {
             this.queue = queue;
             this.producerId = producerId;
             this.itemCount = itemCount;
+            this.producedCount = producedCount;
         }
 
         @Override
@@ -66,6 +99,7 @@ public class BasicProducerConsumerExample {
                 for (int i = 0; i < itemCount; i++) {
                     String item = "Item-" + producerId + "-" + i;
                     queue.put(item); // Blocks if queue is full
+                    producedCount.incrementAndGet();
                     System.out.println("Producer " + producerId + " produced: " + item);
                     Thread.sleep(100); // Simulate production time
                 }
@@ -83,10 +117,15 @@ public class BasicProducerConsumerExample {
     static class Consumer implements Runnable {
         private final BlockingQueue<String> queue;
         private final int consumerId;
+        private final AtomicInteger consumedCount;
+        private final CountDownLatch allConsumed;
 
-        public Consumer(BlockingQueue<String> queue, int consumerId) {
+        public Consumer(BlockingQueue<String> queue, int consumerId, AtomicInteger consumedCount,
+                        CountDownLatch allConsumed) {
             this.queue = queue;
             this.consumerId = consumerId;
+            this.consumedCount = consumedCount;
+            this.allConsumed = allConsumed;
         }
 
         @Override
@@ -95,8 +134,9 @@ public class BasicProducerConsumerExample {
                 while (!Thread.currentThread().isInterrupted()) {
                     String item = queue.poll(1, TimeUnit.SECONDS); // Wait up to 1 second for item
                     if (item != null) {
+                        consumedCount.incrementAndGet();
+                        allConsumed.countDown();
                         System.out.println("Consumer " + consumerId + " consumed: " + item);
-                        Thread.sleep(200); // Simulate processing time
                     }
                 }
             } catch (InterruptedException e) {
