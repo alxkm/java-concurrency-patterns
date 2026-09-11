@@ -80,13 +80,10 @@ public class DeadlockExampleTest {
             synchronized (lock1) {
                 thread1InSync.set(true);
                 bothThreadsStarted.countDown();
-                
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-                
+
+                // Wait until the other thread also holds its first lock, so the cycle is certain.
+                awaitQuietly(bothThreadsStarted);
+
                 synchronized (lock2) {
                     // This should never be reached in a deadlock
                     fail("Thread 1 should not acquire lock2 in a deadlock");
@@ -98,13 +95,9 @@ public class DeadlockExampleTest {
             synchronized (lock2) {
                 thread2InSync.set(true);
                 bothThreadsStarted.countDown();
-                
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-                
+
+                awaitQuietly(bothThreadsStarted);
+
                 synchronized (lock1) {
                     // This should never be reached in a deadlock
                     fail("Thread 2 should not acquire lock1 in a deadlock");
@@ -119,7 +112,7 @@ public class DeadlockExampleTest {
         bothThreadsStarted.await();
         // Both threads hold their first lock, but the JVM has not necessarily registered the cycle
         // yet. Poll for it rather than guessing how long that takes.
-        awaitDeadlockAmong(2, t1, t2);
+        awaitDeadlockAmong(2, 2, t1, t2);
         
         // Verify both threads are stuck
         assertTrue(t1.isAlive());
@@ -158,26 +151,26 @@ public class DeadlockExampleTest {
             final Object lock2 = new Object();
             final int pairIndex = i;
             
+            // Both threads must hold their first lock before either reaches for its second, or the
+            // pair simply runs to completion and no cycle ever forms. Sleeping for a window made that
+            // likely but not certain, which is what made this test flaky under load; the latch makes
+            // it certain.
+            final CountDownLatch firstLocksHeld = new CountDownLatch(2);
+
             threads[i * 2] = new Thread(() -> {
                 synchronized (lock1) {
-                    try {
-                        Thread.sleep(50);
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                    }
+                    firstLocksHeld.countDown();
+                    awaitQuietly(firstLocksHeld);
                     synchronized (lock2) {
                         // Should not reach here
                     }
                 }
             }, "DeadlockPair-" + pairIndex + "-Thread-1");
-            
+
             threads[i * 2 + 1] = new Thread(() -> {
                 synchronized (lock2) {
-                    try {
-                        Thread.sleep(50);
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                    }
+                    firstLocksHeld.countDown();
+                    awaitQuietly(firstLocksHeld);
                     synchronized (lock1) {
                         // Should not reach here
                     }
@@ -190,9 +183,8 @@ public class DeadlockExampleTest {
             t.start();
         }
         
-        // Wait for every pair to close its cycle. A flat sleep here made the test flaky: on a loaded
-        // machine 500ms is not always enough for all six threads to reach their second monitor.
-        awaitDeadlockAmong(NUM_PAIRS * 2, threads);
+        // Every pair is now guaranteed to deadlock; this only waits for the JVM to register the cycles.
+        awaitDeadlockAmong(NUM_PAIRS * 2, 6, threads);
         
         // Count only the threads this test started -- findDeadlockedThreads() is JVM-wide, and the
         // other methods here leak deadlocked threads that stay blocked for the rest of the run.
@@ -206,6 +198,19 @@ public class DeadlockExampleTest {
         // Clean up
         for (Thread t : threads) {
             t.interrupt();
+        }
+    }
+
+    /**
+     * Awaits a latch, restoring the interrupt flag instead of propagating a checked exception.
+     *
+     * @param latch the latch to wait on.
+     */
+    private static void awaitQuietly(CountDownLatch latch) {
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 
@@ -242,12 +247,14 @@ public class DeadlockExampleTest {
      * accumulated threads -- enough to exhaust the caller's own {@code @Timeout} before the cycle is
      * ever reported. The budget likewise stays well inside that timeout.
      *
-     * @param expected how many of the threads should end up deadlocked.
-     * @param threads  the threads to watch.
+     * @param expected      how many of the threads should end up deadlocked.
+     * @param budgetSeconds how long to keep polling; keep it well under the caller's own timeout.
+     * @param threads       the threads to watch.
      * @throws InterruptedException if this thread is interrupted while polling.
      */
-    private static void awaitDeadlockAmong(int expected, Thread... threads) throws InterruptedException {
-        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(2);
+    private static void awaitDeadlockAmong(int expected, long budgetSeconds, Thread... threads)
+            throws InterruptedException {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(budgetSeconds);
         while (System.nanoTime() < deadline) {
             long[] deadlocked = deadlockedAmong(threads);
             if (deadlocked != null && deadlocked.length >= expected) {
