@@ -165,28 +165,35 @@ public class ConcurrentObjectPoolTest {
         customPool.shutdown();
     }
 
-    //@Test
+    @Test
     public void testPoolExhaustion() {
+        // new String(...) on purpose: this hands out instances that are equal but not the same
+        // object, which is exactly the case a pool must tell apart. A shared literal would be a
+        // single instance and could not distinguish identity tracking from equality tracking.
+        @SuppressWarnings("StringOperationCanBeSimplified")
         ConcurrentObjectPool<String> stringPool = new ConcurrentObjectPool<>(
-            () -> "TestString",
+            () -> new String("TestString"),
             2 // Small pool size
         );
 
         String obj1 = stringPool.acquire();
         String obj2 = stringPool.acquire();
-        String obj3 = stringPool.acquire(); // Should still work, creates new object
 
         assertNotNull(obj1);
         assertNotNull(obj2);
-        assertNotNull(obj3);
+        assertEquals(2, stringPool.getLeasedObjectsCount());
 
-        assertEquals(3, stringPool.getLeasedObjectsCount());
+        // The pool is bounded, so a third acquire has nothing to hand out and no room to grow.
+        // acquire() does not block; it reports exhaustion by returning null.
+        assertNull(stringPool.acquire(), "a bounded pool at capacity should return null");
 
+        // Two loans of an equal-valued object still count as two. Tracking by equals rather than by
+        // identity would collapse them, and releasing one would un-lease both.
         stringPool.release(obj1);
+        assertEquals(1, stringPool.getLeasedObjectsCount());
         stringPool.release(obj2);
-        stringPool.release(obj3);
-
         assertEquals(0, stringPool.getLeasedObjectsCount());
+
         stringPool.shutdown();
     }
 
