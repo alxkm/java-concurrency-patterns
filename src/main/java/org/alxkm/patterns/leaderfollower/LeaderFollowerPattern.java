@@ -135,6 +135,13 @@ public class LeaderFollowerPattern<T> {
                     currentLeader = Thread.currentThread();
                     leaderPromotions.incrementAndGet();
                     return true;
+                } else if (currentLeader == Thread.currentThread()) {
+                    // Already promoted by the outgoing leader. Without this branch a freshly promoted
+                    // thread failed the null check, put itself back in the follower queue and spun:
+                    // waitAsFollower returns immediately once currentLeader is this thread, so it went
+                    // straight back round. Nobody polled the queue again, so exactly one event was ever
+                    // processed by exactly one thread.
+                    return true;
                 } else {
                     // Add self to follower queue only if not already there
                     if (!followerQueue.contains(Thread.currentThread())) {
