@@ -1,5 +1,6 @@
 package org.alxkm.patterns.philosopher;
 
+import org.alxkm.diagnostics.DeadlockDetector;
 import org.alxkm.testsupport.Await;
 import org.junit.jupiter.api.Test;
 
@@ -56,11 +57,11 @@ class PhilosopherWithLockTest {
             Await.until("every philosopher to eat " + MEALS_REQUIRED + " meals",
                     () -> Arrays.stream(philosophers)
                             .allMatch(p -> p.getMealsEaten() >= MEALS_REQUIRED)
-                            || deadlockedPhilosophers(philosophers) != null);
+                            || DeadlockDetector.deadlockedAmong(philosophers) != null);
 
             // Ask the JVM directly: this reports any cycle of threads blocked on each other's
             // monitors or ownable synchronizers, which is exactly what fork ordering prevents.
-            assertNull(deadlockedPhilosophers(philosophers), "the philosophers deadlocked");
+            assertNull(DeadlockDetector.deadlockedAmong(philosophers), "the philosophers deadlocked");
             assertTrue(Arrays.stream(philosophers).allMatch(p -> p.getMealsEaten() >= MEALS_REQUIRED),
                     "philosophers stopped making progress");
         } finally {
@@ -79,26 +80,5 @@ class PhilosopherWithLockTest {
             ReentrantLock fork = (ReentrantLock) forks[i];
             assertFalse(fork.isLocked(), "fork " + i + " was left locked");
         }
-    }
-
-    /**
-     * Reports the philosophers at this table that are deadlocked, or null if none are.
-     * <p>
-     * {@link java.lang.management.ThreadMXBean#findDeadlockedThreads()} scans the entire JVM, and the
-     * antipattern suite deliberately deadlocks threads that then stay blocked for the rest of the run.
-     * Asserting on the unfiltered result would make this test fail because of a deadlock some other
-     * test created on purpose, so restrict it to the threads this test started.
-     *
-     * @param philosophers the philosophers under test.
-     * @return the ids of the deadlocked philosophers, or null if none of them are deadlocked.
-     */
-    private static long[] deadlockedPhilosophers(PhilosopherWithLock[] philosophers) {
-        long[] deadlocked = ManagementFactory.getThreadMXBean().findDeadlockedThreads();
-        if (deadlocked == null) {
-            return null;
-        }
-        Set<Long> ours = Arrays.stream(philosophers).map(Thread::threadId).collect(Collectors.toSet());
-        long[] mine = Arrays.stream(deadlocked).filter(ours::contains).toArray();
-        return mine.length == 0 ? null : mine;
     }
 }
