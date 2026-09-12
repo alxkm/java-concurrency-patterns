@@ -13,6 +13,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 public class BusyWaitingExampleTest {
 
@@ -35,54 +36,65 @@ public class BusyWaitingExampleTest {
     }
 
     /**
-     * Demonstrates that busy waiting consumes excessive CPU time
+     * Busy waiting burns a core; blocking does not.
+     *
+     * The previous version of this test set an absolute floor: spin for 100ms of wall time and assert
+     * more than 50ms of CPU was consumed. That is a coin flip by construction, and it failed at 46ms.
+     * Comparing the two strategies over the same interval measures the actual difference instead, and
+     * the gap is orders of magnitude rather than a few percent.
      */
-    //@Test
-    //@Timeout(value = 5, unit = TimeUnit.SECONDS)
-    public void testBusyWaitingConsumesCPU() throws Exception {
-        BusyWaitingExample example = new BusyWaitingExample();
-        AtomicLong cpuTimeSpent = new AtomicLong(0);
-        CountDownLatch threadStarted = new CountDownLatch(1);
-        AtomicBoolean measurementComplete = new AtomicBoolean(false);
-
-        Thread busyWaitThread = new Thread(() -> {
-            ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
-            long threadId = Thread.currentThread().threadId();
-            threadStarted.countDown();
-            
-            // Measure CPU time before busy waiting
-            long startCpuTime = threadMXBean.getThreadCpuTime(threadId);
-            
-            // Perform busy waiting for a short period
-            long startTime = System.currentTimeMillis();
-            try {
-                while (System.currentTimeMillis() - startTime < 100 && !getFlag(example)) {
-                    // Busy wait
-                }
-            } catch (Exception e) {
-                // Handle reflection exception
+    @Test
+    @Timeout(value = 30, unit = TimeUnit.SECONDS)
+    public void testBusyWaitingConsumesFarMoreCpuThanBlocking() throws Exception {
+        long busyCpuNanos = cpuTimeOf("spin", () -> {
+            long deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(WAIT_MILLIS);
+            while (System.nanoTime() < deadline) {
+                // Busy wait, which is the antipattern being measured.
             }
-            
-            // Measure CPU time after busy waiting
-            long endCpuTime = threadMXBean.getThreadCpuTime(threadId);
-            cpuTimeSpent.set(endCpuTime - startCpuTime);
-            measurementComplete.set(true);
         });
 
-        busyWaitThread.start();
-        threadStarted.await();
-        
-        // Let it busy wait for a bit
-        Thread.sleep(150);
-        
-        // Stop the busy waiting
-        setFlag(example, true);
-        busyWaitThread.join();
+        long blockedCpuNanos = cpuTimeOf("sleep", () -> {
+            try {
+                Thread.sleep(WAIT_MILLIS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
 
-        // Verify that significant CPU time was consumed (more than 50% of elapsed time)
-        assertTrue(measurementComplete.get());
-        long cpuTimeMs = cpuTimeSpent.get() / 1_000_000; // Convert nanoseconds to milliseconds
-        assertTrue(cpuTimeMs > 50, "Busy waiting should consume significant CPU time, but consumed only " + cpuTimeMs + "ms");
+        System.out.printf("over %dms: spinning used %.1fms of CPU, sleeping used %.1fms%n",
+                WAIT_MILLIS, busyCpuNanos / 1e6, blockedCpuNanos / 1e6);
+
+        // A parked thread uses essentially no CPU, so even a very loose factor holds comfortably.
+        assertTrue(busyCpuNanos > blockedCpuNanos * 10,
+                "spinning should cost far more CPU than blocking, but used " + busyCpuNanos
+                        + "ns against " + blockedCpuNanos + "ns");
+    }
+
+    /** How long each strategy waits, in milliseconds. */
+    private static final long WAIT_MILLIS = 200;
+
+    /**
+     * Runs the body on its own thread and reports the CPU time that thread consumed.
+     *
+     * @param name the thread name.
+     * @param body the work to measure.
+     * @return CPU time in nanoseconds.
+     * @throws InterruptedException if this thread is interrupted while joining.
+     */
+    private static long cpuTimeOf(String name, Runnable body) throws InterruptedException {
+        ThreadMXBean bean = ManagementFactory.getThreadMXBean();
+        assumeTrue(bean.isThreadCpuTimeSupported(), "per-thread CPU time is not available here");
+
+        AtomicLong consumed = new AtomicLong();
+        Thread thread = new Thread(() -> {
+            long id = Thread.currentThread().threadId();
+            long before = bean.getThreadCpuTime(id);
+            body.run();
+            consumed.set(bean.getThreadCpuTime(id) - before);
+        }, name);
+        thread.start();
+        thread.join();
+        return consumed.get();
     }
 
     /**
