@@ -15,10 +15,11 @@ classes that assert the concurrency property in question instead of sleeping and
 
 - [Getting started](#getting-started)
 - [Repository layout](#repository-layout)
-- [Memory model](#memory-model) — the rules everything else depends on
-- [Patterns](#patterns) — the example catalogue, by topic
-- [Antipatterns](#antipatterns) — each one with its description, its fix, and runnable examples
-- [java.util.concurrent.\*](#javautilconcurrent) — a reference guide to the package:
+- [Memory model](#memory-model) - the rules everything else depends on
+- [Diagnostics](#diagnostics) - reading what a stuck system is telling you
+- [Patterns](#patterns) - the example catalogue, by topic
+- [Antipatterns](#antipatterns) - each one with its description, its fix, and runnable examples
+- [java.util.concurrent.\*](#javautilconcurrent) - a reference guide to the package:
   - [Concurrent Collections](#concurrent-collections-1)
   - [Scalable Maps](#scalable-maps)
   - [Queues](#queues)
@@ -53,7 +54,7 @@ or from the command line:
 java -cp build/classes/java/main org.alxkm.antipatterns.racecondition.AccountExample
 ```
 
-A few of the antipattern examples deliberately misbehave — `DeadlockExample`, for instance, is supposed to
+A few of the antipattern examples deliberately misbehave - `DeadlockExample`, for instance, is supposed to
 hang. That is the point; its resolution class next to it shows the way out.
 
 ## Repository layout
@@ -70,29 +71,29 @@ src/main/java/org/alxkm/
 src/test/java/org/alxkm/
 ├── patterns/        JUnit 5 tests for the pattern examples
 ├── antipatterns/    tests pinning down both the broken and the corrected behaviour
-└── testsupport/     Await and Concurrently — helpers for writing tests that assert
+└── testsupport/     Await and Concurrently - helpers for writing tests that assert
                      concurrency properties deterministically, without Thread.sleep
 ```
 
 ## Memory model
 
-Every other section here shows a mechanism — a lock, a queue, an atomic. This one shows the rules those
+Every other section here shows a mechanism - a lock, a queue, an atomic. This one shows the rules those
 mechanisms exist to satisfy. Without them, "double-checked locking needs `volatile`" is a recipe to
 memorise rather than something you can reason about.
 
 The model is defined in terms of **happens-before**: an ordering between actions in different threads.
 If a write happens-before a read, the read must see that write. If no such edge exists, the read may see
-the write, may see a stale value, or may see actions in a different order than the source lists them —
+the write, may see a stale value, or may see actions in a different order than the source lists them -
 and the compiler, JIT and CPU are all free to exploit that freedom.
 
 - [VisibilityExample.java](./src/main/java/org/alxkm/memorymodel/VisibilityExample.java): a write another
   thread never sees, and the one word that fixes it. Reproduces on every run.
 - [HappensBeforeExample.java](./src/main/java/org/alxkm/memorymodel/HappensBeforeExample.java): the four
-  edges you get for free — `Thread.start()`, `Thread.join()`, a volatile write/read pair, and a lock.
+  edges you get for free - `Thread.start()`, `Thread.join()`, a volatile write/read pair, and a lock.
 - [SafePublicationExample.java](./src/main/java/org/alxkm/memorymodel/SafePublicationExample.java): handing
   a new object to another thread so it cannot observe it half-built.
 - [FalseSharingExample.java](./src/main/java/org/alxkm/memorymodel/FalseSharingExample.java): correctness
-  is not the only cost — two unrelated fields on one cache line run about 3x slower.
+  is not the only cost - two unrelated fields on one cache line run about 3x slower.
 
 ### Why `volatile`, concretely
 
@@ -126,7 +127,7 @@ RESULT       SAMPLES     FREQ       EXPECT  DESCRIPTION
   1, 0   128,998,594   48.61%   Acceptable  actor2 ran first
 ```
 
-That gap — zero by hand, millions under jcstress — is the lesson. These bugs do not fail loudly in
+That gap - zero by hand, millions under jcstress - is the lesson. These bugs do not fail loudly in
 testing; they fail in production, rarely, on someone else's hardware.
 
 The same suite marks the *safe* variants `FORBIDDEN`, so a run fails if a guarantee is ever violated:
@@ -137,8 +138,104 @@ volatile fields must never produce `0, 0`, and a final field must never be obser
 ./gradlew jcstress -PjcstressArgs="-t PlainFields -m quick"  # one test, faster
 ```
 
-`./gradlew build` compiles these tests but does not run them — a full pass takes minutes, which does not
+`./gradlew build` compiles these tests but does not run them - a full pass takes minutes, which does not
 belong in every build. Reports land in `build/reports/jcstress`.
+
+## Diagnostics
+
+Knowing the primitives is not the same as being able to work out what a stuck process is doing at 3am.
+This section covers the other direction: given a system that has stopped making progress, how to find
+out why.
+
+- [DeadlockDetector.java](./src/main/java/org/alxkm/diagnostics/DeadlockDetector.java): finds lock cycles
+  in a running JVM and reports both sides of each one.
+- [ThreadDumpExample.java](./src/main/java/org/alxkm/diagnostics/ThreadDumpExample.java): what the thread
+  states mean, and how contention and a missed handoff look different.
+- [VirtualThreadPinningExample.java](./src/main/java/org/alxkm/diagnostics/VirtualThreadPinningExample.java):
+  the modern trap, plus the two ways to see it.
+
+### Taking a dump
+
+```bash
+jcmd <pid> Thread.print        # preferred
+jstack <pid>                   # older, same idea
+```
+
+Take three, twenty seconds apart. One dump shows where threads are; three show whether they are moving.
+A thread in the same frame across all three is stuck, whereas one that moves is just busy.
+
+### Reading it
+
+| State | Means | Usually |
+|---|---|---|
+| `RUNNABLE` | running, or wants to be | also covers blocking socket reads, so not always "busy" |
+| `BLOCKED` | waiting to enter a `synchronized` block | contention; the dump names the monitor and its owner |
+| `WAITING` | parked until someone signals | a handoff; if nobody signals, it never returns |
+| `TIMED_WAITING` | parked with a deadline | normal for pool workers and `sleep` |
+
+Two traps worth knowing:
+
+**`BLOCKED` and `WAITING` are different problems.** `BLOCKED` is contention and resolves when the owner
+releases. `WAITING` is a handoff that may never come. One costs throughput, the other is a hang.
+
+**`ReentrantLock` never shows as `BLOCKED`.** It parks the thread, so it appears as `WAITING` on an
+ownable synchronizer. Grepping a dump for `BLOCKED` misses every lock in `java.util.concurrent`. Run
+[ThreadDumpExample](./src/main/java/org/alxkm/diagnostics/ThreadDumpExample.java) to see all three
+shapes side by side.
+
+### Deadlocks
+
+The JVM finds these itself. A thread dump ends with a `Found one Java-level deadlock` section, and the
+same analysis is available programmatically:
+
+```
+Found a Java-level deadlock involving 2 threads:
+
+"holder-a" id=21 BLOCKED
+    waiting to lock java.lang.Object@4d405ef7 which is held by "holder-b" id=22
+    holds java.lang.Object@76fb509a
+```
+
+It covers `ReentrantLock` as well as monitors, but it only finds *cycles*. A thread blocked forever on
+a lock nobody will release is not a cycle and will not be reported, and neither will a livelock, where
+threads keep running without progressing. For those, three dumps and your own eyes.
+
+Note that the detector is JVM-wide. Anything asserting on the result should scope it with
+`deadlockedAmong(threads)`, or an unrelated cycle elsewhere in the process will fail the assertion.
+
+### Virtual thread pinning
+
+A virtual thread that blocks normally unmounts from its carrier, which is what lets a few carriers serve
+thousands of threads. Blocking inside `synchronized` is the exception: on Java 21 the monitor is tied to
+the carrier, so the thread holds it for the whole block. Measured by
+[VirtualThreadPinningExample](./src/main/java/org/alxkm/diagnostics/VirtualThreadPinningExample.java),
+64 tasks blocking 500ms each on 12 cores:
+
+```
+synchronized  : 3060 ms     12 at a time, so 6 rounds
+ReentrantLock :  503 ms     all 64 at once
+```
+
+Every task locks a monitor of its own, so nothing there contends. What runs out is carriers.
+
+Pinning is invisible in a thread dump; the symptom is throughput that will not scale. To see it:
+
+```bash
+java -Djdk.tracePinnedThreads=short ...   # prints the frame holding the monitor
+```
+
+```
+Thread[#97,ForkJoinPool-1-worker-12,5,CarrierThreads]
+    org.alxkm.diagnostics.VirtualThreadPinningExample.lambda$runPinned$0(...) <== monitors:1
+```
+
+The `jdk.VirtualThreadPinned` JFR event records the same thing with far less overhead, which makes it
+the option for a production process.
+
+The fix is a `ReentrantLock`, which a virtual thread can hold across an unmount. Everywhere else
+`synchronized` is fine. This advice has an expiry date: JEP 491 removed monitor pinning in Java 24, so
+on a recent JDK both versions run in the same time. It still matters on 21, the current LTS and what
+this repository builds against.
 
 ## Patterns
 
@@ -438,7 +535,7 @@ belong in every build. Reports land in `build/reports/jcstress`.
 
 **Concurrent Collections** are a set of collections designed to operate more efficiently in multithreaded environments compared to the standard universal collections from the java.util package. Instead of using the basic Collections.synchronizedList wrapper, which blocks access to the entire collection, these collections utilize locks on data segments or employ wait-free algorithms to optimize parallel data reading and processing.
 
-**Queues** — non-blocking and blocking queues with multithreading support. Non-blocking queues are designed for speed and work without blocking threads. Blocking queues are used when it is necessary to "slow down" the "Producer" or "Consumer" threads if some conditions are not met, for example, the queue is empty or full, or there is no free "Consumer".
+**Queues** - non-blocking and blocking queues with multithreading support. Non-blocking queues are designed for speed and work without blocking threads. Blocking queues are used when it is necessary to "slow down" the "Producer" or "Consumer" threads if some conditions are not met, for example, the queue is empty or full, or there is no free "Consumer".
 
 **Synchronizers** are auxiliary utilities for synchronizing threads. They are a powerful weapon in "parallel" computing.
 
@@ -446,7 +543,7 @@ belong in every build. Reports land in `build/reports/jcstress`.
 
 **Locks** are alternative and more flexible thread synchronization mechanisms compared to the basic synchronized, wait, notify, notifyAll.
 
-**Atomics** — classes with support for atomic operations on primitives and references.
+**Atomics** - classes with support for atomic operations on primitives and references.
 
 ## Concurrent Collections
 
@@ -456,9 +553,9 @@ belong in every build. Reports land in `build/reports/jcstress`.
 
 The name is self-explanatory. All modification operations on the collection (add, set, remove) result in the creation of a new copy of the internal array. This ensures that when an iterator traverses the collection, a ConcurrentModificationException will not be thrown. It is important to note that only references to objects are copied during the array copy (shallow copy), meaning that access to the fields of elements is not thread-safe. CopyOnWrite collections are particularly useful when write operations are infrequent, such as when implementing a listener subscription mechanism and iterating through the listeners.
 
-**CopyOnWriteArrayList<E>** — A thread-safe analogue of ArrayList, implemented with the CopyOnWrite algorithm.
+**CopyOnWriteArrayList<E>** - A thread-safe analogue of ArrayList, implemented with the CopyOnWrite algorithm.
 
-**CopyOnWriteArraySet<E>** — Implementation of the Set interface, using CopyOnWriteArrayList as a basis. Unlike CopyOnWriteArrayList, there are no additional methods.
+**CopyOnWriteArraySet<E>** - Implementation of the Set interface, using CopyOnWriteArrayList as a basis. Unlike CopyOnWriteArrayList, there are no additional methods.
 
 ### Examples
 
@@ -471,9 +568,9 @@ The name is self-explanatory. All modification operations on the collection (add
 
 Improved implementations of HashMap, TreeMap with better support for multithreading and scalability.
 
-**ConcurrentMap<K, V>** — An interface that extends Map with several additional atomic operations.
+**ConcurrentMap<K, V>** - An interface that extends Map with several additional atomic operations.
 
-**ConcurrentHashMap<K, V>** — Unlike Hashtable and synchronized blocks on HashMap, writes lock only the bin they touch rather than the whole map, so unrelated keys never contend. Up to Java 7 this was done with a fixed set of segments; since Java 8 the map locks the individual bin head and uses CAS for the common uncontended case, which is why `concurrencyLevel` is now only a sizing hint. Iterators are weakly consistent: they reflect the map at some point during traversal and never throw ConcurrentModificationException. See the [ConcurrentHashMap javadoc](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ConcurrentHashMap.html) for details.
+**ConcurrentHashMap<K, V>** - Unlike Hashtable and synchronized blocks on HashMap, writes lock only the bin they touch rather than the whole map, so unrelated keys never contend. Up to Java 7 this was done with a fixed set of segments; since Java 8 the map locks the individual bin head and uses CAS for the common uncontended case, which is why `concurrencyLevel` is now only a sizing hint. Iterators are weakly consistent: they reflect the map at some point during traversal and never throw ConcurrentModificationException. See the [ConcurrentHashMap javadoc](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ConcurrentHashMap.html) for details.
 
 ### Additional constructor
 
@@ -498,32 +595,32 @@ Improved implementations of HashMap, TreeMap with better support for multithread
 
 Thread-safe and non-blocking queue implementations based on linked nodes.
 
-**ConcurrentLinkedQueue<E>** — This implementation utilizes the wait-free algorithm devised by Michael & Scott, optimized to work efficiently with the garbage collector. Built on CAS, this algorithm ensures high-speed operations. However, it's worth noting that the size() method may incur significant overhead if called frequently, so it's advisable to minimize its usage.
+**ConcurrentLinkedQueue<E>** - This implementation utilizes the wait-free algorithm devised by Michael & Scott, optimized to work efficiently with the garbage collector. Built on CAS, this algorithm ensures high-speed operations. However, it's worth noting that the size() method may incur significant overhead if called frequently, so it's advisable to minimize its usage.
 
-**ConcurrentLinkedDeque<E>** — Deque, pronounced as “Deck”, stands for Double-ended queue, indicating that data can be added to and removed from both ends. Consequently, this class supports both FIFO (First In First Out) and LIFO (Last In First Out) modes of operation. In practical scenarios, ConcurrentLinkedDeque should be employed only if LIFO functionality is indispensable, as its bidirectional nature causes a 40% performance loss compared to ConcurrentLinkedQueue.
+**ConcurrentLinkedDeque<E>** - Deque, pronounced as “Deck”, stands for Double-ended queue, indicating that data can be added to and removed from both ends. Consequently, this class supports both FIFO (First In First Out) and LIFO (Last In First Out) modes of operation. In practical scenarios, ConcurrentLinkedDeque should be employed only if LIFO functionality is indispensable, as its bidirectional nature causes a 40% performance loss compared to ConcurrentLinkedQueue.
 
 ### Blocking Queues
 ![image](images/BlockingQueue.png)
 
-**BlockingQueue<E>** — When managing large data streams with queues, ConcurrentLinkedQueue alone may not suffice. If threads clearing the queue fail to keep up with the data influx, it could lead to memory exhaustion or significant IO/Net overload, causing a performance drop until system failure due to timeouts or lack of free descriptors. To address such scenarios, a queue with customizable size or conditional locking is necessary. This is where the BlockingQueue interface comes in, providing access to a range of useful classes. Besides setting the queue size, new methods have been introduced to handle underfilling or overflowing queues differently. For instance, when adding an element to a full queue, one method throws an IllegalStateException, another returns false, another blocks the thread until space is available, and yet another blocks the thread with a timeout, returning false if space is still unavailable. It's important to note that blocking queues don't support null values since null is used in the poll method as a timeout indicator.
+**BlockingQueue<E>** - When managing large data streams with queues, ConcurrentLinkedQueue alone may not suffice. If threads clearing the queue fail to keep up with the data influx, it could lead to memory exhaustion or significant IO/Net overload, causing a performance drop until system failure due to timeouts or lack of free descriptors. To address such scenarios, a queue with customizable size or conditional locking is necessary. This is where the BlockingQueue interface comes in, providing access to a range of useful classes. Besides setting the queue size, new methods have been introduced to handle underfilling or overflowing queues differently. For instance, when adding an element to a full queue, one method throws an IllegalStateException, another returns false, another blocks the thread until space is available, and yet another blocks the thread with a timeout, returning false if space is still unavailable. It's important to note that blocking queues don't support null values since null is used in the poll method as a timeout indicator.
 
-**ArrayBlockingQueue<E>** — A blocking queue implemented using a traditional ring buffer. In addition to the queue size, it allows control over lock fairness. If fair=false (default), thread order is not guaranteed. See the [Locks](#locks-1) section for more on "fairness".
+**ArrayBlockingQueue<E>** - A blocking queue implemented using a traditional ring buffer. In addition to the queue size, it allows control over lock fairness. If fair=false (default), thread order is not guaranteed. See the [Locks](#locks-1) section for more on "fairness".
 
-**DelayQueue<E extends Delayed>** — A specialized class that retrieves elements from the queue only after a delay specified in each element via the getDelay method of the Delayed interface.
+**DelayQueue<E extends Delayed>** - A specialized class that retrieves elements from the queue only after a delay specified in each element via the getDelay method of the Delayed interface.
 
-**LinkedBlockingQueue<E>** — A blocking queue implemented with linked nodes, using the "two lock queue" algorithm: one lock for adding, another for removing elements. Compared to ArrayBlockingQueue, this class offers higher performance due to two locks, but consumes more memory. The queue size is set via the constructor and defaults to Integer.MAX_VALUE.
+**LinkedBlockingQueue<E>** - A blocking queue implemented with linked nodes, using the "two lock queue" algorithm: one lock for adding, another for removing elements. Compared to ArrayBlockingQueue, this class offers higher performance due to two locks, but consumes more memory. The queue size is set via the constructor and defaults to Integer.MAX_VALUE.
 
-**PriorityBlockingQueue<E>** — A thread-safe wrapper over PriorityQueue. When inserting an element, its position in the queue is determined by the Comparator logic or the Comparable interface implemented in the elements. The smallest element is dequeued first.
+**PriorityBlockingQueue<E>** - A thread-safe wrapper over PriorityQueue. When inserting an element, its position in the queue is determined by the Comparator logic or the Comparable interface implemented in the elements. The smallest element is dequeued first.
 
-**SynchronousQueue<E>** — Operates on a "one in, one out" principle. Each insert operation blocks the producer thread until the consumer thread retrieves an element, and vice versa; the consumer waits until the producer inserts an element.
+**SynchronousQueue<E>** - Operates on a "one in, one out" principle. Each insert operation blocks the producer thread until the consumer thread retrieves an element, and vice versa; the consumer waits until the producer inserts an element.
 
-**BlockingDeque<E>** — An interface providing additional methods for a bidirectional blocking queue, allowing data insertion and retrieval from both ends of the queue.
+**BlockingDeque<E>** - An interface providing additional methods for a bidirectional blocking queue, allowing data insertion and retrieval from both ends of the queue.
 
-**LinkedBlockingDeque<E>** — A bidirectional blocking queue implemented with linked nodes, essentially a doubly linked list with a single lock. The queue size is specified via the constructor and defaults to Integer.MAX_VALUE.
+**LinkedBlockingDeque<E>** - A bidirectional blocking queue implemented with linked nodes, essentially a doubly linked list with a single lock. The queue size is specified via the constructor and defaults to Integer.MAX_VALUE.
 
-**TransferQueue<E>** — This interface is interesting because it allows blocking the producer thread when adding an element until a consumer thread retrieves an element from the queue. The blocking can include a timeout or a check for waiting consumers, enabling synchronous and asynchronous message transfer mechanisms.
+**TransferQueue<E>** - This interface is interesting because it allows blocking the producer thread when adding an element until a consumer thread retrieves an element from the queue. The blocking can include a timeout or a check for waiting consumers, enabling synchronous and asynchronous message transfer mechanisms.
 
-**LinkedTransferQueue<E>** — An implementation of TransferQueue based on the Dual Queues with Slack algorithm, utilizing CAS and thread parking extensively when idle.
+**LinkedTransferQueue<E>** - An implementation of TransferQueue based on the Dual Queues with Slack algorithm, utilizing CAS and thread parking extensively when idle.
 
 ### Examples
 
@@ -564,31 +661,31 @@ Here, we reach the most extensive section of the package. This part covers inter
 
 ![image](images/Future.png)
 
-**Future<V>** — This is a useful interface for obtaining the results of an asynchronous operation. The key method is get, which blocks the current thread (with or without a timeout) until the asynchronous operation completes in another thread. Additional methods are available for canceling the operation and checking its current status. The FutureTask class often implements this interface.
+**Future<V>** - This is a useful interface for obtaining the results of an asynchronous operation. The key method is get, which blocks the current thread (with or without a timeout) until the asynchronous operation completes in another thread. Additional methods are available for canceling the operation and checking its current status. The FutureTask class often implements this interface.
 
-**RunnableFuture<V>** — While Future serves as a Client API interface, the RunnableFuture interface is used to start the asynchronous operation. The successful completion of the run() method marks the asynchronous operation as complete, allowing the results to be retrieved via the get method.
+**RunnableFuture<V>** - While Future serves as a Client API interface, the RunnableFuture interface is used to start the asynchronous operation. The successful completion of the run() method marks the asynchronous operation as complete, allowing the results to be retrieved via the get method.
 
-**Callable<V>** — This is an extended version of the Runnable interface for asynchronous operations. It allows returning a typed value and throwing a checked exception. Although it lacks a run() method, many java.util.concurrent classes support it along with Runnable.
+**Callable<V>** - This is an extended version of the Runnable interface for asynchronous operations. It allows returning a typed value and throwing a checked exception. Although it lacks a run() method, many java.util.concurrent classes support it along with Runnable.
 
-**FutureTask<V>** — This class implements the Future and RunnableFuture interfaces. It accepts an asynchronous operation as input in the form of Runnable or Callable objects. The FutureTask class is designed to be launched in a worker thread, for example, via new Thread(task).start(), or through a ThreadPoolExecutor. The results of the asynchronous operation are retrieved using the get(...) method.
+**FutureTask<V>** - This class implements the Future and RunnableFuture interfaces. It accepts an asynchronous operation as input in the form of Runnable or Callable objects. The FutureTask class is designed to be launched in a worker thread, for example, via new Thread(task).start(), or through a ThreadPoolExecutor. The results of the asynchronous operation are retrieved using the get(...) method.
 
-**Delayed** — This interface is used for asynchronous tasks that should start in the future, as well as in DelayQueue. It allows setting the time before the start of an asynchronous operation.
+**Delayed** - This interface is used for asynchronous tasks that should start in the future, as well as in DelayQueue. It allows setting the time before the start of an asynchronous operation.
 
-**ScheduledFuture<V>** — A marker interface that combines the functionalities of Future and Delayed.
+**ScheduledFuture<V>** - A marker interface that combines the functionalities of Future and Delayed.
 
-**RunnableScheduledFuture<V>** — An interface that combines RunnableFuture and ScheduledFuture. It also allows specifying whether the task is one-time or should be launched at a specified frequency.
+**RunnableScheduledFuture<V>** - An interface that combines RunnableFuture and ScheduledFuture. It also allows specifying whether the task is one-time or should be launched at a specified frequency.
 
 ### Executor Services
 
 ![image](images/Executor.png)
 
-**Executor** — This is the fundamental interface for classes that execute Runnable tasks. It decouples the task submission process from the execution mechanism.
+**Executor** - This is the fundamental interface for classes that execute Runnable tasks. It decouples the task submission process from the execution mechanism.
 
-**ExecutorService** — An interface that defines a service for executing Runnable or Callable tasks. The submit methods take a task as a Callable or Runnable and return a Future through which the result can be obtained. The invokeAll methods handle lists of tasks, blocking the thread until all tasks in the provided list are completed or the specified timeout expires. The invokeAny methods block the calling thread until any one of the passed tasks completes. The interface also includes methods for graceful shutdown. Once the shutdown method is called, the service will no longer accept new tasks and will throw a RejectedExecutionException if an attempt is made to submit a task.
+**ExecutorService** - An interface that defines a service for executing Runnable or Callable tasks. The submit methods take a task as a Callable or Runnable and return a Future through which the result can be obtained. The invokeAll methods handle lists of tasks, blocking the thread until all tasks in the provided list are completed or the specified timeout expires. The invokeAny methods block the calling thread until any one of the passed tasks completes. The interface also includes methods for graceful shutdown. Once the shutdown method is called, the service will no longer accept new tasks and will throw a RejectedExecutionException if an attempt is made to submit a task.
 
-**ScheduledExecutorService** — This interface extends ExecutorService by adding capabilities for scheduling tasks to be executed after a delay or periodically.
+**ScheduledExecutorService** - This interface extends ExecutorService by adding capabilities for scheduling tasks to be executed after a delay or periodically.
 
-**AbstractExecutorService** — An abstract class that serves as a base for building an ExecutorService. It provides the basic implementation of the submit, invokeAll, and invokeAny methods. Classes such as ThreadPoolExecutor, ScheduledThreadPoolExecutor, and ForkJoinPool inherit from this class.
+**AbstractExecutorService** - An abstract class that serves as a base for building an ExecutorService. It provides the basic implementation of the submit, invokeAll, and invokeAny methods. Classes such as ThreadPoolExecutor, ScheduledThreadPoolExecutor, and ForkJoinPool inherit from this class.
 
 ### Examples
 
@@ -603,13 +700,13 @@ Here, we reach the most extensive section of the package. This part covers inter
 
 ![image](images/AbstractExecutorService.png)
 
-**ThreadPoolExecutor** — A highly versatile and essential class used to execute asynchronous tasks within a thread pool. This approach minimizes the overhead associated with creating and terminating threads. By maintaining a fixed maximum number of threads in the pool, it ensures predictable application performance. It is generally recommended to create this pool using one of the factory methods provided by the Executors class. However, if the standard configurations are insufficient, all key parameters of the pool can be set via constructors or setters. For more details, refer to the relevant documentation.
+**ThreadPoolExecutor** - A highly versatile and essential class used to execute asynchronous tasks within a thread pool. This approach minimizes the overhead associated with creating and terminating threads. By maintaining a fixed maximum number of threads in the pool, it ensures predictable application performance. It is generally recommended to create this pool using one of the factory methods provided by the Executors class. However, if the standard configurations are insufficient, all key parameters of the pool can be set via constructors or setters. For more details, refer to the relevant documentation.
 
-**ScheduledThreadPoolExecutor** — In addition to the methods of ThreadPoolExecutor, this class allows tasks to be scheduled for execution after a specific delay or at a fixed rate, enabling the implementation of a timer service based on this class.
+**ScheduledThreadPoolExecutor** - In addition to the methods of ThreadPoolExecutor, this class allows tasks to be scheduled for execution after a specific delay or at a fixed rate, enabling the implementation of a timer service based on this class.
 
-**ThreadFactory** — By default, ThreadPoolExecutor uses the standard thread factory obtained through Executors.defaultThreadFactory(). If additional customization is needed, such as setting thread priority or naming threads, you can implement this interface and pass it to ThreadPoolExecutor.
+**ThreadFactory** - By default, ThreadPoolExecutor uses the standard thread factory obtained through Executors.defaultThreadFactory(). If additional customization is needed, such as setting thread priority or naming threads, you can implement this interface and pass it to ThreadPoolExecutor.
 
-**RejectedExecutionHandler** — Defines a handler for tasks that cannot be executed by ThreadPoolExecutor for various reasons, such as a lack of available threads or the service being shut down. The ThreadPoolExecutor class includes several standard implementations: CallerRunsPolicy — runs the task in the calling thread; AbortPolicy — throws an exception; DiscardPolicy — silently discards the task; DiscardOldestPolicy — removes the oldest unexecuted task from the queue and retries adding the new task.
+**RejectedExecutionHandler** - Defines a handler for tasks that cannot be executed by ThreadPoolExecutor for various reasons, such as a lack of available threads or the service being shut down. The ThreadPoolExecutor class includes several standard implementations: CallerRunsPolicy - runs the task in the calling thread; AbortPolicy - throws an exception; DiscardPolicy - silently discards the task; DiscardOldestPolicy - removes the oldest unexecuted task from the queue and retries adding the new task.
 
 ## Fork Join
 
@@ -619,43 +716,43 @@ Java 1.7 introduces a new Fork Join framework for solving recursive problems usi
 
 Thus, by dividing into parts, it is possible to achieve their parallel processing in different threads. To solve this problem, you can use the usual ThreadPoolExecutor, but due to frequent context switching and tracking of execution control, all this does not work very effectively. Here, the Fork Join framework comes to our aid, which is based on the work-stealing algorithm. It reveals itself best in systems with a large number of processors. Doug Lea's [design paper](https://gee.cs.oswego.edu/dl/papers/fj.pdf) covers the algorithm and its performance characteristics in depth.
 
-**ForkJoinPool** — The main entry point for initiating root (main) ForkJoinTask tasks. Subtasks are started using methods of the task being forked. By default, the thread pool is created with a number of threads equal to the number of processors (cores) available to the JVM.
+**ForkJoinPool** - The main entry point for initiating root (main) ForkJoinTask tasks. Subtasks are started using methods of the task being forked. By default, the thread pool is created with a number of threads equal to the number of processors (cores) available to the JVM.
 
-**ForkJoinTask** — The base class for all Fork/Join tasks. Key methods include: fork() — adds a task to the queue of the current ForkJoinWorkerThread for asynchronous execution; invoke() — executes a task in the current thread; join() — waits for the subtask to complete and returns the result; invokeAll(…) — combines the previous three operations, executing two or more tasks at once; adapt(…) — creates a new ForkJoinTask from Runnable or Callable objects.
+**ForkJoinTask** - The base class for all Fork/Join tasks. Key methods include: fork() - adds a task to the queue of the current ForkJoinWorkerThread for asynchronous execution; invoke() - executes a task in the current thread; join() - waits for the subtask to complete and returns the result; invokeAll(…) - combines the previous three operations, executing two or more tasks at once; adapt(…) - creates a new ForkJoinTask from Runnable or Callable objects.
 
-**RecursiveTask** — An abstract class derived from ForkJoinTask, requiring the implementation of the compute method, which performs the asynchronous operation.
+**RecursiveTask** - An abstract class derived from ForkJoinTask, requiring the implementation of the compute method, which performs the asynchronous operation.
 
-**RecursiveAction** — Similar to RecursiveTask but does not return a result.
+**RecursiveAction** - Similar to RecursiveTask but does not return a result.
 
-**ForkJoinWorkerThread** — Used as the default implementation in ForkJoinPool. Optionally, it can be extended to override worker thread initialization and completion methods.
+**ForkJoinWorkerThread** - Used as the default implementation in ForkJoinPool. Optionally, it can be extended to override worker thread initialization and completion methods.
 
 ## Completion Service
 
 ![image](images/CompletionService.png)
 
-**CompletionService** — An interface that separates the submission of asynchronous tasks from the retrieval of their results. The submit methods are used to add tasks, while the take method (blocking) and poll method (non-blocking) are used to obtain the results of completed tasks.
+**CompletionService** - An interface that separates the submission of asynchronous tasks from the retrieval of their results. The submit methods are used to add tasks, while the take method (blocking) and poll method (non-blocking) are used to obtain the results of completed tasks.
 
-**ExecutorCompletionService** — A wrapper around any class that implements the Executor interface, such as ThreadPoolExecutor or ForkJoinPool. It is primarily used to abstract the task submission and execution monitoring process. If tasks are completed, their results can be retrieved; otherwise, the take method will wait for completion. The default service uses LinkedBlockingQueue, but any BlockingQueue implementation can be used.
+**ExecutorCompletionService** - A wrapper around any class that implements the Executor interface, such as ThreadPoolExecutor or ForkJoinPool. It is primarily used to abstract the task submission and execution monitoring process. If tasks are completed, their results can be retrieved; otherwise, the take method will wait for completion. The default service uses LinkedBlockingQueue, but any BlockingQueue implementation can be used.
 
 ## Locks
 
 ![image](images/Locks.png)
 
-**Condition** — An interface that provides alternative methods to the traditional wait/notify/notifyAll methods. A condition object is typically obtained from a lock using the lock.newCondition() method, allowing multiple wait/notify sets for a single object.
+**Condition** - An interface that provides alternative methods to the traditional wait/notify/notifyAll methods. A condition object is typically obtained from a lock using the lock.newCondition() method, allowing multiple wait/notify sets for a single object.
 
-**Lock** — A fundamental interface in the lock framework that offers a more flexible approach to controlling access to resources or blocks compared to using synchronized. When using multiple locks, the release order can be arbitrary, and it provides an option to follow an alternative scenario if the lock is already held by another thread.
+**Lock** - A fundamental interface in the lock framework that offers a more flexible approach to controlling access to resources or blocks compared to using synchronized. When using multiple locks, the release order can be arbitrary, and it provides an option to follow an alternative scenario if the lock is already held by another thread.
 
-**ReentrantLock** — A reentrant lock that allows only one thread to enter a protected block at a time. This class supports both "fair" and "non-fair" thread locking. With "fair" locking, threads are released in the order they called lock(). With "unfair" locking, the release order is not guaranteed, but it operates faster. By default, "unfair" locking is used.
+**ReentrantLock** - A reentrant lock that allows only one thread to enter a protected block at a time. This class supports both "fair" and "non-fair" thread locking. With "fair" locking, threads are released in the order they called lock(). With "unfair" locking, the release order is not guaranteed, but it operates faster. By default, "unfair" locking is used.
 
-**ReadWriteLock** — An interface for creating read/write locks. These locks are particularly useful when the system has many read operations and few write operations.
+**ReadWriteLock** - An interface for creating read/write locks. These locks are particularly useful when the system has many read operations and few write operations.
 
-**ReentrantReadWriteLock** — Commonly used in multithreaded services and caches, providing a significant performance improvement over synchronized blocks. This class operates in two mutually exclusive modes: multiple readers can read data simultaneously, while only one writer can write data at a time.
+**ReentrantReadWriteLock** - Commonly used in multithreaded services and caches, providing a significant performance improvement over synchronized blocks. This class operates in two mutually exclusive modes: multiple readers can read data simultaneously, while only one writer can write data at a time.
 
-**ReentrantReadWriteLock.ReadLock** — A read lock for readers, obtained via readWriteLock.readLock().
+**ReentrantReadWriteLock.ReadLock** - A read lock for readers, obtained via readWriteLock.readLock().
 
-**ReentrantReadWriteLock.WriteLock** — A write lock for writers, obtained via readWriteLock.writeLock().
+**ReentrantReadWriteLock.WriteLock** - A write lock for writers, obtained via readWriteLock.writeLock().
 
-**LockSupport** — Designed for creating classes with locks. It includes methods for parking threads, serving as replacements for the deprecated Thread.suspend() and Thread.resume() methods.
+**LockSupport** - Designed for creating classes with locks. It includes methods for parking threads, serving as replacements for the deprecated Thread.suspend() and Thread.resume() methods.
 
 ### Examples
 
@@ -669,28 +766,28 @@ Thus, by dividing into parts, it is possible to achieve their parallel processin
 
 ![image](images/AbstractOwnableSynchronizer.png)
 
-**AbstractOwnableSynchronizer** — A base class designed for creating synchronization mechanisms. It includes a simple getter/setter pair for storing and accessing an exclusive thread that can interact with the data.
+**AbstractOwnableSynchronizer** - A base class designed for creating synchronization mechanisms. It includes a simple getter/setter pair for storing and accessing an exclusive thread that can interact with the data.
 
-**AbstractQueuedSynchronizer** — This class serves as the foundation for synchronization mechanisms in FutureTask, CountDownLatch, Semaphore, ReentrantLock, and ReentrantReadWriteLock. It can also be used to develop new synchronization mechanisms that rely on a single atomic integer value.
+**AbstractQueuedSynchronizer** - This class serves as the foundation for synchronization mechanisms in FutureTask, CountDownLatch, Semaphore, ReentrantLock, and ReentrantReadWriteLock. It can also be used to develop new synchronization mechanisms that rely on a single atomic integer value.
 
-**AbstractQueuedLongSynchronizer** — A variant of AbstractQueuedSynchronizer that supports operations on an atomic long value.
+**AbstractQueuedLongSynchronizer** - A variant of AbstractQueuedSynchronizer that supports operations on an atomic long value.
 
 ## Atomics
 
 ![image](images/Atomics.png)
 
 
-**AtomicBoolean, AtomicInteger, AtomicLong, AtomicIntegerArray, AtomicLongArray** — When you need to synchronize access to a simple int variable in a class, you can use synchronized constructs, or volatile with atomic set/get operations. However, the new Atomic* classes offer an even better solution. These classes use CAS (Compare-And-Swap) operations, which are faster than synchronization with synchronized or volatile. Additionally, they provide methods for atomic addition, increment, and decrement.
+**AtomicBoolean, AtomicInteger, AtomicLong, AtomicIntegerArray, AtomicLongArray** - When you need to synchronize access to a simple int variable in a class, you can use synchronized constructs, or volatile with atomic set/get operations. However, the new Atomic* classes offer an even better solution. These classes use CAS (Compare-And-Swap) operations, which are faster than synchronization with synchronized or volatile. Additionally, they provide methods for atomic addition, increment, and decrement.
 
-**AtomicReference** — This class allows for atomic operations on an object reference.
+**AtomicReference** - This class allows for atomic operations on an object reference.
 
-**AtomicMarkableReference** — This class supports atomic operations on a pair of fields: an object reference and a boolean flag (true/false).
+**AtomicMarkableReference** - This class supports atomic operations on a pair of fields: an object reference and a boolean flag (true/false).
 
-**AtomicStampedReference** — This class supports atomic operations on a pair of fields: an object reference and an integer value.
+**AtomicStampedReference** - This class supports atomic operations on a pair of fields: an object reference and an integer value.
 
-**AtomicReferenceArray** — An array of object references that can be updated atomically.
+**AtomicReferenceArray** - An array of object references that can be updated atomically.
 
-**AtomicIntegerFieldUpdater, AtomicLongFieldUpdater, AtomicReferenceFieldUpdater** — These classes allow for atomic updates of fields by their names using reflection. The field offsets for CAS are determined in the constructor and cached, so the performance impact of reflection is minimal.
+**AtomicIntegerFieldUpdater, AtomicLongFieldUpdater, AtomicReferenceFieldUpdater** - These classes allow for atomic updates of fields by their names using reflection. The field offsets for CAS are determined in the constructor and cached, so the performance impact of reflection is minimal.
 
 ### Examples
 
@@ -709,12 +806,12 @@ Run the suite with `./gradlew test`; `./gradlew build` runs it as part of the bu
 report is written to `build/reports/jacoco/test/html/index.html`.
 
 Concurrency tests that lean on `Thread.sleep` pass on a fast machine and fail on a loaded CI runner, so
-these ones do not. They assert the actual condition — a latch reached, a counter settled, an ordering
-observed — through the helpers in [`src/test/java/org/alxkm/testsupport`](./src/test/java/org/alxkm/testsupport):
+these ones do not. They assert the actual condition - a latch reached, a counter settled, an ordering
+observed - through the helpers in [`src/test/java/org/alxkm/testsupport`](./src/test/java/org/alxkm/testsupport):
 
-- [`Await`](./src/test/java/org/alxkm/testsupport/Await.java) — polls a condition up to a timeout and fails
+- [`Await`](./src/test/java/org/alxkm/testsupport/Await.java) - polls a condition up to a timeout and fails
   with a clear message instead of hanging.
-- [`Concurrently`](./src/test/java/org/alxkm/testsupport/Concurrently.java) — holds N threads behind a start
+- [`Concurrently`](./src/test/java/org/alxkm/testsupport/Concurrently.java) - holds N threads behind a start
   gate and releases them together, so the operations actually overlap instead of running one after another;
   `collect` returns one result per thread.
 
@@ -888,7 +985,7 @@ To run specific test categories:
 
 ## Contributing
 
-Contributions are welcome — please open an issue or submit a pull request. When adding an example:
+Contributions are welcome - please open an issue or submit a pull request. When adding an example:
 
 - Put it under the topic package it belongs to, mirroring the existing layout.
 - Give the class a Javadoc comment explaining what it demonstrates, and, for an antipattern, why it breaks.
