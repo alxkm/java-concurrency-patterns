@@ -1,6 +1,7 @@
 package org.alxkm.patterns.objectpool;
 
 import java.util.concurrent.BlockingQueue;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -22,8 +23,32 @@ public class ConcurrentObjectPool<T> {
     private final int maxPoolSize;
     private final AtomicInteger currentPoolSize;
     private final AtomicInteger createdObjectsCount;
-    private final ConcurrentHashMap<T, Boolean> leasedObjects;
+    private final Set<Identity<T>> leasedObjects;
     private final ReentrantLock poolLock;
+
+    /**
+     * Wraps a pooled object so it is tracked by identity rather than by equals.
+     *
+     * A pool hands out distinct instances, and two of them can easily be equal: a pool of Strings, or
+     * of any value-like type, collapses into a single entry if the tracking map keys on equals. It then
+     * under-reports how many objects are out on loan, and releasing one of them un-leases all the rest.
+     * Identity is the only thing that distinguishes one loan from another.
+     *
+     * @param target the pooled object.
+     * @param <T> the pooled type.
+     */
+    private record Identity<T>(T target) {
+
+        @Override
+        public boolean equals(Object other) {
+            return other instanceof Identity<?> that && that.target == this.target;
+        }
+
+        @Override
+        public int hashCode() {
+            return System.identityHashCode(target);
+        }
+    }
     
     /**
      * Validator interface for checking object validity.
@@ -69,7 +94,7 @@ public class ConcurrentObjectPool<T> {
         this.pool = new LinkedBlockingQueue<>(maxPoolSize);
         this.currentPoolSize = new AtomicInteger(0);
         this.createdObjectsCount = new AtomicInteger(0);
-        this.leasedObjects = new ConcurrentHashMap<>();
+        this.leasedObjects = ConcurrentHashMap.newKeySet();
         this.poolLock = new ReentrantLock();
         
         // Pre-populate pool with initial objects
@@ -142,7 +167,7 @@ public class ConcurrentObjectPool<T> {
             }
             
             // Mark object as leased
-            leasedObjects.put(object, Boolean.TRUE);
+            leasedObjects.add(new Identity<>(object));
         }
         
         return object;
@@ -184,7 +209,7 @@ public class ConcurrentObjectPool<T> {
         }
         
         // Remove from leased objects
-        if (!leasedObjects.remove(object, Boolean.TRUE)) {
+        if (!leasedObjects.remove(new Identity<>(object))) {
             // Object was not leased from this pool
             return;
         }
