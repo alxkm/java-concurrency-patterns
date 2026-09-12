@@ -26,6 +26,45 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
+// JMH -- the OpenJDK microbenchmark harness.
+//
+// Same arrangement as jcstress below: its own source set, compiled by `build` so CI catches breakage,
+// but never run as part of it. A benchmark needs warmup and several forks to say anything trustworthy,
+// which takes minutes. Run it with:
+//
+//     ./gradlew jmh
+//     ./gradlew jmh -PjmhArgs="Counter -f 1 -wi 3 -i 3"     # one benchmark, quicker
+//
+// The point of having it is that this repository makes performance claims. Anything it asserts about
+// speed should come from a measurement someone can reproduce, not from a number quoted from elsewhere.
+sourceSets {
+    jmh {
+        java.srcDir 'src/jmh/java'
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+}
+
+dependencies {
+    jmhImplementation 'org.openjdk.jmh:jmh-core:1.37'
+    jmhAnnotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess:1.37'
+}
+
+tasks.register('jmh', JavaExec) {
+    group = 'verification'
+    description = 'Runs the JMH benchmarks (minutes, not seconds).'
+    classpath = sourceSets.jmh.runtimeClasspath
+    mainClass = 'org.openjdk.jmh.Main'
+
+    def extra = (project.findProperty('jmhArgs') ?: '').toString()
+    def resultFile = layout.buildDirectory.file('reports/jmh/results.txt').get().asFile
+    doFirst {
+        resultFile.parentFile.mkdirs()
+    }
+    args(extra.isEmpty() ? ['-rf', 'text', '-rff', resultFile.toString()]
+                         : extra.split('\s+').toList())
+}
+
 // jcstress -- the OpenJDK harness for Java Memory Model races.
 //
 // Kept in its own source set, off the main build, on purpose. A jcstress run forks a JVM per test and

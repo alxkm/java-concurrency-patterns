@@ -17,6 +17,7 @@ classes that assert the concurrency property in question instead of sleeping and
 - [Repository layout](#repository-layout)
 - [Memory model](#memory-model) - the rules everything else depends on
 - [Diagnostics](#diagnostics) - reading what a stuck system is telling you
+- [Benchmarks](#benchmarks) - measured numbers for the claims made here
 - [Patterns](#patterns) - the example catalogue, by topic
 - [Antipatterns](#antipatterns) - each one with its description, its fix, and runnable examples
 - [java.util.concurrent.\*](#javautilconcurrent) - a reference guide to the package:
@@ -236,6 +237,94 @@ The fix is a `ReentrantLock`, which a virtual thread can hold across an unmount.
 `synchronized` is fine. This advice has an expiry date: JEP 491 removed monitor pinning in Java 24, so
 on a recent JDK both versions run in the same time. It still matters on 21, the current LTS and what
 this repository builds against.
+
+## Benchmarks
+
+A repository that makes performance claims should be able to back them. These are JMH benchmarks for
+the specific claims made above, and the numbers below come from running them, not from an article.
+
+```bash
+./gradlew jmh                                              # everything, several minutes
+./gradlew jmh -PjmhArgs="CounterBenchmark -t 8"            # one benchmark, contended
+./gradlew jmh -PjmhArgs="CounterBenchmark -f 1 -wi 3 -i 3" # quick and rough
+```
+
+`./gradlew build` compiles them but never runs them. Results land in `build/reports/jmh`.
+
+All figures below are throughput in ops/us, higher is better, on a 12 core machine running JDK 21.
+Your numbers will differ; the point is that you can produce your own.
+
+### Counters
+
+[CounterBenchmark.java](./src/jmh/java/org/alxkm/benchmark/CounterBenchmark.java)
+
+| | 1 thread | 8 threads |
+|---|---|---|
+| `synchronized` | 92.9 | 18.2 |
+| `ReentrantLock` | 96.1 | 66.6 |
+| `AtomicLong` | 204.2 | 115.5 |
+| `LongAdder` | 210.3 | 1256.5 |
+
+Two things worth noting. Uncontended, the atomics are already about twice as fast as either lock, which
+contradicts the old advice that an uncontended monitor is nearly free. That advice assumed biased
+locking, disabled in JDK 15 and removed in 18.
+
+Under contention the spread is much wider, and `LongAdder` is in a different class: 69x the throughput
+of `synchronized`. It gets there by spreading its state across padded cells so threads stop fighting
+over one cache line, which is the effect
+[FalseSharingExample](./src/main/java/org/alxkm/memorymodel/FalseSharingExample.java) measures directly.
+The catch is that `sum()` has to walk every cell, so a counter read as often as it is written is a
+different question from this one.
+
+### Queues
+
+[QueueBenchmark.java](./src/jmh/java/org/alxkm/benchmark/QueueBenchmark.java) offers and polls from the
+same thread, 4 threads:
+
+| | ops/us |
+|---|---|
+| `ArrayBlockingQueue` | 23.6 |
+| `LinkedBlockingQueue` | 11.1 |
+| `ConcurrentLinkedQueue` | 4.4 |
+| `ConcurrentLinkedDeque` | 3.2 |
+
+`ConcurrentLinkedDeque` came out about 27% slower than `ConcurrentLinkedQueue`, which is the same
+direction as the 40% this README used to quote, but not the same number.
+
+The `LinkedBlockingQueue` result contradicts what this README used to claim. Its two-lock design is
+supposed to beat `ArrayBlockingQueue`, but that argument is about producers and consumers running at
+once, which offer-then-poll on one thread cannot show either way. So
+[QueueHandoffBenchmark.java](./src/jmh/java/org/alxkm/benchmark/QueueHandoffBenchmark.java) runs 4
+producers against 4 consumers:
+
+| | total | produce | consume |
+|---|---|---|---|
+| `ArrayBlockingQueue` | 49.5 ± 1.4 | 23.7 | 25.8 |
+| `LinkedBlockingQueue` | 40.9 ± 18.2 | 15.2 | 25.7 |
+
+Closer, as expected, but still not in favour of the two-lock design here. `ArrayBlockingQueue` writes
+into a ring buffer it allocated once; `LinkedBlockingQueue` allocates a node per element. Note the error
+bars: the linked queue's throughput is also far less predictable.
+
+### Lists
+
+[ListBenchmark.java](./src/jmh/java/org/alxkm/benchmark/ListBenchmark.java), 1000 elements, throughput
+of the whole group:
+
+| | 7 readers, 1 writer | 4 readers, 4 writers |
+|---|---|---|
+| `CopyOnWriteArrayList` | 314.7 | 300.3 |
+| `Collections.synchronizedList` | 19.3 | 12.4 |
+
+The advice that CopyOnWrite suits infrequent writes is right, but it understates the case: the crossover
+is much further out than "infrequent" suggests. Even at an even read/write split it was 24x ahead here,
+because its reads take no lock at all (296 against 6.8 ops/us) and that dominates the total.
+
+Read the write column separately before concluding too much. CopyOnWrite writes were 4.1 ops/us against
+5.8 for the synchronized list at 1000 elements, and the gap widens with size, since every write copies
+the whole array. At 100,000 elements CopyOnWrite writes become both slower and very erratic. Total
+throughput still favoured CopyOnWrite at every size tested, which is a statement about this workload
+rather than a general rule.
 
 ## Patterns
 
@@ -597,7 +686,7 @@ Thread-safe and non-blocking queue implementations based on linked nodes.
 
 **ConcurrentLinkedQueue<E>** - This implementation utilizes the wait-free algorithm devised by Michael & Scott, optimized to work efficiently with the garbage collector. Built on CAS, this algorithm ensures high-speed operations. However, it's worth noting that the size() method may incur significant overhead if called frequently, so it's advisable to minimize its usage.
 
-**ConcurrentLinkedDeque<E>** - Deque, pronounced as “Deck”, stands for Double-ended queue, indicating that data can be added to and removed from both ends. Consequently, this class supports both FIFO (First In First Out) and LIFO (Last In First Out) modes of operation. In practical scenarios, ConcurrentLinkedDeque should be employed only if LIFO functionality is indispensable, as its bidirectional nature causes a 40% performance loss compared to ConcurrentLinkedQueue.
+**ConcurrentLinkedDeque<E>** - Deque, pronounced as “Deck”, stands for Double-ended queue, indicating that data can be added to and removed from both ends. Consequently, this class supports both FIFO (First In First Out) and LIFO (Last In First Out) modes of operation. In practical scenarios, ConcurrentLinkedDeque should be employed only if LIFO functionality is indispensable, as its bidirectional nature costs throughput compared to ConcurrentLinkedQueue. Measured here it was about 27% slower on offer/poll; see [Benchmarks](#benchmarks).
 
 ### Blocking Queues
 ![image](images/BlockingQueue.png)
@@ -608,7 +697,7 @@ Thread-safe and non-blocking queue implementations based on linked nodes.
 
 **DelayQueue<E extends Delayed>** - A specialized class that retrieves elements from the queue only after a delay specified in each element via the getDelay method of the Delayed interface.
 
-**LinkedBlockingQueue<E>** - A blocking queue implemented with linked nodes, using the "two lock queue" algorithm: one lock for adding, another for removing elements. Compared to ArrayBlockingQueue, this class offers higher performance due to two locks, but consumes more memory. The queue size is set via the constructor and defaults to Integer.MAX_VALUE.
+**LinkedBlockingQueue<E>** - A blocking queue implemented with linked nodes, using the "two lock queue" algorithm: one lock for adding, another for removing elements. The two locks let a put and a take proceed at once, which is often quoted as making it faster than ArrayBlockingQueue. Measured here that did not hold: ArrayBlockingQueue was ahead in both the single-threaded and the producer/consumer case, because it writes into a preallocated ring buffer while LinkedBlockingQueue allocates a node per element. It does consume more memory. See [Benchmarks](#benchmarks). The queue size is set via the constructor and defaults to Integer.MAX_VALUE.
 
 **PriorityBlockingQueue<E>** - A thread-safe wrapper over PriorityQueue. When inserting an element, its position in the queue is determined by the Comparator logic or the Comparable interface implemented in the elements. The smallest element is dequeued first.
 
@@ -777,7 +866,7 @@ Thus, by dividing into parts, it is possible to achieve their parallel processin
 ![image](images/Atomics.png)
 
 
-**AtomicBoolean, AtomicInteger, AtomicLong, AtomicIntegerArray, AtomicLongArray** - When you need to synchronize access to a simple int variable in a class, you can use synchronized constructs, or volatile with atomic set/get operations. However, the new Atomic* classes offer an even better solution. These classes use CAS (Compare-And-Swap) operations, which are faster than synchronization with synchronized or volatile. Additionally, they provide methods for atomic addition, increment, and decrement.
+**AtomicBoolean, AtomicInteger, AtomicLong, AtomicIntegerArray, AtomicLongArray** - When you need to synchronize access to a simple int variable in a class, you can use synchronized constructs, or volatile with atomic set/get operations. However, the new Atomic* classes offer an even better solution. These classes use CAS (Compare-And-Swap) operations, which are faster than a lock: measured here about 2x uncontended and about 6x with eight threads, and LongAdder far more than that. See [Benchmarks](#benchmarks). Additionally, they provide methods for atomic addition, increment, and decrement.
 
 **AtomicReference** - This class allows for atomic operations on an object reference.
 
