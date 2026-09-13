@@ -133,6 +133,12 @@ and the compiler, JIT and CPU are all free to exploit that freedom.
 - [FalseSharingExample.java](./src/main/java/org/alxkm/memorymodel/FalseSharingExample.java): correctness
   is not the only cost - two unrelated fields on one cache line run about 2.8x slower.
 
+Each of these has a diagrammed write-up in [docs/diagrams](./docs/diagrams):
+[happens-before](./docs/diagrams/01-happens-before.md),
+[visibility](./docs/diagrams/02-visibility.md),
+[reordering](./docs/diagrams/03-reordering.md),
+[false sharing](./docs/diagrams/04-false-sharing.md).
+
 ### Why `volatile`, concretely
 
 Run the visibility example and the answer stops being abstract:
@@ -154,6 +160,17 @@ Some of these races cannot be demonstrated by an ordinary test, and it is worth 
 Lining two threads up requires synchronisation, and that synchronisation is itself a memory barrier that
 drains the store buffer producing the effect. Measured here, the textbook Dekker probe found **zero**
 reorderings in 20,000 thread-pair runs and **zero** in 500,000 barrier-synchronised iterations.
+
+Why that happens is worth spelling out, because it is not bad luck:
+
+```mermaid
+flowchart LR
+    A["Catch reordering<br/>in a unit test"] --> B["Two threads<br/>must line up"]
+    B --> C["Lining up needs<br/>a barrier or latch"]
+    C --> D["That IS a<br/>memory barrier"]
+    D --> E["It drains the store buffer<br/>that produces the effect"]
+    E --> F["The test destroys<br/>what it measures"]
+```
 
 [jcstress](https://github.com/openjdk/jcstress), the OpenJDK harness built for this, spins the actors
 without synchronisation and shuffles JIT decisions between forks. Given the same idiom:
@@ -210,6 +227,31 @@ A thread in the same frame across all three is stuck, whereas one that moves is 
 | `BLOCKED` | waiting to enter a `synchronized` block | contention; the dump names the monitor and its owner |
 | `WAITING` | parked until someone signals | a handoff; if nobody signals, it never returns |
 | `TIMED_WAITING` | parked with a deadline | normal for pool workers and `sleep` |
+
+```mermaid
+stateDiagram-v2
+    direction LR
+    [*] --> NEW
+    NEW --> RUNNABLE: start()
+    RUNNABLE --> BLOCKED: enters synchronized<br/>someone else holds it
+    BLOCKED --> RUNNABLE: monitor released
+    RUNNABLE --> WAITING: wait() / park()<br/>take() / await()
+    WAITING --> RUNNABLE: notify / signal / unpark
+    RUNNABLE --> TIMED_WAITING: sleep(n) / poll(n, unit)
+    TIMED_WAITING --> RUNNABLE: signalled or timed out
+    RUNNABLE --> TERMINATED: run() returns
+    TERMINATED --> [*]
+
+    note right of BLOCKED
+        CONTENTION. Someone holds the monitor.
+        You proceed when they release. Costs throughput.
+    end note
+
+    note right of WAITING
+        A HANDOFF. Parked until signalled.
+        If nobody signals, this is a HANG.
+    end note
+```
 
 Two traps worth knowing:
 
@@ -270,6 +312,19 @@ Thread[#97,ForkJoinPool-1-worker-12,5,CarrierThreads]
 The `jdk.VirtualThreadPinned` JFR event records the same thing with far less overhead, which makes it
 the option for a production process.
 
+```mermaid
+flowchart TD
+    A["Throughput will not scale,<br/>and there is no lock contention"] --> B["Run with<br/>-Djdk.tracePinnedThreads=short"]
+    B --> C["Prints the frame<br/>holding the monitor"]
+    A --> D["In production, use the<br/>jdk.VirtualThreadPinned JFR event"]
+    C --> F{"Is the blocking call<br/>inside synchronized?"}
+    F -->|yes| G["Swap the monitor<br/>for a ReentrantLock"]
+    F -->|no| H["Look elsewhere:<br/>native frames also pin"]
+```
+
+Longer write-ups: [thread states and dumps](./docs/diagrams/06-thread-states.md),
+[virtual thread pinning](./docs/diagrams/05-virtual-thread-pinning.md).
+
 The fix is a `ReentrantLock`, which a virtual thread can hold across an unmount. Everywhere else
 `synchronized` is fine. This advice has an expiry date: JEP 491 removed monitor pinning in Java 24, so
 on a recent JDK both versions run in the same time. It still matters on 21, the current LTS and what
@@ -314,6 +369,21 @@ The catch is that `sum()` has to walk every cell, so a counter read as often as 
 different question from this one.
 
 ### Queues
+
+Which of the seven is usually the question people arrive with:
+
+```mermaid
+flowchart TD
+    A["I need a queue<br/>between threads"] --> B{"Need blocking,<br/>i.e. backpressure?"}
+    B -->|no| C{"Need LIFO too?"}
+    C -->|no| D["ConcurrentLinkedQueue<br/>4.4 ops/us"]
+    C -->|yes| E["ConcurrentLinkedDeque<br/>3.2 ops/us, ~27% slower"]
+    B -->|yes| F{"Special delivery<br/>order?"}
+    F -->|by priority| G["PriorityBlockingQueue"]
+    F -->|after a delay| H["DelayQueue"]
+    F -->|producer must know<br/>it was picked up| I["LinkedTransferQueue"]
+    F -->|plain FIFO| J["ArrayBlockingQueue<br/>23.6 ops/us"]
+```
 
 [QueueBenchmark.java](./src/jmh/java/org/alxkm/benchmark/QueueBenchmark.java) offers and polls from the
 same thread, 4 threads:
@@ -362,6 +432,9 @@ Read the write column separately before concluding too much. CopyOnWrite writes 
 the whole array. At 100,000 elements CopyOnWrite writes become both slower and very erratic. Total
 throughput still favoured CopyOnWrite at every size tested, which is a statement about this workload
 rather than a general rule.
+
+The same choices as decision trees, with the counter and thread-type cases too:
+[docs/diagrams/07-choosing.md](./docs/diagrams/07-choosing.md).
 
 ## Patterns
 
@@ -690,7 +763,37 @@ The name is self-explanatory. All modification operations on the collection (add
 
 ## Scalable Maps
 
-![image](images/ConcurrentMap.png)
+`ConcurrentHashMap` is the most repeated out-of-date fact in Java concurrency, and this README
+carried the old version of it until recently. Up to Java 7 the map was a fixed array of segments,
+each with its own lock, and `concurrencyLevel` set how many there were:
+
+```mermaid
+flowchart TD
+    CHM["ConcurrentHashMap, Java 7"] --> S0["Segment 0<br/>own lock, own table"]
+    CHM --> S1["Segment 1<br/>own lock, own table"]
+    CHM --> S15["Segment 15<br/>own lock, own table"]
+    WA["writer A"] --> S0
+    WB["writer B"] --> S0
+    S0 --> X["A holds the lock, B waits,<br/>even though their buckets differ.<br/>At most 16 writers, ever."]
+```
+
+Since Java 8 there are no segments at all. The lock granularity is the individual bin, so two
+writers collide only when their keys hash to the same bucket:
+
+```mermaid
+flowchart TD
+    CHM["ConcurrentHashMap, Java 8+"] --> T["one table of bins"]
+    T --> B0["empty bin"]
+    T --> B1["bin: Node -> Node"]
+    T --> BN["bin: TreeBin"]
+    B0 --> C0["CAS the head in.<br/>No lock at all."]
+    B1 --> C1["synchronized on<br/>THAT node only"]
+    BN --> CN["over 8 entries becomes a<br/>red-black tree: O(log n),<br/>not O(n), on a bad hash"]
+```
+
+Concurrency now scales with table size instead of being capped at 16, and `concurrencyLevel`
+survives only as a sizing hint. Full write-up, including why `size()` is an estimate and what
+weakly consistent iterators really promise: [docs/diagrams/09-concurrenthashmap.md](./docs/diagrams/09-concurrenthashmap.md).
 
 Improved implementations of HashMap, TreeMap with better support for multithreading and scalability.
 
@@ -943,6 +1046,27 @@ observed - through the helpers in [`src/test/java/org/alxkm/testsupport`](./src/
 
 Tests that pin down an antipattern assert both halves: that the broken version can actually lose updates,
 and that the corrected version never does.
+
+Nine ways a concurrency test passes while the code is broken, every one of them found and fixed in
+this repository:
+
+```mermaid
+flowchart TD
+    A["My concurrency test passes"] --> B{"Does it sleep<br/>instead of waiting?"}
+    B -->|yes| B1["Passes fast, fails on CI.<br/>Wait for the condition."]
+    B -->|no| C{"Does it assert inside<br/>a spawned thread?"}
+    C -->|yes| C1["AssertionError kills that thread only.<br/>JUnit never sees it."]
+    C -->|no| D{"Does it call the class<br/>it is named after?"}
+    D -->|no| D1["It tests the JDK.<br/>407 lines here never mentioned<br/>the class under test."]
+    D -->|yes| E{"Does it assert the<br/>outcome of a race?"}
+    E -->|yes| E1["Passes, then fails next run.<br/>Order it with a latch."]
+    E -->|no| F{"A hard threshold<br/>on a timing?"}
+    F -->|yes| F1["Coin flip.<br/>Compare two strategies instead."]
+    F -->|no| G["Probably a real test"]
+```
+
+The full list, with what each one looked like here:
+[docs/diagrams/08-testing-concurrency.md](./docs/diagrams/08-testing-concurrency.md).
 
 ### Running tests
 
