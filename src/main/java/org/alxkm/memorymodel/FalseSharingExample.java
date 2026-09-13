@@ -12,11 +12,14 @@ import java.util.concurrent.TimeUnit;
  * block on each other, yet each write bounces the line between cores. Hence the name -- the sharing is
  * an accident of layout.
  * <p>
- * Measured on the machine this example was written on, with 50 million increments per thread:
+ * Measured on the machine this example was written on, with 50 million increments per thread and both
+ * layouts compiled before anything is timed:
  * <pre>
- *   adjacent fields : ~800 ms
- *   padded fields   : ~270 ms      (about 3x faster)
+ *   adjacent fields : ~730 ms
+ *   padded fields   : ~265 ms      (about 2.8x faster)
  * </pre>
+ * Warm the JIT up before believing any of this. Timing the first run of each layout produces a
+ * similar looking ratio for an entirely different reason, and it disappears on the second round.
  * The fix is to keep the two fields off one line by putting 7 longs of padding between them: 8 longs at
  * 8 bytes each fills a 64-byte line. This is what {@code jdk.internal.vm.annotation.Contended} does, and
  * it is why {@link java.util.concurrent.atomic.LongAdder} beats
@@ -145,14 +148,33 @@ public final class FalseSharingExample {
         }
     }
 
+    /** Short runs of both shapes, enough for the JIT to compile the loops before anything is timed. */
+    private static final int WARMUP_ROUNDS = 5;
+
+    /** Measured rounds. More than one, because a single timing says nothing about its own stability. */
+    private static final int MEASURED_ROUNDS = 4;
+
+    private static final long WARMUP_ITERATIONS = 5_000_000L;
+
     /**
-     * Runs both layouts twice and prints the ratio, discarding the first round as JIT warm-up.
+     * Warms both layouts up, then times them several times and prints every result.
+     * <p>
+     * The warm-up is not a formality here. An earlier version of this demo timed the very first run of
+     * each layout, and the adjacent one came out three times slower simply because it was the first
+     * thing the JIT had to compile. The ratio looked like the cache effect and was not; timing the
+     * second round showed no difference at all. Both layouts are compiled before anything is measured
+     * now, and running several rounds makes an unstable measurement visible rather than quotable.
      *
      * @param args command line arguments (not used).
      * @throws InterruptedException if the demo is interrupted.
      */
     public static void main(String[] args) throws InterruptedException {
-        for (int round = 0; round < 2; round++) {
+        for (int i = 0; i < WARMUP_ROUNDS; i++) {
+            timeAdjacentMillis(WARMUP_ITERATIONS);
+            timePaddedMillis(WARMUP_ITERATIONS);
+        }
+
+        for (int round = 0; round < MEASURED_ROUNDS; round++) {
             long adjacent = timeAdjacentMillis(DEFAULT_ITERATIONS);
             long padded = timePaddedMillis(DEFAULT_ITERATIONS);
             System.out.printf("round %d: adjacent=%dms padded=%dms -> %.2fx%n",

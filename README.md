@@ -131,7 +131,7 @@ and the compiler, JIT and CPU are all free to exploit that freedom.
 - [SafePublicationExample.java](./src/main/java/org/alxkm/memorymodel/SafePublicationExample.java): handing
   a new object to another thread so it cannot observe it half-built.
 - [FalseSharingExample.java](./src/main/java/org/alxkm/memorymodel/FalseSharingExample.java): correctness
-  is not the only cost - two unrelated fields on one cache line run about 3x slower.
+  is not the only cost - two unrelated fields on one cache line run about 2.8x slower.
 
 ### Why `volatile`, concretely
 
