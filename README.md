@@ -1,15 +1,52 @@
-# Java multithreading and concurrency patterns and antipatterns
+# Java Concurrency Patterns
+
+Concurrency examples that are measured, not asserted. Every performance claim here has a benchmark
+behind it, every antipattern has a test that catches it failing, and the memory model section proves
+its point with jcstress instead of prose.
 
 [![Java CI with Gradle](https://github.com/alxkm/java-concurrency-patterns/actions/workflows/gradle.yml/badge.svg)](https://github.com/alxkm/java-concurrency-patterns/actions/workflows/gradle.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://openjdk.org/projects/jdk/21/)
 
-Runnable examples of the concurrency primitives in `java.util.concurrent`, the classic multithreading
-patterns built on top of them, and the antipatterns they exist to prevent. Every antipattern is paired
-with the code that fixes it, so you can read the broken version and the corrected version side by side.
+Here is why `volatile` exists, in something you can run in the next thirty seconds:
 
-75 pattern examples across 32 topics, 44 antipattern examples across 15 topics, and 53 JUnit 5 test
-classes that assert the concurrency property in question instead of sleeping and hoping.
+```
+$ java -cp build/classes/java/main org.alxkm.memorymodel.VisibilityExample
+plain field    -> reader observed the write: false     <- still spinning, forever
+volatile field -> reader observed the write: true
+```
+
+The reader spins on a flag another thread sets. With a plain field it never stops: nothing in the loop
+writes the flag, so the JIT may hoist the read out and turn `while (!flag)` into `if (!flag) while
+(true)`. That is legal precisely because no happens-before edge exists between the writer's store and
+the reader's load. One keyword creates the edge that forbids it.
+
+### What is different here
+
+**The memory model section proves things instead of stating them.** The textbook Dekker probe for
+instruction reordering found zero in 20,000 hand-written attempts, and zero again in 500,000
+barrier-synchronised iterations. [jcstress](#stress-tests-what-a-unit-test-cannot-show) found 9,914,377
+in a single run, 3.74% of samples. Both numbers are here, and so is the reason the first one is zero.
+
+**Performance claims come with benchmarks.** `LongAdder` at 1256 ops/us against 18 for `synchronized`
+under contention. Two claims this README used to make turned out to be wrong once measured, and they
+now carry the numbers that disproved them. See [Benchmarks](#benchmarks).
+
+**There is a section on debugging concurrency, not only on writing it.** How to read a thread dump, why
+`ReentrantLock` never appears as BLOCKED, and virtual thread pinning costing 6x on Java 21 along with
+the two ways to see it. See [Diagnostics](#diagnostics).
+
+### Start here
+
+| You are | Go to |
+|---|---|
+| new to this | [Memory model](#memory-model), then [Patterns](#patterns) |
+| debugging something right now | [Diagnostics](#diagnostics) |
+| choosing between two options | [Benchmarks](#benchmarks) |
+| looking for a specific class | [Contents](#contents) below |
+
+Contents: 75 pattern examples across 32 topics, 44 antipattern examples across 15 topics, and JUnit 5
+tests that assert the concurrency property in question rather than sleeping and hoping.
 
 ## Contents
 
