@@ -1,7 +1,10 @@
 package org.alxkm.patterns.executors;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Manages a pool of worker threads to perform tasks concurrently.
@@ -15,11 +18,45 @@ public class ThreadPoolExample {
      *
      * @param args The command-line arguments (unused).
      */
-    public static void main(String[] args) {
-        ExecutorService executorService = Executors.newFixedThreadPool(10); // Create a fixed thread pool with 10 threads
-        for (int i = 0; i < 20; i++) {
-            executorService.execute(new Task(i)); // Submit 20 tasks to the executor service
+    /** Pool size used by the demo in main. */
+    private static final int DEMO_POOL_SIZE = 10;
+
+    /** Task count used by the demo in main. */
+    private static final int DEMO_TASKS = 20;
+
+    public static void main(String[] args) throws InterruptedException {
+        int threadsUsed = run(DEMO_POOL_SIZE, DEMO_TASKS);
+        System.out.println("Ran " + DEMO_TASKS + " tasks on " + threadsUsed + " distinct threads.");
+    }
+
+    /**
+     * Submits the tasks to a fixed pool and waits for them to finish.
+     *
+     * The number of threads is the thing worth noticing: it is bounded by the pool, not by the number
+     * of tasks, so twenty tasks on a pool of ten never produce twenty threads.
+     *
+     * @param poolSize  how many threads the pool keeps.
+     * @param taskCount how many tasks to submit.
+     * @return how many distinct threads ran the tasks, never more than poolSize.
+     * @throws InterruptedException if this thread is interrupted while waiting for the pool to drain.
+     */
+    public static int run(int poolSize, int taskCount) throws InterruptedException {
+        Set<Long> threadIds = ConcurrentHashMap.newKeySet();
+        ExecutorService executorService = Executors.newFixedThreadPool(poolSize);
+
+        for (int i = 0; i < taskCount; i++) {
+            Task task = new Task(i);
+            executorService.execute(() -> {
+                threadIds.add(Thread.currentThread().threadId());
+                task.run();
+            });
         }
-        executorService.shutdown(); // Shut down the executor service
+
+        executorService.shutdown();
+        if (!executorService.awaitTermination(1, TimeUnit.MINUTES)) {
+            executorService.shutdownNow();
+            throw new IllegalStateException("pool did not drain");
+        }
+        return threadIds.size();
     }
 }
