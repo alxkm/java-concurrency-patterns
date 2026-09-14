@@ -26,6 +26,87 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
+// Running one example.
+//
+// Almost every class here has a main method and is meant to be read and run on its own. Reaching one
+// used to mean spelling out a classpath and a fully qualified name, which is a poor first impression
+// for a repository whose whole point is that you can run the thing.
+//
+//     ./gradlew listExamples
+//     ./gradlew runExample -Pexample=VisibilityExample
+//     ./gradlew runExample -Pexample=org.alxkm.memorymodel.VisibilityExample
+//
+// A simple name is enough unless two examples share it, in which case the task says so and lists the
+// candidates rather than guessing.
+
+/** Maps every example's simple name to the fully qualified names that carry it. */
+ext.exampleIndex = {
+    def index = [:]
+    file('src/main/java').eachFileRecurse { candidate ->
+        if (!candidate.name.endsWith('.java')) {
+            return
+        }
+        def text = candidate.getText('UTF-8')
+        if (!text.contains('static void main')) {
+            return
+        }
+        def packageMatch = text =~ /(?m)^package\s+([\w.]+);/
+        if (!packageMatch) {
+            return
+        }
+        def simple = candidate.name - '.java'
+        index.computeIfAbsent(simple) { [] } << (packageMatch[0][1] + '.' + simple)
+    }
+    index
+}
+
+tasks.register('listExamples') {
+    group = 'application'
+    description = 'Lists every example that has a main method.'
+    doLast {
+        def index = exampleIndex()
+        def names = index.values().flatten().sort()
+        names.each { println it }
+        println()
+        println("${names.size()} runnable examples. Run one with:")
+        println('    ./gradlew runExample -Pexample=<simple or fully qualified name>')
+    }
+}
+
+tasks.register('runExample', JavaExec) {
+    group = 'application'
+    description = 'Runs one example: -Pexample=VisibilityExample'
+    classpath = sourceSets.main.runtimeClasspath
+
+    mainClass = providers.provider {
+        def requested = (project.findProperty('example') ?: '').toString().trim()
+        if (requested.isEmpty()) {
+            throw new GradleException(
+                    'Which example? Pass -Pexample=<name>, or run ./gradlew listExamples to see them.')
+        }
+
+        def index = exampleIndex()
+        // Not withDefault: in Groovy that inserts the key on read, so a typo would end up in the
+        // index and then be offered back as a suggestion for itself.
+        def matches = requested.contains('.')
+            ? index.values().flatten().findAll { it == requested }
+            : (index.containsKey(requested) ? index[requested] : [])
+
+        if (matches.isEmpty()) {
+            def near = index.keySet().findAll { it.toLowerCase().contains(requested.toLowerCase()) }.sort()
+            def hint = near.isEmpty()
+                ? 'Run ./gradlew listExamples to see them.'
+                : "Did you mean: ${near.join(', ')}"
+            throw new GradleException("No example named '${requested}'. ${hint}")
+        }
+        if (matches.size() > 1) {
+            throw new GradleException(
+                    "'${requested}' is ambiguous. Use the full name, one of: ${matches.sort().join(', ')}")
+        }
+        matches.first()
+    }
+}
+
 // JMH -- the OpenJDK microbenchmark harness.
 //
 // Same arrangement as jcstress below: its own source set, compiled by `build` so CI catches breakage,
