@@ -49,7 +49,7 @@ A volatile write happens-before every later volatile read of the same field. Tha
 the hoist and the stale read, so the reader is guaranteed to terminate.
 
 ```
-$ java -cp build/classes/java/main org.alxkm.memorymodel.VisibilityExample
+$ ./gradlew runExample -Pexample=VisibilityExample
 plain field    -> reader observed the write: false     <- still spinning
 volatile field -> reader observed the write: true
 ```

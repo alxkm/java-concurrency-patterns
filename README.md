@@ -11,7 +11,7 @@ its point with jcstress instead of prose.
 Here is why `volatile` exists, in something you can run in the next thirty seconds:
 
 ```
-$ java -cp build/classes/java/main org.alxkm.memorymodel.VisibilityExample
+$ ./gradlew runExample -Pexample=VisibilityExample
 plain field    -> reader observed the write: false     <- still spinning, forever
 volatile field -> reader observed the write: true
 ```
@@ -84,12 +84,13 @@ cd java-concurrency-patterns
 ./gradlew test           # run the tests on their own
 ```
 
-Most examples carry a `main` method and are meant to be read and run one at a time. Run one from your IDE,
-or from the command line:
+Most examples carry a `main` method and are meant to be read and run one at a time. Run one from your
+IDE, or from the command line:
 
 ```bash
-./gradlew compileJava
-java -cp build/classes/java/main org.alxkm.antipatterns.racecondition.AccountExample
+./gradlew listExamples                            # all 91 of them
+./gradlew runExample -Pexample=AccountExample     # a simple name is enough
+./gradlew runExample -Pexample=org.alxkm.antipatterns.racecondition.AccountExample
 ```
 
 A few of the antipattern examples deliberately misbehave - `DeadlockExample`, for instance, is supposed to
@@ -144,7 +145,7 @@ Each of these has a diagrammed write-up in [docs/diagrams](./docs/diagrams):
 Run the visibility example and the answer stops being abstract:
 
 ```
-$ java -cp build/classes/java/main org.alxkm.memorymodel.VisibilityExample
+$ ./gradlew runExample -Pexample=VisibilityExample
 plain field    -> reader observed the write: false
 volatile field -> reader observed the write: true
 ```
