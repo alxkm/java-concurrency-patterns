@@ -1,10 +1,11 @@
 package org.alxkm.patterns.executors;
 
 import java.util.List;
+import java.util.Set;
 import java.util.ArrayList;
 import java.util.concurrent.AbstractExecutorService;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
@@ -29,9 +30,13 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class AbstractExecutorServiceExample extends AbstractExecutorService {
 
-    private final AtomicInteger taskCount = new AtomicInteger(0);
+    /** Tasks started and not yet finished. Decremented when a task completes, or isTerminated never holds. */
+    private final AtomicInteger runningTasks = new AtomicInteger(0);
+
     private volatile boolean isShutdown = false;
-    private final ConcurrentSkipListSet<Runnable> tasks = new ConcurrentSkipListSet<>();
+
+    /** The threads currently running a task, so shutdownNow can actually interrupt them. */
+    private final Set<Thread> runningThreads = ConcurrentHashMap.newKeySet();
 
     /**
      * Submits a task for execution.
@@ -55,14 +60,32 @@ public class AbstractExecutorServiceExample extends AbstractExecutorService {
      *
      * @param command the task to execute
      */
+    /**
+     * Starts the command on a thread of its own.
+     *
+     * The bookkeeping around the call is the part worth copying. An earlier version of this class
+     * only incremented the counter, so it never returned to zero, isTerminated was permanently false
+     * and awaitTermination burned its whole timeout before reporting failure. Whatever a custom
+     * executor counts, it has to count both ways.
+     *
+     * @param command the task to run.
+     */
     @Override
     public void execute(Runnable command) {
         if (isShutdown) {
             throw new RejectedExecutionException("Executor has been shut down");
         }
-        Thread thread = new Thread(command);
+        runningTasks.incrementAndGet();
+        Thread thread = new Thread(() -> {
+            try {
+                command.run();
+            } finally {
+                runningThreads.remove(Thread.currentThread());
+                runningTasks.decrementAndGet();
+            }
+        });
+        runningThreads.add(thread);
         thread.start();
-        taskCount.incrementAndGet();
     }
 
     /**
@@ -73,9 +96,21 @@ public class AbstractExecutorServiceExample extends AbstractExecutorService {
         isShutdown = true;
     }
 
+    /**
+     * Stops accepting work and interrupts whatever is already running.
+     *
+     * The returned list is always empty, and that is correct rather than a stub: this executor starts
+     * every task immediately on its own thread, so nothing is ever queued and there is nothing
+     * awaiting execution to hand back. The previous version returned a set that no code ever added
+     * to, which looked like the same answer for the wrong reason.
+     *
+     * @return an empty list; this executor never queues.
+     */
     @Override
     public List<Runnable> shutdownNow() {
-        return tasks.stream().toList();
+        isShutdown = true;
+        runningThreads.forEach(Thread::interrupt);
+        return List.of();
     }
 
     /**
@@ -95,7 +130,7 @@ public class AbstractExecutorServiceExample extends AbstractExecutorService {
      */
     @Override
     public boolean isTerminated() {
-        return isShutdown && taskCount.get() == 0;
+        return isShutdown && runningTasks.get() == 0;
     }
 
     /**
