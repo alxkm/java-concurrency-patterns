@@ -33,7 +33,7 @@ jobs: # need next plugin gradle-versions-plugin
   #       run: ./gradlew dependencyUpdates
   #
   #     - name: Upload dependency update report
-  #       uses: actions/upload-artifact@v4
+  #       uses: actions/upload-artifact@v7
   #       with:
   #         name: dependency-updates-report
   #         path: build/dependencyUpdates/
@@ -79,7 +79,7 @@ jobs: # need next plugin gradle-versions-plugin
         continue-on-error: true
 
       - name: Upload OWASP report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: owasp-dependency-check
