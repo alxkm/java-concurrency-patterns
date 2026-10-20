@@ -1,7 +1,6 @@
-package org.alxkm.patterns.activeobjects;
+package org.alxkm.patterns.activeobject;
 
 import org.junit.jupiter.api.Test;
-import org.alxkm.patterns.activeobject.ActiveObject;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
