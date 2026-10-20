@@ -1,11 +1,21 @@
 version: 2
+
+# Minor and patch updates arrive as one pull request per ecosystem, so a quiet week is one review
+# instead of four. Majors stay one per pull request: they are the ones that break the build, and a
+# break is easiest to pin down when nothing else changed in the same pull request.
 updates:
   - package-ecosystem: "gradle"
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      gradle-minor-and-patch:
+        update-types: ["minor", "patch"]
 
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      actions-minor-and-patch:
+        update-types: ["minor", "patch"]
