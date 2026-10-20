@@ -1,8 +1,6 @@
-package org.alxkm.patterns.readwritelock;
+package org.alxkm.patterns.locks;
 
 import org.junit.jupiter.api.Test;
-import org.alxkm.patterns.locks.ReadWriteLockExample;
-import org.alxkm.patterns.locks.ReentrantReadWriteLockCounter;
 
 import java.util.concurrent.CountDownLatch;
 
