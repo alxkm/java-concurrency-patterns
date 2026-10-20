@@ -1,0 +1,19 @@
+name: Suggest an example
+description: A pattern, antipattern or mechanism that is missing
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: mechanism
+    attributes:
+      label: What it should demonstrate
+      description: One mechanism. What happens, and why it matters in real code.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proof
+    attributes:
+      label: How it could be proved
+      description: >
+        Every example here comes with something that runs: a test of a guaranteed property, a JMH
+        benchmark, or a jcstress test. A rough idea of which one, and what it would assert, is enough.

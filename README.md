@@ -1258,6 +1258,9 @@ Contributions are welcome - please open an issue or submit a pull request. When 
 - Add a test that asserts the behaviour rather than waiting for it.
 - Add a link to it in the matching README section.
 
+[CONTRIBUTING.md](CONTRIBUTING.md) has the rest: how to run the stress tests and benchmarks, and what a
+test of concurrent code here may and may not assert.
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details. Feel free to

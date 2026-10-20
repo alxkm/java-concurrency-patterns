@@ -1,0 +1,29 @@
+name: Something is wrong
+description: An example that is broken, a test that proves nothing, or a claim that does not reproduce
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What is wrong
+      description: The class, test or README section, and what it gets wrong.
+      placeholder: MutexExample.getCounter() reads the field without taking the lock.
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: How you know
+      description: >
+        A failing test, a jcstress or JMH result, or the line of the JDK source or JLS that settles it.
+        Paste output rather than describing it.
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: JDK, OS and CPU
+      description: Concurrency results depend on all three, ARM against x86 most of all.
+      placeholder: Temurin 21.0.5, Linux, 16-core x86_64
