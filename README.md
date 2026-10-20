@@ -1105,10 +1105,11 @@ To run specific test categories:
 ### Pattern Tests
 
 #### Active Objects
-- [ActiveObjectTest.java](./src/test/java/org/alxkm/patterns/activeobjects/ActiveObjectTest.java)
+- [ActiveObjectTest.java](./src/test/java/org/alxkm/patterns/activeobject/ActiveObjectTest.java)
 
 #### Atomics
 - [AtomicExampleTest.java](./src/test/java/org/alxkm/patterns/atomics/AtomicExampleTest.java)
+- [VarHandleGaugeTest.java](./src/test/java/org/alxkm/patterns/atomics/VarHandleGaugeTest.java)
 
 #### Balking Pattern
 - [BalkingPatternExampleTest.java](./src/test/java/org/alxkm/patterns/balking/BalkingPatternExampleTest.java)
@@ -1162,7 +1163,7 @@ To run specific test categories:
 - [CustomBlockingQueueTest.java](./src/test/java/org/alxkm/patterns/queue/CustomBlockingQueueTest.java)
 
 #### Read-Write Lock
-- [ReentrantReadWriteLockCounterTest.java](./src/test/java/org/alxkm/patterns/readwritelock/ReentrantReadWriteLockCounterTest.java)
+- [ReentrantReadWriteLockCounterTest.java](./src/test/java/org/alxkm/patterns/locks/ReentrantReadWriteLockCounterTest.java)
 
 #### Reactor Pattern
 - [ReactorTest.java](./src/test/java/org/alxkm/patterns/reactor/ReactorTest.java)
@@ -1217,7 +1218,7 @@ To run specific test categories:
 - [DeadlockExampleTest.java](./src/test/java/org/alxkm/antipatterns/deadlock/DeadlockExampleTest.java) - Detects deadlocks using ThreadMXBean
 
 #### Forgotten Synchronization
-- [ForgottenSynchronizationTest.java](./src/test/java/org/alxkm/antipatterns/forgottensynchronization/ForgottenSynchronizationTest.java) - Shows race conditions from missing synchronization
+- [CounterTest.java](./src/test/java/org/alxkm/antipatterns/forgottensynchronization/CounterTest.java) - Both fixes lose no increment under contention; the unguarded counter never overcounts
 
 #### Race Conditions
 - [RaceConditionTest.java](./src/test/java/org/alxkm/antipatterns/racecondition/RaceConditionTest.java) - Demonstrates lost updates and inconsistent reads
