@@ -19,6 +19,8 @@
  *       {@code Thread.start()}, {@code Thread.join()}, a volatile write/read pair, and a lock.</li>
  *   <li>{@link org.alxkm.memorymodel.SafePublicationExample} -- how to hand a newly built object to
  *       another thread so it cannot observe it half-constructed.</li>
+ *   <li>{@link org.alxkm.memorymodel.ReleaseAcquireExample} -- the cheaper half of volatile: enough to
+ *       hand data over in one direction, not enough for Dekker's idiom.</li>
  *   <li>{@link org.alxkm.memorymodel.FalseSharingExample} -- correctness is not the only thing the
  *       memory model costs you; two unrelated fields on one cache line are measurably slower.</li>
  * </ul>
