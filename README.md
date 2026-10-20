@@ -45,7 +45,7 @@ the two ways to see it. See [Diagnostics](#diagnostics).
 | choosing between two options | [Benchmarks](#benchmarks) |
 | looking for a specific class | [Contents](#contents) below |
 
-Contents: 75 pattern examples across 32 topics, 44 antipattern examples across 15 topics, and JUnit 5
+Contents: 76 pattern examples across 32 topics, 44 antipattern examples across 15 topics, and JUnit 5
 tests that assert the concurrency property in question rather than sleeping and hoping.
 
 ## Contents
@@ -88,7 +88,7 @@ Most examples carry a `main` method and are meant to be read and run one at a ti
 IDE, or from the command line:
 
 ```bash
-./gradlew listExamples                            # all 91 of them
+./gradlew listExamples                            # all 93 of them
 ./gradlew runExample -Pexample=AccountExample     # a simple name is enough
 ./gradlew runExample -Pexample=org.alxkm.antipatterns.racecondition.AccountExample
 ```
@@ -100,7 +100,7 @@ hang. That is the point; its resolution class next to it shows the way out.
 
 ```
 src/main/java/org/alxkm/
-├── patterns/        75 examples across 32 topics: atomics, locks, executors, queues,
+├── patterns/        76 examples across 32 topics: atomics, locks, executors, queues,
 │                    synchronizers, and the classic patterns (active object, balking,
 │                    guarded suspension, monitor object, reactor, object pool, ...),
 │                    plus Java 21 virtual threads and structured concurrency
@@ -131,10 +131,12 @@ and the compiler, JIT and CPU are all free to exploit that freedom.
   edges you get for free - `Thread.start()`, `Thread.join()`, a volatile write/read pair, and a lock.
 - [SafePublicationExample.java](./src/main/java/org/alxkm/memorymodel/SafePublicationExample.java): handing
   a new object to another thread so it cannot observe it half-built.
+- [ReleaseAcquireExample.java](./src/main/java/org/alxkm/memorymodel/ReleaseAcquireExample.java): the
+  cheaper half of volatile. Enough to hand data from one thread to another, not enough for Dekker's idiom.
 - [FalseSharingExample.java](./src/main/java/org/alxkm/memorymodel/FalseSharingExample.java): correctness
   is not the only cost - two unrelated fields on one cache line run about 2.8x slower.
 
-Each of these has a diagrammed write-up in [docs/diagrams](./docs/diagrams):
+Most of these have a diagrammed write-up in [docs/diagrams](./docs/diagrams):
 [happens-before](./docs/diagrams/01-happens-before.md),
 [visibility](./docs/diagrams/02-visibility.md),
 [reordering](./docs/diagrams/03-reordering.md),
@@ -188,6 +190,12 @@ testing; they fail in production, rarely, on someone else's hardware.
 
 The same suite marks the *safe* variants `FORBIDDEN`, so a run fails if a guarantee is ever violated:
 volatile fields must never produce `0, 0`, and a final field must never be observed at its default.
+
+Release/acquire sits between the two, and the suite shows both of its edges. A value handed over through
+a `setRelease`/`getAcquire` flag was never seen half done in about 400 million samples, where the same
+handover through plain fields was caught at it 116,180 times. Dekker's idiom through the same two modes
+still produced `0, 0` in 12.7% of samples: release/acquire does not order a store before a later load,
+and that ordering is the part of volatile you pay for.
 
 ```bash
 ./gradlew jcstress                                          # full run, a few minutes
@@ -448,6 +456,7 @@ The same choices as decision trees, with the counter and thread-type cases too:
 - [AtomicReferenceExample.java](./src/main/java/org/alxkm/patterns/atomics/AtomicReferenceExample.java): Example of using AtomicReference.
 - [AtomicReferenceFieldUpdaterExample.java](./src/main/java/org/alxkm/patterns/atomics/AtomicReferenceFieldUpdaterExample.java): Demonstrates atomic field updater for reference fields.
 - [AtomicStampedReferenceExample.java](./src/main/java/org/alxkm/patterns/atomics/AtomicStampedReferenceExample.java): Example of using AtomicStampedReference.
+- [VarHandleGauge.java](./src/main/java/org/alxkm/patterns/atomics/VarHandleGauge.java): Atomic updates on plain fields through a VarHandle, one by fetch-and-add and one by a compare-and-set loop.
 
 ### Concurrent collections
 - [ConcurrentHashMapExample.java](./src/main/java/org/alxkm/patterns/collections/ConcurrentHashMapExample.java): Demonstrates usage of ConcurrentHashMap.
@@ -1019,6 +1028,8 @@ Thus, by dividing into parts, it is possible to achieve their parallel processin
 
 **AtomicIntegerFieldUpdater, AtomicLongFieldUpdater, AtomicReferenceFieldUpdater** - These classes allow for atomic updates of fields by their names using reflection. The field offsets for CAS are determined in the constructor and cached, so the performance impact of reflection is minimal.
 
+**VarHandle** - Since Java 9, the modern way to do what the field updaters do, and what several of the classes above are built on. A handle to a field or an array element offers the same atomic operations with a choice of memory ordering: plain, opaque, release/acquire and volatile. The weaker modes are what the JDK's own queues use for a one-way handover, where a full volatile pays for an ordering nobody needs.
+
 ### Examples
 
 [Atomics](./src/main/java/org/alxkm/patterns/atomics/AtomicExample.java)\
@@ -1028,6 +1039,9 @@ Thus, by dividing into parts, it is possible to achieve their parallel processin
 [AtomicReferenceArray](./src/main/java/org/alxkm/patterns/atomics/AtomicReferenceArrayExample.java)\
 [AtomicReference](./src/main/java/org/alxkm/patterns/atomics/AtomicReferenceExample.java)\
 [AtomicReferenceFieldUpdater](./src/main/java/org/alxkm/patterns/atomics/AtomicReferenceFieldUpdaterExample.java)\
+[AtomicStampedReference](./src/main/java/org/alxkm/patterns/atomics/AtomicStampedReferenceExample.java)\
+[VarHandle](./src/main/java/org/alxkm/patterns/atomics/VarHandleGauge.java)\
+[Release/acquire through a VarHandle](./src/main/java/org/alxkm/memorymodel/ReleaseAcquireExample.java)\
 [AtomicStampedReference](./src/main/java/org/alxkm/patterns/atomics/AtomicStampedReferenceExample.java)
 
 ## Testing
