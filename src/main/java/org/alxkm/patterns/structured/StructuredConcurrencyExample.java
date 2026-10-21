@@ -5,10 +5,11 @@ import java.time.Instant;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -27,146 +28,228 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class StructuredConcurrencyExample {
 
     /**
-     * Custom structured task scope for managing related tasks.
+     * A stand-in for the JDK's {@code StructuredTaskScope.ShutdownOnFailure}, which is a preview API on
+     * Java 21 and would need {@code --enable-preview} everywhere this repository builds.
+     * <p>
+     * It keeps the three promises that make structured concurrency worth having:
+     * <ul>
+     *   <li><b>Fail fast.</b> The first subtask to fail shuts the scope down: its siblings are cancelled,
+     *       and {@link #join()} returns as soon as that happens, not when the slowest would have
+     *       finished.</li>
+     *   <li><b>A deadline is a deadline.</b> {@link #joinUntil(Instant)} waits until that instant in total,
+     *       however many subtasks there are, and reports running out of time as a
+     *       {@link TimeoutException}.</li>
+     *   <li><b>Nothing outlives the scope.</b> {@link #close()} cancels what is still running and joins
+     *       every subtask's thread before it returns.</li>
+     * </ul>
+     * Each subtask gets a virtual thread of its own, started directly rather than through an executor.
+     * That is not a detail. The JDK 21 virtual-thread executor counts a cancelled task as finished the
+     * moment it is cancelled, so its {@code close()} and {@code awaitTermination} return while a task that
+     * ignores the interrupt is still running. Joining the threads themselves is the only way to keep the
+     * third promise.
+     * <p>
+     * As with the JDK's version, only the thread that created the scope should fork, join and close it.
      */
     public static class StructuredTaskScope implements AutoCloseable {
-        private final ExecutorService executor;
-        private final List<Future<?>> futures;
-        private volatile boolean cancelled = false;
-        private volatile Throwable firstException = null;
-        
-        public StructuredTaskScope() {
-            this.executor = Executors.newVirtualThreadPerTaskExecutor();
-            this.futures = new ArrayList<>();
-        }
-        
+        private final ThreadFactory threads = Thread.ofVirtual().name("subtask-", 0).factory();
+        // The owner adds to this while a failing subtask, on its own thread, walks it to cancel the rest.
+        private final List<Subtask<?>> subtasks = new CopyOnWriteArrayList<>();
+        private volatile boolean shutdown;
+        private volatile Throwable firstException;
+        private volatile Subtask<?> failedSubtask;
+
         /**
-         * Fork a new subtask.
+         * Starts a subtask on its own virtual thread.
+         *
+         * @throws IllegalStateException if a failure, {@link #cancel()} or {@link #close()} has shut the
+         *                               scope down.
          */
         public <T> Subtask<T> fork(Callable<T> task) {
-            if (cancelled) {
-                throw new IllegalStateException("Scope is cancelled");
+            if (shutdown) {
+                throw new IllegalStateException("Scope is shut down");
             }
-            
-            Future<T> future = executor.submit(() -> {
+            Subtask<T> subtask = new Subtask<>();
+            subtask.start(threads, () -> {
                 try {
                     return task.call();
-                } catch (Exception e) {
-                    synchronized (this) {
-                        if (firstException == null) {
-                            firstException = e;
-                        }
-                    }
-                    throw new RuntimeException(e);
+                } catch (Throwable failure) {
+                    failed(subtask, failure);
+                    throw failure;
                 }
             });
-            
-            futures.add(future);
-            return new Subtask<>(future);
+            subtasks.add(subtask);
+            if (shutdown && subtask != failedSubtask) {
+                // A sibling failed between the check above and the add, after its shutdown had already
+                // cancelled everything in the list. Without this the new subtask would run to the end.
+                subtask.cancel();
+            }
+            return subtask;
         }
-        
+
         /**
-         * Join all subtasks and wait for completion.
+         * Records the first failure and cancels every other subtask.
+         */
+        private synchronized void failed(Subtask<?> failing, Throwable failure) {
+            if (shutdown) {
+                // A sibling failed first, or the scope was cancelled and this subtask is reacting to the
+                // interrupt. Either way the scope caused this, and it is not a failure of its own.
+                return;
+            }
+            firstException = failure;
+            failedSubtask = failing;
+            shutdown = true;
+            for (Subtask<?> sibling : subtasks) {
+                if (sibling != failing) {
+                    sibling.cancel();
+                }
+            }
+        }
+
+        /**
+         * Waits until every subtask has finished, or until a failure has shut the scope down.
          */
         public StructuredTaskScope join() throws InterruptedException {
-            for (Future<?> future : futures) {
-                try {
-                    future.get();
-                } catch (ExecutionException e) {
-                    // Exception already recorded
-                }
+            for (Subtask<?> subtask : subtasks) {
+                subtask.await();
             }
             return this;
         }
-        
+
         /**
-         * Join with timeout.
+         * Like {@link #join()}, but gives up at {@code deadline}, cancelling whatever is still running.
+         *
+         * @throws TimeoutException if the deadline passes first.
          */
-        public StructuredTaskScope joinUntil(Instant deadline) throws InterruptedException {
-            Duration timeout = Duration.between(Instant.now(), deadline);
-            
-            for (Future<?> future : futures) {
-                try {
-                    future.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
-                } catch (ExecutionException e) {
-                    // Exception already recorded
-                } catch (TimeoutException e) {
+        public StructuredTaskScope joinUntil(Instant deadline) throws InterruptedException, TimeoutException {
+            for (Subtask<?> subtask : subtasks) {
+                // What is left of the deadline, not the original timeout. Restarting the full timeout for
+                // each subtask in turn would let the last of N subtasks run up to N times past it.
+                long remaining = Math.max(0, Duration.between(Instant.now(), deadline).toNanos());
+                if (!subtask.await(remaining)) {
                     cancel();
-                    throw new InterruptedException("Timeout exceeded");
+                    throw new TimeoutException("Deadline " + deadline + " passed with subtasks still running");
                 }
             }
             return this;
         }
-        
+
         /**
-         * Cancel all subtasks.
+         * Shuts the scope down: cancels every subtask still running and refuses new ones.
          */
-        public void cancel() {
-            cancelled = true;
-            for (Future<?> future : futures) {
-                future.cancel(true);
+        public synchronized void cancel() {
+            shutdown = true;
+            for (Subtask<?> subtask : subtasks) {
+                subtask.cancel();
             }
         }
-        
+
         /**
-         * Check if any subtask failed.
+         * The first failure, exactly as it was thrown, or {@code null} if nothing failed.
          */
         public Throwable exception() {
             return firstException;
         }
-        
+
         /**
-         * Throw exception if any subtask failed.
+         * Rethrows the first failure, if there was one.
          */
         public void throwIfFailed() throws Exception {
-            if (firstException instanceof Exception) {
-                throw (Exception) firstException;
-            } else if (firstException instanceof RuntimeException) {
-                throw (RuntimeException) firstException;
-            } else if (firstException instanceof Error) {
-                throw (Error) firstException;
+            Throwable failure = firstException;
+            if (failure instanceof Exception exception) {
+                throw exception;
+            }
+            if (failure instanceof Error error) {
+                throw error;
             }
         }
-        
+
+        /**
+         * Cancels what is still running, then waits for every subtask's thread to finish, however long
+         * that takes. Returning earlier would leave a subtask running outside the block that started it.
+         */
         @Override
         public void close() {
             cancel();
-            executor.shutdown();
-            try {
-                if (!executor.awaitTermination(1, TimeUnit.SECONDS)) {
-                    executor.shutdownNow();
-                }
-            } catch (InterruptedException e) {
-                executor.shutdownNow();
+            boolean interrupted = false;
+            for (Subtask<?> subtask : subtasks) {
+                interrupted |= subtask.joinThread();
+            }
+            if (interrupted) {
                 Thread.currentThread().interrupt();
             }
         }
     }
-    
+
     /**
      * Represents a subtask within a structured scope.
      */
     public static class Subtask<T> {
-        private final Future<T> future;
-        
-        public Subtask(Future<T> future) {
-            this.future = future;
+        // Set once by the owner before the subtask is shared, through thread start and the scope's list.
+        private volatile FutureTask<T> future;
+        private volatile Thread thread;
+
+        void start(ThreadFactory threads, Callable<T> body) {
+            future = new FutureTask<>(body);
+            thread = threads.newThread(future);
+            thread.start();
         }
-        
+
+        void cancel() {
+            future.cancel(true);
+        }
+
+        /** Waits for the outcome, whatever it is. The outcome itself is read through get() or state(). */
+        void await() throws InterruptedException {
+            try {
+                future.get();
+            } catch (ExecutionException | CancellationException e) {
+                // Finished: failed or cancelled.
+            }
+        }
+
+        /** @return false if the subtask was still running when the time ran out. */
+        boolean await(long nanos) throws InterruptedException {
+            try {
+                future.get(nanos, TimeUnit.NANOSECONDS);
+            } catch (ExecutionException | CancellationException e) {
+                // Finished: failed or cancelled.
+            } catch (TimeoutException e) {
+                return false;
+            }
+            return true;
+        }
+
+        /**
+         * Waits for the thread itself to end, which a cancelled subtask may not have done yet.
+         *
+         * @return whether the calling thread was interrupted while it waited.
+         */
+        boolean joinThread() {
+            boolean interrupted = false;
+            while (true) {
+                try {
+                    thread.join();
+                    return interrupted;
+                } catch (InterruptedException e) {
+                    interrupted = true;   // keep waiting; the caller re-asserts it at the end
+                }
+            }
+        }
+
         /**
          * Get the result of the subtask.
          */
         public T get() throws ExecutionException, InterruptedException {
             return future.get();
         }
-        
+
         /**
          * Check if the subtask is done.
          */
         public boolean isDone() {
             return future.isDone();
         }
-        
+
         /**
          * Get the state of the subtask.
          */
@@ -236,7 +319,7 @@ public class StructuredConcurrencyExample {
             System.out.println("Medium task: " + mediumTask.state());
             System.out.println("Slow task: " + slowTask.state());
             
-        } catch (InterruptedException e) {
+        } catch (TimeoutException e) {
             System.out.println("Tasks timed out and were cancelled");
         } catch (Exception e) {
             System.err.println("Error: " + e.getMessage());
@@ -248,7 +331,8 @@ public class StructuredConcurrencyExample {
      */
     public static void failFastExample() {
         System.out.println("\n=== Fail-Fast Structured Concurrency ===");
-        
+
+        long start = System.nanoTime();
         try (var scope = new StructuredTaskScope()) {
             // Fork tasks where one will fail
             Subtask<String> task1 = scope.fork(() -> simulateWork("Task 1", 200));
@@ -259,8 +343,11 @@ public class StructuredConcurrencyExample {
             Subtask<String> task3 = scope.fork(() -> simulateWork("Task 3", 300));
             
             scope.join();
+            // Task 2 fails at 100 ms and cancels the other two, so join returns then, not at 300 ms
+            // when Task 3 would have finished.
+            System.out.println("join returned after " + (System.nanoTime() - start) / 1_000_000 + " ms");
             scope.throwIfFailed();
-            
+
             // This won't be reached due to the exception
             System.out.println("All tasks completed successfully");
             
