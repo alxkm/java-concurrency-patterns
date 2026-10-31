@@ -566,7 +566,7 @@ The same choices as decision trees, with the counter and thread-type cases too:
 
 ### Modern Java features (Java 21+)
 - [VirtualThreadsExample.java](./src/main/java/org/alxkm/patterns/virtualthreads/VirtualThreadsExample.java): Lightweight threads (Project Loom) for massive concurrency with minimal overhead.
-- [StructuredConcurrencyExample.java](./src/main/java/org/alxkm/patterns/structured/StructuredConcurrencyExample.java): Treats groups of related tasks as a single unit of work with streamlined error handling.
+- [StructuredConcurrencyExample.java](./src/main/java/org/alxkm/patterns/structured/StructuredConcurrencyExample.java): Treats a group of tasks as one unit of work: the first failure cancels the rest, a deadline bounds the whole group, and no task outlives the block. Built without the Java 21 preview API, and on threads rather than an executor, for a reason the class explains.
 
 ### Odd-Even Printer
 - [OddEvenPrinter.java](./src/main/java/org/alxkm/patterns/oddevenprinter/OddEvenPrinter.java): Example of odd-even printing using threads.
