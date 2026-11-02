@@ -19,7 +19,7 @@ public class ThreadInConstructor extends Thread {
      */
     // javac's -Xlint:this-escape flags this constructor, which is exactly the defect being
     // demonstrated: start() publishes `this` to a new thread before the object is fully built.
-    @SuppressWarnings("this-escape")
+    @SuppressWarnings({"this-escape", "PMD.ConstructorCallsOverridableMethod"})
     public ThreadInConstructor(String message) {
         this.message = message;
         start(); // Starting thread in the constructor

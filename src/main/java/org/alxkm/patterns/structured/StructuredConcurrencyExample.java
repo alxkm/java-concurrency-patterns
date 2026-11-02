@@ -72,7 +72,7 @@ public class StructuredConcurrencyExample {
             subtask.start(threads, () -> {
                 try {
                     return task.call();
-                } catch (Throwable failure) {
+                } catch (Throwable failure) { // NOPMD AvoidCatchingThrowable: an Error must shut the scope down too
                     failed(subtask, failure);
                     throw failure;
                 }
@@ -335,12 +335,13 @@ public class StructuredConcurrencyExample {
         long start = System.nanoTime();
         try (var scope = new StructuredTaskScope()) {
             // Fork tasks where one will fail
-            Subtask<String> task1 = scope.fork(() -> simulateWork("Task 1", 200));
-            Subtask<String> task2 = scope.fork(() -> {
+            // The handles are not needed: throwIfFailed reports the failure.
+            scope.fork(() -> simulateWork("Task 1", 200));
+            scope.fork(() -> {
                 Thread.sleep(100);
                 throw new RuntimeException("Task 2 failed!");
             });
-            Subtask<String> task3 = scope.fork(() -> simulateWork("Task 3", 300));
+            scope.fork(() -> simulateWork("Task 3", 300));
             
             scope.join();
             // Task 2 fails at 100 ms and cancels the other two, so join returns then, not at 300 ms

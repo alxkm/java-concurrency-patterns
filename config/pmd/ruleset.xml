@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ruleset name="java-concurrency-patterns"
+         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+
+    <description>
+        PMD rules for a repository about concurrency.
+
+        The stock categories are written for application code, and here most of their output was noise:
+        over 900 findings, of which more than 550 said "do not use threads" and "do not use volatile".
+        Real findings were buried under that, and the build ignored all of it.
+
+        This ruleset keeps the stock categories and drops the rules that argue with the subject matter or
+        with the format of a runnable example. What is left should be clean, and the build fails if it
+        is not. A deliberate violation, such as an antipattern kept broken on purpose, is suppressed at
+        the spot with @SuppressWarnings("PMD.RuleName") and a comment saying why.
+    </description>
+
+    <rule ref="category/java/errorprone.xml">
+        <!-- Identity comparison is the point in lock-owner and leader checks. -->
+        <exclude name="CompareObjectsWithEquals"/>
+        <!-- Clearing a reference (the current leader, a slot) is how these examples release state. -->
+        <exclude name="NullAssignment"/>
+        <!-- Pools and executors are shut down by hand on purpose: shutdown and awaitTermination are
+             what the examples teach. -->
+        <exclude name="CloseResource"/>
+        <!-- while ((item = queue.poll()) != null) is the idiomatic drain loop. -->
+        <exclude name="AssignmentInOperand"/>
+        <exclude name="AvoidDuplicateLiterals"/>
+        <exclude name="AvoidLiteralsInIfCondition"/>
+        <exclude name="AvoidFieldNameMatchingMethodName"/>
+        <exclude name="AvoidFieldNameMatchingTypeName"/>
+        <exclude name="ReturnEmptyCollectionRatherThanNull"/>
+        <!-- jcstress tests are named *Test but have no JUnit methods. -->
+        <exclude name="TestClassWithoutTestCases"/>
+        <!-- Configured below. -->
+        <exclude name="EmptyCatchBlock"/>
+    </rule>
+
+    <!-- An empty catch is fine when a comment says why nothing needs doing. -->
+    <rule ref="category/java/errorprone.xml/EmptyCatchBlock">
+        <properties>
+            <property name="allowCommentedBlocks" value="true"/>
+        </properties>
+    </rule>
+
+    <rule ref="category/java/bestpractices.xml">
+        <!-- Examples print what they do; there is no logger to use instead. -->
+        <exclude name="SystemPrintln"/>
+        <exclude name="AvoidPrintStackTrace"/>
+        <!-- Examples name the concrete type (ConcurrentHashMap, ArrayBlockingQueue) because the
+             concrete type is the lesson. -->
+        <exclude name="LooseCoupling"/>
+        <!-- Sorting in place is what a fork/join merge sort does. -->
+        <exclude name="ArrayIsStoredDirectly"/>
+        <exclude name="UseVarargs"/>
+        <exclude name="ForLoopCanBeForeach"/>
+        <exclude name="OneDeclarationPerLine"/>
+        <!-- Its "memory leak" argument does not apply to a short-lived example. -->
+        <exclude name="AvoidStringBufferField"/>
+    </rule>
+
+    <rule ref="category/java/multithreading.xml">
+        <!-- Threads, volatile and synchronized methods are the subject of the repository. -->
+        <exclude name="DoNotUseThreads"/>
+        <exclude name="AvoidUsingVolatile"/>
+        <exclude name="AvoidSynchronizedAtMethodLevel"/>
+    </rule>
+</ruleset>

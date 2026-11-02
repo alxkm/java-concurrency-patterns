@@ -24,6 +24,7 @@ public class UnsafeSingleton {
      *
      * @return the singleton instance.
      */
+    @SuppressWarnings("PMD.NonThreadSafeSingleton") // the broken version, kept on purpose
     public static UnsafeSingleton getInstance() {
         if (instance == null) {
             instance = new UnsafeSingleton();

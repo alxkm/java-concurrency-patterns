@@ -1,7 +1,7 @@
 package org.alxkm.antipatterns.busywaiting;
 
 /**
- * Demonstrates the resolution of busy waiting by using the wait() and notify() methods for thread synchronization.
+ * Demonstrates the resolution of busy waiting by using the wait() and notifyAll() methods for thread synchronization.
  */
 public class BusyWaitingResolution {
 
@@ -18,7 +18,7 @@ public class BusyWaitingResolution {
         // Set the flag to true and notify the worker thread to proceed
         synchronized (example) {
             example.flag = true;
-            example.notify();
+            example.notifyAll();
         }
 
         workerThread.join();

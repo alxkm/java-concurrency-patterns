@@ -56,7 +56,7 @@ public final class VisibilityExample {
         });
 
         Thread.sleep(WRITE_DELAY_MILLIS);
-        plainFlag = true;
+        plainFlag = true; // NOPMD UnusedAssignment: the reader thread reads it
 
         reader.join(DEFAULT_TIMEOUT_MILLIS);
         boolean observed = !reader.isAlive();

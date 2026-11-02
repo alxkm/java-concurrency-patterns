@@ -15,7 +15,6 @@ import java.util.concurrent.locks.Lock;
  * possibility of deadlock, without any timeout or retry.
  */
 public class PhilosopherWithLock extends Thread {
-    private final int id;
     private final Lock firstFork;
     private final Lock secondFork;
     private final AtomicInteger mealsEaten = new AtomicInteger();
@@ -23,13 +22,13 @@ public class PhilosopherWithLock extends Thread {
     /**
      * Constructs a PhilosopherWithLock seated between two numbered forks.
      *
-     * @param id          the ID of the philosopher.
+     * @param id          the ID of the philosopher, used to name its thread.
      * @param leftForkId  the index of the fork to the philosopher's left.
      * @param rightForkId the index of the fork to the philosopher's right.
      * @param forks       the shared table of forks, indexed by fork ID.
      */
     public PhilosopherWithLock(int id, int leftForkId, int rightForkId, Lock[] forks) {
-        this.id = id;
+        super("philosopher-" + id);
         // Order the two forks by index rather than by hand, so no philosopher is a special case.
         this.firstFork = forks[Math.min(leftForkId, rightForkId)];
         this.secondFork = forks[Math.max(leftForkId, rightForkId)];

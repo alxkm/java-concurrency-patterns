@@ -44,6 +44,7 @@ public final class ReleaseAcquireExample {
     // Both plain on purpose. The payload needs no ordering of its own, since the flag carries its
     // visibility, and the flag is only ever touched through READY.
     private int payload;
+    @SuppressWarnings("PMD.UnusedPrivateField") // read and written through READY
     private boolean ready;
 
     /**
