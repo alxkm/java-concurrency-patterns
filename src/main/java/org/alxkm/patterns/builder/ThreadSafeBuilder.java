@@ -10,8 +10,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * safely used across multiple threads.
  */
 public class ThreadSafeBuilder {
-    private final ReentrantLock lock = new ReentrantLock();
-    
+
     // Target object to build
     public static class Product {
         private final String name;

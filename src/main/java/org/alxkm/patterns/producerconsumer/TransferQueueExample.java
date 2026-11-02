@@ -50,6 +50,7 @@ public class TransferQueueExample {
         CountDownLatch allConsumed = new CountDownLatch(producers * itemsPerProducer);
         ExecutorService executor = Executors.newFixedThreadPool(producers + consumers);
 
+        boolean terminated;
         try {
             for (int i = 0; i < consumers; i++) {
                 executor.submit(new TransferConsumer(queue, i, consumed, allConsumed));
@@ -64,9 +65,12 @@ public class TransferQueueExample {
             }
         } finally {
             executor.shutdownNow();
-            if (!executor.awaitTermination(10, TimeUnit.SECONDS)) {
-                throw new IllegalStateException("executor did not terminate");
-            }
+            terminated = executor.awaitTermination(10, TimeUnit.SECONDS);
+        }
+        // Checked here rather than in the finally block: a throw from finally would replace
+        // whatever the try block threw, and that is usually the more useful of the two.
+        if (!terminated) {
+            throw new IllegalStateException("executor did not terminate");
         }
         return new Result(produced.get(), consumed.get());
     }

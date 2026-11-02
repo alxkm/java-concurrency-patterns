@@ -260,7 +260,7 @@ public class VirtualThreadsExample {
             // Process all requests
             for (Future<String> future : futures) {
                 try {
-                    String result = future.get();
+                    future.get();
                     completedRequests.incrementAndGet();
                     if (completedRequests.get() % 100 == 0) {
                         System.out.printf("Completed %d requests%n", completedRequests.get());

@@ -60,6 +60,7 @@ public class ScheduledThreadPoolExecutorExample {
 
         // Create a ScheduledThreadPoolExecutor with 3 threads
         ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(3);
+        boolean terminated;
         try {
             // A single run, once the delay has passed
             executor.schedule(() -> {
@@ -84,9 +85,12 @@ public class ScheduledThreadPoolExecutorExample {
             // shutdown() alone would let the repeating tasks keep going until their next fire;
             // shutdownNow() cancels them.
             executor.shutdownNow();
-            if (!executor.awaitTermination(10, TimeUnit.SECONDS)) {
-                throw new IllegalStateException("scheduler did not terminate");
-            }
+            terminated = executor.awaitTermination(10, TimeUnit.SECONDS);
+        }
+        // Checked here rather than in the finally block: a throw from finally would replace
+        // whatever the try block threw, and that is usually the more useful of the two.
+        if (!terminated) {
+            throw new IllegalStateException("scheduler did not terminate");
         }
         return new Runs(oneShot.get(), atFixedRate.get(), withFixedDelay.get());
     }

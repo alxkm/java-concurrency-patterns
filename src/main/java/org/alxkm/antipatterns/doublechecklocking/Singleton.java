@@ -34,6 +34,7 @@ public class Singleton {
      *
      * @return the singleton instance.
      */
+    @SuppressWarnings("PMD.DoubleCheckedLocking") // the broken version, kept on purpose
     public static Singleton getInstance() {
         if (instance == null) { // First check (not synchronized)
             synchronized (Singleton.class) {

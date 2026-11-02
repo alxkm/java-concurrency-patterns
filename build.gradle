@@ -301,14 +301,19 @@ configurations.checkstyle {
     }
 }
 
-// PMD Configuration - NON-BREAKING  
+// PMD.
+//
+// It used to run the stock rule categories with ignoreFailures = true, which produced 900+ findings
+// that nobody read: most were "do not use threads" in a repository about threads, and the few real
+// problems were buried under them. config/pmd/ruleset.xml drops the rules that argue with the subject
+// matter, and what is left fails the build.
+//
+// The unit tests are left out. PMD's JUnit rules (one assert per test, a message on every assert) do
+// not fit tests that check a concurrent outcome from several angles.
 pmd {
+    sourceSets = [sourceSets.main, sourceSets.jmh, sourceSets.jcstress]
     consoleOutput = true
     toolVersion = '7.0.0'
-    ignoreFailures = true  // 🛡️ WON'T BREAK BUILD
-    ruleSets = [
-        'category/java/errorprone.xml',
-        'category/java/bestpractices.xml',
-        'category/java/multithreading.xml'
-    ]
+    ruleSets = []
+    ruleSetFiles = files('config/pmd/ruleset.xml')
 }

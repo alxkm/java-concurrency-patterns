@@ -77,10 +77,7 @@ public class LeaderFollowerPattern<T> {
      * Worker thread that implements the Leader-Follower pattern.
      */
     private class WorkerThread extends Thread {
-        private final int threadId;
-        
         public WorkerThread(int threadId) {
-            this.threadId = threadId;
             setName("LeaderFollower-Worker-" + threadId);
             setDaemon(true); // Make daemon thread to prevent JVM hanging
         }

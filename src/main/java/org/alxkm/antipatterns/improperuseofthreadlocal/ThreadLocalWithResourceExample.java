@@ -39,7 +39,7 @@ public class ThreadLocalWithResourceExample {
 
     // The cleaner is never referenced in the try body on purpose: it is held solely so that its
     // close() runs the ThreadLocal.remove() on the way out, which is what -Xlint:try warns about.
-    @SuppressWarnings("try")
+    @SuppressWarnings({"try", "PMD.UnusedLocalVariable"})
     public static void main(String[] args) throws InterruptedException {
         ThreadLocalWithResourceExample example = new ThreadLocalWithResourceExample();
 

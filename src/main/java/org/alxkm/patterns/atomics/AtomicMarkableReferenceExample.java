@@ -43,7 +43,6 @@ public class AtomicMarkableReferenceExample {
         // Define worker threads
         Thread updaterThread = new Thread(() -> {
             SharedResource newResource = new SharedResource("New Data");
-            boolean[] mark = {false};
             atomicMarkableReference.attemptMark(initialResource, true);
             atomicMarkableReference.set(newResource, false);
             System.out.println(Thread.currentThread().getName() + " sets new data: " + newResource.getData());
