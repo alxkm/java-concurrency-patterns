@@ -4,12 +4,9 @@ import org.alxkm.diagnostics.DeadlockDetector;
 import org.alxkm.testsupport.Await;
 import org.junit.jupiter.api.Test;
 
-import java.lang.management.ManagementFactory;
 import java.util.Arrays;
-import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;

@@ -273,11 +273,11 @@ public class LeaderFollowerPatternTest {
     @Test
     public void testConstructorValidation() {
         assertThrows(IllegalArgumentException.class, () -> {
-            new LeaderFollowerPattern<>(0, event -> {});
+            new LeaderFollowerPattern<>(0, event -> { });
         });
 
         assertThrows(IllegalArgumentException.class, () -> {
-            new LeaderFollowerPattern<>(-1, event -> {});
+            new LeaderFollowerPattern<>(-1, event -> { });
         });
 
         assertThrows(IllegalArgumentException.class, () -> {
