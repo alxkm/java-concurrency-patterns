@@ -287,11 +287,16 @@ jacocoTestReport {
     }
 }
 
-// Checkstyle Configuration - NON-BREAKING
+// Checkstyle.
+//
+// Every check in config/checkstyle/checkstyle.xml is an error, and an error fails the build. The
+// checks used to run at "info" severity with ignoreFailures = true, so violations collected in a
+// report nobody read. maxWarnings = 0 keeps a check that is ever set back to "warning" from slipping
+// through the same way.
 checkstyle {
     toolVersion = '10.12.7'
     configFile = rootProject.file('config/checkstyle/checkstyle.xml')
-    ignoreFailures = true  // 🛡️ WON'T BREAK BUILD
+    maxWarnings = 0
 }
 
 // Fix Guava dependency conflict
