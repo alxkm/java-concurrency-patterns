@@ -1,5 +1,6 @@
 package org.alxkm.patterns.leaderfollower;
 
+import org.alxkm.testsupport.Await;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.AfterEach;
@@ -9,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -17,6 +19,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.Set;
+import java.util.function.BooleanSupplier;
 
 public class LeaderFollowerPatternTest {
 
@@ -266,7 +269,7 @@ public class LeaderFollowerPatternTest {
         waitForCondition(() -> leaderFollower.getProcessedEventCount() == 1, 2000);
 
         // There should still be a leader (new one promoted)
-        Thread.sleep(100); // Brief wait for leader promotion
+        waitForCondition(() -> leaderFollower.getCurrentLeader() != null, 2000);
         assertNotNull(leaderFollower.getCurrentLeader());
     }
 
@@ -285,7 +288,7 @@ public class LeaderFollowerPatternTest {
         });
     }
 
-    //
+    @Test
     public void testEventClass() {
         LeaderFollowerPattern.Event event = new LeaderFollowerPattern.Event(42, "Test data");
         
@@ -360,17 +363,17 @@ public class LeaderFollowerPatternTest {
     /**
      * Utility method to wait for a condition with timeout.
      */
-    private void waitForCondition(java.util.concurrent.Callable<Boolean> condition, long timeoutMs) {
-        long startTime = System.currentTimeMillis();
-        while (System.currentTimeMillis() - startTime < timeoutMs) {
-            try {
-                if (condition.call()) {
-                    return;
-                }
-                Thread.sleep(10);
-            } catch (Exception e) {
-                // Ignore and continue waiting
-            }
+    /**
+     * Waits for the condition and fails the test if it does not hold in time. This used to return
+     * quietly on a timeout, so a test whose condition never held went on as if it had, and most call
+     * sites assert nothing after the wait.
+     */
+    private void waitForCondition(BooleanSupplier condition, long timeoutMs) {
+        try {
+            Await.until("the condition at the call site in the stack trace", condition, timeoutMs);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            fail("interrupted while waiting for a condition");
         }
     }
 }
