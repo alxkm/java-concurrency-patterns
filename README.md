@@ -45,7 +45,7 @@ the two ways to see it. See [Diagnostics](#diagnostics).
 | choosing between two options | [Benchmarks](#benchmarks) |
 | looking for a specific class | [Contents](#contents) below |
 
-Contents: 76 pattern examples across 32 topics, 44 antipattern examples across 15 topics, and JUnit 5
+Contents: 75 pattern examples across 31 topics, 44 antipattern examples across 15 topics, and JUnit 5
 tests that assert the concurrency property in question rather than sleeping and hoping.
 
 ## Contents
@@ -100,7 +100,7 @@ hang. That is the point; its resolution class next to it shows the way out.
 
 ```
 src/main/java/org/alxkm/
-├── patterns/        76 examples across 32 topics: atomics, locks, executors, queues,
+├── patterns/        75 examples across 31 topics: atomics, locks, executors, queues,
 │                    synchronizers, and the classic patterns (active object, balking,
 │                    guarded suspension, monitor object, reactor, object pool, ...),
 │                    plus Java 21 virtual threads and structured concurrency
@@ -519,7 +519,7 @@ The same choices as decision trees, with the counter and thread-type cases too:
 - [SemaphoreExample.java](./src/main/java/org/alxkm/patterns/semaphore/SemaphoreExample.java): Demonstrates usage of a semaphore.
 
 ### Double check locking singleton
-- [DoubleCheckedLockingSingleton.java](./src/main/java/org/alxkm/patterns/doublechecklocking/DoubleCheckedLockingSingleton.java): Demonstrates double-checked locking for singleton pattern.
+- [DoubleCheckedLockingSingleton.java](./src/main/java/org/alxkm/patterns/doublechecklocking/DoubleCheckedLockingSingleton.java): Demonstrates double-checked locking for singleton pattern. For the broken version without `volatile`, and the holder idiom that needs no locking at all, see [Double-checked locking](#double-checked-locking) under Antipatterns.
  
 ### Active object
 - [ActiveObject.java](./src/main/java/org/alxkm/patterns/activeobject/ActiveObject.java): Example of Active Object pattern.
@@ -545,9 +545,6 @@ The same choices as decision trees, with the counter and thread-type cases too:
 
 ### Scheduler
 - [Scheduler.java](./src/main/java/org/alxkm/patterns/scheduler/Scheduler.java): Example of a task scheduler.
-
-### Singleton pattern
-- [Singleton.java](./src/main/java/org/alxkm/patterns/singleton/Singleton.java): Example of the singleton pattern.
 
 ### Thread-safe lazy initialization
 - [LazyInitialization.java](./src/main/java/org/alxkm/patterns/threadsafelazyinitialization/LazyInitialization.java): Example of thread-safe lazy initialization.
@@ -1173,9 +1170,6 @@ To run specific test categories:
 
 #### Semaphore
 - [SemaphoreExampleTest.java](./src/test/java/org/alxkm/patterns/semaphore/SemaphoreExampleTest.java)
-
-#### Singleton
-- [DoubleCheckedLockingSingletonTest.java](./src/test/java/org/alxkm/patterns/singleton/DoubleCheckedLockingSingletonTest.java)
 
 #### Synchronizers
 - [BarrierTest.java](./src/test/java/org/alxkm/patterns/synchronizers/BarrierTest.java)
