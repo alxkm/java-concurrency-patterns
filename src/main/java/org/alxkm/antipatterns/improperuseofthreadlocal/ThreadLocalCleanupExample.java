@@ -1,10 +1,15 @@
 package org.alxkm.antipatterns.improperuseofthreadlocal;
 
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 /**
- * To avoid memory leaks, ensure that ThreadLocal variables are cleaned up after use by calling the remove method.
+ * The fix for {@link ThreadLocalExample}: remove the value in a finally block, so it is gone when the
+ * task ends, however it ends.
  * <p>
- * <p>
- * In this revised example, the removeThreadLocalValue method is called in the finally block to ensure that the ThreadLocal variable is cleaned up after use, preventing memory leaks.
+ * {@link #run()} serves the same two requests on one pooled thread, and the second one now sees no
+ * user.
  */
 public class ThreadLocalCleanupExample {
     private static final ThreadLocal<String> THREAD_LOCAL = new ThreadLocal<>();
@@ -28,38 +33,36 @@ public class ThreadLocalCleanupExample {
     }
 
     /**
-     * Removes the value from the ThreadLocal variable to prevent memory leaks.
+     * Removes the value from the ThreadLocal variable, so the next task on this thread starts clean.
      */
     public void removeThreadLocalValue() {
         THREAD_LOCAL.remove();
     }
 
-    public static void main(String[] args) throws InterruptedException {
+    /**
+     * Serves two requests on one pooled thread. The first stores its user and removes it in a finally
+     * block. The second has no user of its own and only reads.
+     *
+     * @return the user the second request sees: null.
+     * @throws InterruptedException if this thread is interrupted while waiting for a request.
+     * @throws ExecutionException   if a request fails.
+     */
+    public static String run() throws InterruptedException, ExecutionException {
         ThreadLocalCleanupExample example = new ThreadLocalCleanupExample();
+        try (ExecutorService pool = Executors.newSingleThreadExecutor()) {
+            pool.submit(() -> {
+                try {
+                    example.setThreadLocalValue("alice");
+                } finally {
+                    example.removeThreadLocalValue();
+                }
+            }).get();
+            return pool.submit(example::getThreadLocalValue).get();
+        }
+    }
 
-        Runnable task = () -> {
-            try {
-                example.setThreadLocalValue("ThreadLocal value");
-                System.out.println(Thread.currentThread().getName() + ": " + example.getThreadLocalValue());
-                // Simulating work
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                return;
-            } finally {
-                // Ensure the ThreadLocal variable is cleaned up
-                example.removeThreadLocalValue();
-            }
-        };
-
-        Thread thread1 = new Thread(task);
-        Thread thread2 = new Thread(task);
-
-        thread1.start();
-        thread2.start();
-
-        thread1.join();
-        thread2.join();
+    public static void main(String[] args) throws InterruptedException, ExecutionException {
+        System.out.println("second request sees user: " + run()
+                + "   <- the first request removed its value in finally");
     }
 }
-
