@@ -684,8 +684,8 @@ The same choices as decision trees, with the counter and thread-type cases too:
 
 ### Improper Use of ThreadLocal
 
-- Description: Using ThreadLocal incorrectly, leading to memory leaks or unexpected behavior.
-- Solution: Ensure proper management and cleanup of ThreadLocal variables.
+- Description: A ThreadLocal value set on a pooled thread and never removed outlives its task. The next task on that thread inherits it, so one request can see another request's user. It is also never collected while the thread lives.
+- Solution: Remove the value when the task ends, in a finally block or through a try-with-resources cleaner.
 
 #### Examples
 - [ThreadLocalCleanupExample.java](./src/main/java/org/alxkm/antipatterns/improperuseofthreadlocal/ThreadLocalCleanupExample.java)

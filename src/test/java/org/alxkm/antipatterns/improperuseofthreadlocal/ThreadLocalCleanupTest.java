@@ -43,6 +43,17 @@ class ThreadLocalCleanupTest {
         }
     }
 
+    /**
+     * The examples' own run() methods, which is what someone sees with ./gradlew runExample: the
+     * broken one hands the first request's user to the second, and both fixes hand over nothing.
+     */
+    @Test
+    void runnableExamplesShowTheLeakAndBothFixes() throws Exception {
+        assertEquals("alice", ThreadLocalExample.run());
+        assertNull(ThreadLocalCleanupExample.run());
+        assertNull(ThreadLocalWithResourceExample.run());
+    }
+
     @Test
     void removeInFinallyStopsTheLeak() throws Exception {
         ThreadLocalCleanupExample example = new ThreadLocalCleanupExample();
