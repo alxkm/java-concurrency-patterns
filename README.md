@@ -197,6 +197,12 @@ handover through plain fields was caught at it 116,180 times. Dekker's idiom thr
 still produced `0, 0` in 12.7% of samples: release/acquire does not order a store before a later load,
 and that ordering is the part of volatile you pay for.
 
+The same harness settles an antipattern the unit tests can only describe. An unsynchronised lazy
+singleton is check-then-act, and two threads that both see `null` both construct. A unit test with 64
+threads behind a start gate usually misses it. jcstress caught it in 258,119,096 of 4.09 billion
+samples, while the `synchronized` and double-checked versions never produced a second instance in over
+2 billion samples each. See [Lack of Thread Safety in Singletons](#lack-of-thread-safety-in-singletons).
+
 ```bash
 ./gradlew jcstress                                          # full run, a few minutes
 ./gradlew jcstress -PjcstressArgs="-t PlainFields -m quick"  # one test, faster
@@ -721,6 +727,9 @@ The same choices as decision trees, with the counter and thread-type cases too:
 - [HolderSingleton.java](./src/main/java/org/alxkm/antipatterns/lackofthreadsafetyinsingletons/HolderSingleton.java)
 - [SafeSingleton.java](./src/main/java/org/alxkm/antipatterns/lackofthreadsafetyinsingletons/SafeSingleton.java)
 - [UnsafeSingleton.java](./src/main/java/org/alxkm/antipatterns/lackofthreadsafetyinsingletons/UnsafeSingleton.java)
+
+#### Stress test
+- [LazySingletonStressTest.java](./src/jcstress/java/org/alxkm/antipatterns/lackofthreadsafetyinsingletons/LazySingletonStressTest.java) - the unsynchronised `getInstance()` handed two threads two different instances in 6.32% of 4.09 billion samples. The `synchronized` and double-checked versions never did, in 2.46 and 2.21 billion.
 
 ### Using Threads Instead of Tasks
 
