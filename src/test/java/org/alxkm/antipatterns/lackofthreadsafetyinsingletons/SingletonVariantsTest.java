@@ -51,6 +51,9 @@ class SingletonVariantsTest {
      * The unsafe variant is not asserted to fail: the race is permitted, not required, and on a
      * given run it may well return a single instance. What is guaranteed is that whatever it hands
      * back is a usable, non-null instance -- so this documents the hazard without a flaky assertion.
+     * <p>
+     * The failure itself is shown by LazySingletonStressTest in src/jcstress, which runs the race
+     * billions of times and counts the samples where two threads got two instances.
      */
     @Test
     void unsafeSingletonStillReturnsUsableInstances() throws InterruptedException, ExecutionException {
