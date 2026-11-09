@@ -1,62 +1,39 @@
 package org.alxkm.patterns.synchronizers;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 import java.util.concurrent.Exchanger;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
- * Unit tests for the ExchangerExample class.
- *
- * setUp(): Initializes a new instance of ExchangerExample before each test.
- * testExchanger(): Tests the overall exchange process by starting the producer and consumer threads.
- * testProducerConsumerExchange(): Tests the actual exchange of data between producer and consumer threads by asserting the exchanged values.
+ * Tests for ExchangerExample.
+ * <p>
+ * The assertions run on the test thread. An assertion inside a spawned thread only kills that thread:
+ * JUnit never hears about it, and the test passes whatever the thread saw.
  */
-public class ExchangerExampleTest {
-    private ExchangerExample example;
-
-    @BeforeEach
-    public void setUp() {
-        example = new ExchangerExample();
-    }
+@Timeout(value = 30, unit = TimeUnit.SECONDS)
+class ExchangerExampleTest {
 
     @Test
-    public void testExchanger() throws InterruptedException {
-        // This test indirectly verifies the exchange process by starting the producer and consumer threads
-        example.start();
+    void eachSideReceivesWhatTheOtherOffered() throws InterruptedException {
+        ExchangerExample.Exchange exchange = new ExchangerExample().start();
+
+        assertEquals("Data from Consumer", exchange.producerReceived());
+        assertEquals("Data from Producer", exchange.consumerReceived());
     }
 
+    /**
+     * exchange() is a rendezvous: with no partner it waits, and with a timeout it gives up.
+     */
     @Test
-    public void testProducerConsumerExchange() throws InterruptedException {
-        // This test verifies the actual exchange of data between producer and consumer
+    void aThreadWithNoPartnerWaitsAndThenTimesOut() {
         Exchanger<String> exchanger = new Exchanger<>();
-        Thread producer = new Thread(() -> {
-            try {
-                String data = "Data from Producer";
-                String response = exchanger.exchange(data);
-                assertEquals("Data from Consumer", response);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        });
 
-        Thread consumer = new Thread(() -> {
-            try {
-                String data = "Data from Consumer";
-                String response = exchanger.exchange(data);
-                assertEquals("Data from Producer", response);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        });
-
-        producer.start();
-        consumer.start();
-
-        producer.join();
-        consumer.join();
+        assertThrows(TimeoutException.class, () -> exchanger.exchange("alone", 50, TimeUnit.MILLISECONDS));
     }
 }
-
