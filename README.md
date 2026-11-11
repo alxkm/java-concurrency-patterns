@@ -496,8 +496,8 @@ The same choices as decision trees, with the counter and thread-type cases too:
 
 ### Locks
 - [AbstractOwnableSynchronizerExample.java](./src/main/java/org/alxkm/patterns/locks/AbstractOwnableSynchronizerExample.java): Demonstrates AbstractOwnableSynchronizer usage.
-- [AbstractQueuedLongSynchronizerExample.java](./src/main/java/org/alxkm/patterns/locks/AbstractQueuedLongSynchronizerExample.java): Example of AbstractQueuedLongSynchronizer usage.
-- [AbstractQueuedSynchronizerExample.java](./src/main/java/org/alxkm/patterns/locks/AbstractQueuedSynchronizerExample.java): Demonstrates AbstractQueuedSynchronizer usage.
+- [AbstractQueuedLongSynchronizerExample.java](./src/main/java/org/alxkm/patterns/locks/AbstractQueuedLongSynchronizerExample.java): A byte budget in shared mode, with a long state so it can hold more than an int-based Semaphore.
+- [AbstractQueuedSynchronizerExample.java](./src/main/java/org/alxkm/patterns/locks/AbstractQueuedSynchronizerExample.java): A mutex in exclusive mode, and why tryRelease has to check the owner.
 - [LockSupportExample.java](./src/main/java/org/alxkm/patterns/locks/LockSupportExample.java): Demonstrates usage of LockSupport.
 - [ReadWriteLockExample.java](./src/main/java/org/alxkm/patterns/locks/ReadWriteLockExample.java): Example of ReadWriteLock usage.
 - [ReentrantReadWriteLockCounter.java](./src/main/java/org/alxkm/patterns/locks/ReentrantReadWriteLockCounter.java): Counter using ReentrantReadWriteLock.
@@ -1013,9 +1013,11 @@ Thus, by dividing into parts, it is possible to achieve their parallel processin
 
 **AbstractOwnableSynchronizer** - A base class designed for creating synchronization mechanisms. It includes a simple getter/setter pair for storing and accessing an exclusive thread that can interact with the data.
 
-**AbstractQueuedSynchronizer** - This class serves as the foundation for synchronization mechanisms in FutureTask, CountDownLatch, Semaphore, ReentrantLock, and ReentrantReadWriteLock. It can also be used to develop new synchronization mechanisms that rely on a single atomic integer value.
+**AbstractQueuedSynchronizer** - This class serves as the foundation for synchronization mechanisms in FutureTask, CountDownLatch, Semaphore, ReentrantLock, and ReentrantReadWriteLock. It can also be used to develop new synchronization mechanisms that rely on a single atomic integer value. AQS handles the queue of waiting threads, parking, timeouts and interrupts; a synchronizer only overrides a few hooks that say what the state means. In exclusive mode (`tryAcquire`, `tryRelease`) one thread holds it at a time. In shared mode (`tryAcquireShared`, `tryReleaseShared`) several can, as with Semaphore and CountDownLatch.
 
-**AbstractQueuedLongSynchronizer** - A variant of AbstractQueuedSynchronizer that supports operations on an atomic long value.
+The example is a mutex made of three overridden hooks. Its `tryRelease` checks that the caller is the owner: without that check, any thread can call `unlock()` and let a second thread into the critical section while the first is still in it. The test for that fails if the check is removed.
+
+**AbstractQueuedLongSynchronizer** - A variant of AbstractQueuedSynchronizer that supports operations on an atomic long value. The example is a byte budget in shared mode: the state is the number of free bytes, so the budget can exceed the roughly 2 GB an int-based Semaphore can count, and one release can let several waiters in.
 
 ## Atomics
 
