@@ -461,7 +461,7 @@ The same choices as decision trees, with the counter and thread-type cases too:
 - [AtomicReferenceArrayExample.java](./src/main/java/org/alxkm/patterns/atomics/AtomicReferenceArrayExample.java): Demonstrates atomic operations on arrays.
 - [AtomicReferenceExample.java](./src/main/java/org/alxkm/patterns/atomics/AtomicReferenceExample.java): Example of using AtomicReference.
 - [AtomicReferenceFieldUpdaterExample.java](./src/main/java/org/alxkm/patterns/atomics/AtomicReferenceFieldUpdaterExample.java): Demonstrates atomic field updater for reference fields.
-- [AtomicStampedReferenceExample.java](./src/main/java/org/alxkm/patterns/atomics/AtomicStampedReferenceExample.java): Example of using AtomicStampedReference.
+- [AtomicStampedReferenceExample.java](./src/main/java/org/alxkm/patterns/atomics/AtomicStampedReferenceExample.java): The ABA problem on a lock-free stack, and how the stamp catches it.
 - [VarHandleGauge.java](./src/main/java/org/alxkm/patterns/atomics/VarHandleGauge.java): Atomic updates on plain fields through a VarHandle, one by fetch-and-add and one by a compare-and-set loop.
 
 ### Concurrent collections
@@ -1028,7 +1028,7 @@ Thus, by dividing into parts, it is possible to achieve their parallel processin
 
 **AtomicMarkableReference** - This class supports atomic operations on a pair of fields: an object reference and a boolean flag (true/false).
 
-**AtomicStampedReference** - This class supports atomic operations on a pair of fields: an object reference and an integer value.
+**AtomicStampedReference** - This class supports atomic operations on a pair of fields: an object reference and an integer value. Its use is the ABA problem: a CAS checks that the value is still what the thread read, not that nothing happened in between, so a change from A to B and back to A goes unnoticed. The example forces that on a lock-free stack with reused nodes: a paused pop CASes the top from A to B after another thread popped A and B and pushed A back, and B, already popped, ends up on the stack again. With a stamp that every update increments, the paused CAS fails and the pop retries. In Java this needs node reuse, as in an object pool: with fresh nodes the paused thread's reference keeps A alive, so no other node can be the same A.
 
 **AtomicReferenceArray** - An array of object references that can be updated atomically.
 
