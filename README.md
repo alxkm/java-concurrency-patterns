@@ -495,7 +495,7 @@ The same choices as decision trees, with the counter and thread-type cases too:
 - [FutureExample.java](./src/main/java/org/alxkm/patterns/future/FutureExample.java): Demonstrates usage of Future.
 
 ### Locks
-- [AbstractOwnableSynchronizerExample.java](./src/main/java/org/alxkm/patterns/locks/AbstractOwnableSynchronizerExample.java): Demonstrates AbstractOwnableSynchronizer usage.
+- [AbstractOwnableSynchronizerExample.java](./src/main/java/org/alxkm/patterns/locks/AbstractOwnableSynchronizerExample.java): A spin lock that shows up in thread dumps because it records its owner in AbstractOwnableSynchronizer, next to one that does not.
 - [AbstractQueuedLongSynchronizerExample.java](./src/main/java/org/alxkm/patterns/locks/AbstractQueuedLongSynchronizerExample.java): A byte budget in shared mode, with a long state so it can hold more than an int-based Semaphore.
 - [AbstractQueuedSynchronizerExample.java](./src/main/java/org/alxkm/patterns/locks/AbstractQueuedSynchronizerExample.java): A mutex in exclusive mode, and why tryRelease has to check the owner.
 - [LockSupportExample.java](./src/main/java/org/alxkm/patterns/locks/LockSupportExample.java): Demonstrates usage of LockSupport.
@@ -1011,7 +1011,7 @@ Thus, by dividing into parts, it is possible to achieve their parallel processin
 
 ![image](images/AbstractOwnableSynchronizer.png)
 
-**AbstractOwnableSynchronizer** - A base class designed for creating synchronization mechanisms. It includes a simple getter/setter pair for storing and accessing an exclusive thread that can interact with the data.
+**AbstractOwnableSynchronizer** - A base class designed for creating synchronization mechanisms. It includes a simple getter/setter pair for storing and accessing an exclusive thread that can interact with the data. AQS extends it, and so does every lock built on AQS. The field has a second reader, the JVM: a thread dump lists every AbstractOwnableSynchronizer a thread owns under "Locked ownable synchronizers", and `ThreadMXBean` reports the same. The example writes one spin lock twice, on top of this class and with an owner field of its own. Both work, but only the first shows up in a dump, and a test checks that through `ThreadMXBean`.
 
 **AbstractQueuedSynchronizer** - This class serves as the foundation for synchronization mechanisms in FutureTask, CountDownLatch, Semaphore, ReentrantLock, and ReentrantReadWriteLock. It can also be used to develop new synchronization mechanisms that rely on a single atomic integer value. AQS handles the queue of waiting threads, parking, timeouts and interrupts; a synchronizer only overrides a few hooks that say what the state means. In exclusive mode (`tryAcquire`, `tryRelease`) one thread holds it at a time. In shared mode (`tryAcquireShared`, `tryReleaseShared`) several can, as with Semaphore and CountDownLatch.
 
