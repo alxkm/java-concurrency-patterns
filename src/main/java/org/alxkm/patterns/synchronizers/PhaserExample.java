@@ -1,49 +1,86 @@
 package org.alxkm.patterns.synchronizers;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.Phaser;
 
 /**
- * The CustomTask class represents a task to be executed in the PhaserExample.
- * Each task arrives at the phaser and then deregisters from it upon completion.
+ * Phaser: a reusable barrier whose number of parties can change while it runs.
+ * <p>
+ * Workers move through phases in step: nobody starts phase n + 1 until everyone still taking part has
+ * finished phase n. A CyclicBarrier does the same with a fixed number of parties, and that is where it
+ * falls short: a worker with less to do cannot leave, because the barrier would wait for it forever.
+ * With a Phaser it calls arriveAndDeregister() and the others carry on without it.
+ * <p>
+ * Three calls carry the example:
+ * <ul>
+ *   <li>register() adds a party; it is called for each worker before the worker starts.</li>
+ *   <li>arriveAndAwaitAdvance() finishes the phase for this worker and waits for the rest.</li>
+ *   <li>arriveAndDeregister() finishes the phase and leaves; it does not wait.</li>
+ * </ul>
+ * arrive() also exists and does not wait either. The earlier version of this example used it where it
+ * meant to wait, so its phaser synchronised nothing.
  */
-class CustomTask implements Runnable {
-    private final Phaser phaser;
-    private final String taskName;
+public final class PhaserExample {
+
+    private PhaserExample() {
+    }
 
     /**
-     * Constructs a CustomTask with the given phaser and task name.
+     * One step of one worker, and the phase the phaser was in while the step ran.
      *
-     * @param phaser   the phaser to synchronize task execution
-     * @param taskName the name of the task
+     * @param phase  the phaser's phase during the step.
+     * @param worker the worker's index.
      */
-    public CustomTask(Phaser phaser, String taskName) {
-        this.phaser = phaser;
-        this.taskName = taskName;
-        phaser.register();
+    public record Step(int phase, int worker) {
     }
 
-    @Override
-    public void run() {
-        System.out.println(taskName + " started");
-        phaser.arrive(); // Indicate that this task has arrived
-        System.out.println(taskName + " completed");
-        phaser.arriveAndDeregister(); // Indicate that this task has completed and deregister from the phaser
+    /**
+     * Runs one worker per entry in {@code stepsPerWorker}; worker i does that many steps, one per phase,
+     * and leaves the phaser after its last one.
+     *
+     * @param stepsPerWorker how many steps each worker does; each at least 1.
+     * @return every step, in the order they were done.
+     * @throws InterruptedException if interrupted while waiting for the workers.
+     */
+    public static List<Step> run(int... stepsPerWorker) throws InterruptedException {
+        Phaser phaser = new Phaser();
+        List<Step> log = Collections.synchronizedList(new ArrayList<>());
+        List<Thread> workers = new ArrayList<>();
+
+        for (int i = 0; i < stepsPerWorker.length; i++) {
+            int worker = i;
+            int steps = stepsPerWorker[i];
+            if (steps < 1) {
+                throw new IllegalArgumentException("worker " + i + " needs at least one step: " + steps);
+            }
+            // Every worker is registered before any starts. Registering and starting in the same iteration
+            // would let the first worker arrive while it was still the only party, and advance phase 0 alone.
+            phaser.register();
+            workers.add(new Thread(() -> {
+                for (int step = 0; step < steps; step++) {
+                    log.add(new Step(phaser.getPhase(), worker));
+                    if (step < steps - 1) {
+                        phaser.arriveAndAwaitAdvance();
+                    } else {
+                        phaser.arriveAndDeregister();
+                    }
+                }
+            }, "phaser-worker-" + i));
+        }
+
+        workers.forEach(Thread::start);
+        for (Thread worker : workers) {
+            worker.join();
+        }
+        return List.copyOf(log);
     }
-}
 
-/**
- * The PhaserExample class demonstrates the usage of Phaser to synchronize multiple tasks.
- * It creates multiple threads, each representing a task, and waits for all tasks to complete using a Phaser.
- */
-public class PhaserExample {
-    public static void main(String[] args) {
-        final int TASK_COUNT = 3;
-        Phaser phaser = new Phaser(TASK_COUNT); // Create a Phaser with the specified number of parties
-
-        // Create and start threads for each task
-        for (int i = 1; i <= TASK_COUNT; i++) {
-            String taskName = "Task " + i;
-            new Thread(new CustomTask(phaser, taskName)).start();
+    public static void main(String[] args) throws InterruptedException {
+        // Worker 0 has one step, worker 1 two, worker 2 four. Each leaves after its last step.
+        for (Step step : run(1, 2, 4)) {
+            System.out.println("phase " + step.phase() + ": worker " + step.worker());
         }
     }
 }
