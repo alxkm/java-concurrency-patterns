@@ -508,7 +508,7 @@ The same choices as decision trees, with the counter and thread-type cases too:
 - [BarrierExample.java](./src/main/java/org/alxkm/patterns/synchronizers/BarrierExample.java): Example of using barriers.
 - [CountDownLatchExample.java](./src/main/java/org/alxkm/patterns/synchronizers/CountDownLatchExample.java): Demonstrates usage of CountDownLatch.
 - [ExchangerExample.java](./src/main/java/org/alxkm/patterns/synchronizers/ExchangerExample.java): Demonstrates usage of Exchanger.
-- [PhaserExample.java](./src/main/java/org/alxkm/patterns/synchronizers/PhaserExample.java): Example of using Phaser.
+- [PhaserExample.java](./src/main/java/org/alxkm/patterns/synchronizers/PhaserExample.java): Workers move through phases in step, and those with less to do leave without holding up the rest.
 - [SemaphorePrintQueueExample.java](./src/main/java/org/alxkm/patterns/synchronizers/SemaphorePrintQueueExample.java): Demonstrates a print queue using semaphore.
 
 ### Thread local
@@ -888,7 +888,7 @@ This section introduces classes for active thread management:
 
 **Exchanger<V>** - Facilitates the exchange of objects between two threads, supporting null values for single object transfers or as a simple synchronizer. The first thread calling the exchange method blocks until the second thread calls the same method. The threads then exchange values and proceed.
 
-**Phaser** - An advanced barrier for thread synchronization, combining features of CyclicBarrier and CountDownLatch. The number of threads is dynamic and can change. The class can be reused and allows threads to report readiness without blocking.
+**Phaser** - An advanced barrier for thread synchronization, combining features of CyclicBarrier and CountDownLatch. The number of threads is dynamic and can change. The class can be reused and allows threads to report readiness without blocking. In the example, workers do different numbers of steps, one per phase. `arriveAndAwaitAdvance()` keeps them in step, and a worker that has finished calls `arriveAndDeregister()` and leaves; the rest go on without it. A CyclicBarrier has a fixed number of parties and would wait for the leaver forever. Note that `arrive()` does not wait either: it is for a party that reports and moves on, not for one that needs the others to catch up.
 
 ### Examples
 
