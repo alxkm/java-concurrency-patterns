@@ -498,7 +498,7 @@ The same choices as decision trees, with the counter and thread-type cases too:
 - [AbstractOwnableSynchronizerExample.java](./src/main/java/org/alxkm/patterns/locks/AbstractOwnableSynchronizerExample.java): A spin lock that shows up in thread dumps because it records its owner in AbstractOwnableSynchronizer, next to one that does not.
 - [AbstractQueuedLongSynchronizerExample.java](./src/main/java/org/alxkm/patterns/locks/AbstractQueuedLongSynchronizerExample.java): A byte budget in shared mode, with a long state so it can hold more than an int-based Semaphore.
 - [AbstractQueuedSynchronizerExample.java](./src/main/java/org/alxkm/patterns/locks/AbstractQueuedSynchronizerExample.java): A mutex in exclusive mode, and why tryRelease has to check the owner.
-- [LockSupportExample.java](./src/main/java/org/alxkm/patterns/locks/LockSupportExample.java): Demonstrates usage of LockSupport.
+- [LockSupportExample.java](./src/main/java/org/alxkm/patterns/locks/LockSupportExample.java): The park/unpark permit, why an early unpark is not lost the way an early notify is, and a signal built on them.
 - [ReadWriteLockExample.java](./src/main/java/org/alxkm/patterns/locks/ReadWriteLockExample.java): Example of ReadWriteLock usage.
 - [ReentrantReadWriteLockCounter.java](./src/main/java/org/alxkm/patterns/locks/ReentrantReadWriteLockCounter.java): Counter using ReentrantReadWriteLock.
 - [ReentrantReadWriteLockCounterExample.java](./src/main/java/org/alxkm/patterns/locks/ReentrantReadWriteLockCounterExample.java): Demonstrates counter with ReentrantReadWriteLock.
@@ -997,7 +997,7 @@ Thus, by dividing into parts, it is possible to achieve their parallel processin
 
 **ReentrantReadWriteLock.WriteLock** - A write lock for writers, obtained via readWriteLock.writeLock().
 
-**LockSupport** - Designed for creating classes with locks. It includes methods for parking threads, serving as replacements for the deprecated Thread.suspend() and Thread.resume() methods.
+**LockSupport** - Designed for creating classes with locks. It includes methods for parking threads, serving as replacements for the deprecated Thread.suspend() and Thread.resume() methods. Each thread has one permit: `unpark(t)` makes it available and `park()` takes it, blocking only if it is not there. So an `unpark` that comes before the `park` is not lost, unlike a `notify` with nobody waiting yet. The example measures both orders (park returns in 0 ms, wait sleeps through its whole timeout) and builds a one-shot signal the way the JDK's synchronizers use park: a volatile flag, `park` in a loop because it may return spuriously, and `park(blocker)` so the thread dump says what the thread waits for.
 
 ### Examples
 
