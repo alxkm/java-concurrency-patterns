@@ -505,7 +505,7 @@ The same choices as decision trees, with the counter and thread-type cases too:
 
 ### Synchronizers
 - [Barrier.java](./src/main/java/org/alxkm/patterns/synchronizers/Barrier.java): A thin wrapper exposing CyclicBarrier's await.
-- [BarrierExample.java](./src/main/java/org/alxkm/patterns/synchronizers/BarrierExample.java): Example of using barriers.
+- [BarrierExample.java](./src/main/java/org/alxkm/patterns/synchronizers/BarrierExample.java): Workers sum in rounds and the barrier action merges each round; a worker that fails breaks the barrier so the others do not wait for it forever.
 - [CountDownLatchExample.java](./src/main/java/org/alxkm/patterns/synchronizers/CountDownLatchExample.java): Demonstrates usage of CountDownLatch.
 - [ExchangerExample.java](./src/main/java/org/alxkm/patterns/synchronizers/ExchangerExample.java): Demonstrates usage of Exchanger.
 - [PhaserExample.java](./src/main/java/org/alxkm/patterns/synchronizers/PhaserExample.java): Workers move through phases in step, and those with less to do leave without holding up the rest.
@@ -884,7 +884,9 @@ This section introduces classes for active thread management:
 
 **CountDownLatch** - Allows one or more threads to wait until a specific number of operations in other threads are completed. For example, threads calling the latch's await method (with or without a timeout) will block until another thread completes initialization and calls the countDown method. This method decrements the count. When the counter reaches zero, all waiting threads proceed, and subsequent await calls pass without waiting. The count is one-time and cannot be reset.
 
-**CyclicBarrier** - Used to synchronize a set number of threads at a common point. The barrier is reached when N threads call the await method and block. The counter then resets, and waiting threads are released. Optionally, a Runnable task can be executed before threads are unblocked and the counter is reset.
+**CyclicBarrier** - Used to synchronize a set number of threads at a common point. The barrier is reached when N threads call the await method and block. The counter then resets, and waiting threads are released. Optionally, a Runnable task can be executed before threads are unblocked and the counter is reset. In the example, each worker sums its share of a round and the barrier action adds up the shares, once per round, on the same barrier. The barrier also makes the shares visible to the action, and the action's result visible to every worker after `await()` returns.
+
+The part that is easy to get wrong is failure. A worker that throws never reaches `await()`, and the others wait for it forever. It has to break the barrier on its way out, and `reset()` does not do that: it breaks the barrier only for the parties waiting at that moment, and a worker that arrives later waits on a fresh barrier for a party that will never come. An `await()` from an already interrupted thread breaks it for good, so every later arrival gets `BrokenBarrierException`. The test that runs a failing worker 300 times hangs within the first few runs if `reset()` is used instead.
 
 **Exchanger<V>** - Facilitates the exchange of objects between two threads, supporting null values for single object transfers or as a simple synchronizer. The first thread calling the exchange method blocks until the second thread calls the same method. The threads then exchange values and proceed.
 
