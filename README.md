@@ -457,7 +457,7 @@ The same choices as decision trees, with the counter and thread-type cases too:
 - [AtomicExample.java](./src/main/java/org/alxkm/patterns/atomics/AtomicExample.java): Demonstrates basic atomic operations.
 - [AtomicIntegerFieldUpdaterExample.java](./src/main/java/org/alxkm/patterns/atomics/AtomicIntegerFieldUpdaterExample.java): Demonstrates atomic field updater for integer fields.
 - [AtomicLongFieldUpdaterExample.java](./src/main/java/org/alxkm/patterns/atomics/AtomicLongFieldUpdaterExample.java): Demonstrates atomic field updater for long fields.
-- [AtomicMarkableReferenceExample.java](./src/main/java/org/alxkm/patterns/atomics/AtomicMarkableReferenceExample.java): Example of AtomicMarkableReference usage.
+- [AtomicMarkableReferenceExample.java](./src/main/java/org/alxkm/patterns/atomics/AtomicMarkableReferenceExample.java): A lock-free sorted list, and why removing a node needs the mark: without it, an insert next to a remove is lost.
 - [AtomicReferenceArrayExample.java](./src/main/java/org/alxkm/patterns/atomics/AtomicReferenceArrayExample.java): Demonstrates atomic operations on arrays.
 - [AtomicReferenceExample.java](./src/main/java/org/alxkm/patterns/atomics/AtomicReferenceExample.java): Example of using AtomicReference.
 - [AtomicReferenceFieldUpdaterExample.java](./src/main/java/org/alxkm/patterns/atomics/AtomicReferenceFieldUpdaterExample.java): Demonstrates atomic field updater for reference fields.
@@ -1030,7 +1030,7 @@ The example is a mutex made of three overridden hooks. Its `tryRelease` checks t
 
 **AtomicReference** - This class allows for atomic operations on an object reference.
 
-**AtomicMarkableReference** - This class supports atomic operations on a pair of fields: an object reference and a boolean flag (true/false).
+**AtomicMarkableReference** - This class supports atomic operations on a pair of fields: an object reference and a boolean flag (true/false). It is made for the lock-free linked list (Harris, 2001). Removing a node with one CAS on its predecessor checks the predecessor and nothing else, so if another thread inserts right after the node meanwhile, the new key goes out with it, and if it removes the next node, that node comes back. The example forces both on a list with plain AtomicReference links. In the fixed list each next is an AtomicMarkableReference: remove() first marks the node's own next, which deletes it logically and makes every later CAS on that link fail, and only then unlinks it. A thread that finds a marked node on its way unlinks it. The mark has to change in the same CAS as the reference; a separate flag leaves the same gap.
 
 **AtomicStampedReference** - This class supports atomic operations on a pair of fields: an object reference and an integer value. Its use is the ABA problem: a CAS checks that the value is still what the thread read, not that nothing happened in between, so a change from A to B and back to A goes unnoticed. The example forces that on a lock-free stack with reused nodes: a paused pop CASes the top from A to B after another thread popped A and B and pushed A back, and B, already popped, ends up on the stack again. With a stamp that every update increments, the paused CAS fails and the pop retries. In Java this needs node reuse, as in an object pool: with fresh nodes the paused thread's reference keeps A alive, so no other node can be the same A.
 
