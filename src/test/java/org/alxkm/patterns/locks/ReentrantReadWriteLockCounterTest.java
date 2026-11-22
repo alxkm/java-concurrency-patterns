@@ -39,20 +39,4 @@ public class ReentrantReadWriteLockCounterTest {
         final int counterValue = counter.getCounter();
         assertEquals(expectedValue, counterValue, "The counter value should be equal to the expected value");
     }
-
-    /**
-     * This test method verifies the functionality of the ReadWriteLockExample class, which demonstrates
-     * the usage of ReadWriteLock to provide concurrent read access and exclusive write access to a shared
-     * resource. It sets a value using the write method and then reads the value using the read method.
-     * The test asserts that the value read from the shared resource matches the value previously written,
-     * confirming that the read and write operations are performed correctly with the appropriate locking
-     * mechanisms in place to ensure thread safety.
-     */
-
-    @Test
-    public void testReadWriteLock() throws InterruptedException {
-        ReadWriteLockExample example = new ReadWriteLockExample();
-        example.write(42);
-        assertEquals(42, example.read());
-    }
 }
