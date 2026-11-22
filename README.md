@@ -499,7 +499,7 @@ The same choices as decision trees, with the counter and thread-type cases too:
 - [AbstractQueuedLongSynchronizerExample.java](./src/main/java/org/alxkm/patterns/locks/AbstractQueuedLongSynchronizerExample.java): A byte budget in shared mode, with a long state so it can hold more than an int-based Semaphore.
 - [AbstractQueuedSynchronizerExample.java](./src/main/java/org/alxkm/patterns/locks/AbstractQueuedSynchronizerExample.java): A mutex in exclusive mode, and why tryRelease has to check the owner.
 - [LockSupportExample.java](./src/main/java/org/alxkm/patterns/locks/LockSupportExample.java): The park/unpark permit, why an early unpark is not lost the way an early notify is, and a signal built on them.
-- [ReadWriteLockExample.java](./src/main/java/org/alxkm/patterns/locks/ReadWriteLockExample.java): Example of ReadWriteLock usage.
+- [ReadWriteLockExample.java](./src/main/java/org/alxkm/patterns/locks/ReadWriteLockExample.java): A cached value on a ReentrantReadWriteLock: no upgrade from read to write, a downgrade from write to read, and the second check after switching locks.
 - [ReentrantReadWriteLockCounter.java](./src/main/java/org/alxkm/patterns/locks/ReentrantReadWriteLockCounter.java): Counter using ReentrantReadWriteLock.
 - [ReentrantReadWriteLockCounterExample.java](./src/main/java/org/alxkm/patterns/locks/ReentrantReadWriteLockCounterExample.java): Demonstrates counter with ReentrantReadWriteLock.
 
@@ -993,7 +993,7 @@ Thus, by dividing into parts, it is possible to achieve their parallel processin
 
 **ReadWriteLock** - An interface for creating read/write locks. These locks are particularly useful when the system has many read operations and few write operations.
 
-**ReentrantReadWriteLock** - Commonly used in multithreaded services and caches, providing a significant performance improvement over synchronized blocks. This class operates in two mutually exclusive modes: multiple readers can read data simultaneously, while only one writer can write data at a time.
+**ReentrantReadWriteLock** - Commonly used in caches and other read-mostly structures. This class operates in two mutually exclusive modes: multiple readers can read data simultaneously, while only one writer can write data at a time. It pays only when reads are many, take a while and rarely overlap a write; each acquisition costs more than a plain lock, so with short reads ReentrantLock or synchronized is usually as fast. Two rules decide how to use it. There is no upgrade: a thread holding the read lock that calls writeLock().lock() waits for every reader to leave, itself included, so it waits forever. A downgrade is allowed: a writer may take the read lock and then let go of the write lock, so no other writer can change what it just wrote while it still uses it. The example is the cached-value pattern built on both. A reader that finds the value missing has to let go of the read lock before taking the write lock, and in that gap another thread may load it first, so the write path checks again. The tests also show that a new reader queues behind a waiting writer, even while the read lock is held, so a steady stream of readers cannot keep a writer out.
 
 **ReentrantReadWriteLock.ReadLock** - A read lock for readers, obtained via readWriteLock.readLock().
 
