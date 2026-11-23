@@ -489,7 +489,7 @@ The same choices as decision trees, with the counter and thread-type cases too:
 
 ### Fork join pool
 - [ForkJoinMergeSort.java](./src/main/java/org/alxkm/patterns/forkjoinpool/ForkJoinMergeSort.java): Example of merge sort using ForkJoinPool.
-- [ForkJoinPoolExample.java](./src/main/java/org/alxkm/patterns/forkjoinpool/ForkJoinPoolExample.java): Demonstrates ForkJoinPool usage.
+- [ForkJoinPoolExample.java](./src/main/java/org/alxkm/patterns/forkjoinpool/ForkJoinPoolExample.java): A RecursiveTask that sums an array: split by index, fork one half and compute the other, and an exception from any subtask reaching the caller.
 
 ### Future
 - [FutureExample.java](./src/main/java/org/alxkm/patterns/future/FutureExample.java): Demonstrates usage of Future.
@@ -967,7 +967,7 @@ Thus, by dividing into parts, it is possible to achieve their parallel processin
 
 **ForkJoinTask** - The base class for all Fork/Join tasks. Key methods include: fork() - adds a task to the queue of the current ForkJoinWorkerThread for asynchronous execution; invoke() - executes a task in the current thread; join() - waits for the subtask to complete and returns the result; invokeAll(…) - combines the previous three operations, executing two or more tasks at once; adapt(…) - creates a new ForkJoinTask from Runnable or Callable objects.
 
-**RecursiveTask** - An abstract class derived from ForkJoinTask, requiring the implementation of the compute method, which performs the asynchronous operation.
+**RecursiveTask** - An abstract class derived from ForkJoinTask, requiring the implementation of the compute method, which performs the asynchronous operation. The usual shape is: below a threshold, compute directly; above it, split the range by index into [from, mid) and [mid, to), fork() the left half so an idle worker can steal it, compute() the right half in the current thread, then join() the left. Splitting by index matters: the earlier version of the example made two subtasks of size n / 2, and for odd n an element was dropped. An exception thrown in any subtask is rethrown by join() and invoke(), so the example sums with Math.addExact and an overflow anywhere in the tree reaches the caller instead of a wrong total.
 
 **RecursiveAction** - Similar to RecursiveTask but does not return a result.
 
@@ -1156,6 +1156,7 @@ To run specific test categories:
 
 #### Fork/Join
 - [ForkJoinMergeSortTest.java](./src/test/java/org/alxkm/patterns/forkjoinpool/ForkJoinMergeSortTest.java)
+- [ForkJoinPoolExampleTest.java](./src/test/java/org/alxkm/patterns/forkjoinpool/ForkJoinPoolExampleTest.java)
 
 #### Philosopher Problem
 - [PhilosopherWithLockTest.java](./src/test/java/org/alxkm/patterns/philosopher/PhilosopherWithLockTest.java)
