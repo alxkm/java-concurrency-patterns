@@ -10,6 +10,7 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.stream.LongStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -66,8 +67,9 @@ class ForkJoinPoolExampleTest {
 
     /**
      * The overflow happens in one leaf deep in the tree, on some worker thread; it still reaches the
-     * caller of sum(). The JDK may hand over a copy with the original as its cause, so the original's
-     * message is looked for on either.
+     * caller of sum(). What arrives may be a copy of a copy, one per thread it crossed, so the original's
+     * message is looked for at the end of the cause chain. Looking only one level down passed locally and
+     * failed on CI, where a different worker had stolen part of the tree.
      */
     @Test
     void anExceptionInASubtaskReachesTheCaller() {
@@ -78,7 +80,8 @@ class ForkJoinPoolExampleTest {
         try (ForkJoinPool pool = new ForkJoinPool(4)) {
             ArithmeticException thrown = assertThrows(ArithmeticException.class,
                     () -> ForkJoinPoolExample.sum(values, 100, pool, (from, to) -> { }));
-            Throwable original = thrown.getCause() instanceof ArithmeticException ? thrown.getCause() : thrown;
+            Throwable original = ForkJoinPoolExample.originalCause(thrown);
+            assertInstanceOf(ArithmeticException.class, original);
             assertEquals("long overflow", original.getMessage());
         }
     }
@@ -109,6 +112,18 @@ class ForkJoinPoolExampleTest {
             assertThrows(IllegalArgumentException.class,
                     () -> ForkJoinPoolExample.sum(new long[1], 0, pool, (from, to) -> { }));
         }
+    }
+
+    @Test
+    void theOriginalCauseIsTheEndOfTheChain() {
+        ArithmeticException original = new ArithmeticException("long overflow");
+        ArithmeticException copy = new ArithmeticException();
+        copy.initCause(original);
+        ArithmeticException copyOfCopy = new ArithmeticException();
+        copyOfCopy.initCause(copy);
+
+        assertEquals(original, ForkJoinPoolExample.originalCause(copyOfCopy));
+        assertEquals(original, ForkJoinPoolExample.originalCause(original));
     }
 
     @Test

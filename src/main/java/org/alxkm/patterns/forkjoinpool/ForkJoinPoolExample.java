@@ -23,8 +23,9 @@ import java.util.concurrent.RecursiveTask;
  * Math.addExact, so an overflow anywhere in the tree comes out of {@link #sum} as ArithmeticException
  * instead of a wrong total. When it was thrown on another thread, what the caller gets is usually not
  * the original but a new exception of the same type, with the original as its cause. That way the stack
- * trace shows where the caller was waiting as well as where the worker failed; the message is on the
- * cause.
+ * trace shows where the caller was waiting as well as where the worker failed. Each join on a different
+ * thread can add such a copy, so how deep the original sits depends on which worker stole what; it is
+ * the last one in the cause chain, and it alone carries the message. See {@link #originalCause}.
  */
 public final class ForkJoinPoolExample {
 
@@ -56,6 +57,21 @@ public final class ForkJoinPoolExample {
         try (ForkJoinPool pool = new ForkJoinPool(parallelism)) {
             return sum(values, DEFAULT_THRESHOLD, pool, (from, to) -> { });
         }
+    }
+
+    /**
+     * Follows the cause chain to its end: for an exception rethrown by join() or invoke(), the one the
+     * failing task actually threw.
+     *
+     * @param thrown what the caller caught.
+     * @return the last exception in its cause chain; {@code thrown} itself if it has no cause.
+     */
+    public static Throwable originalCause(Throwable thrown) {
+        Throwable original = thrown;
+        while (original.getCause() != null && original.getCause() != original) {
+            original = original.getCause();
+        }
+        return original;
     }
 
     static long sum(long[] values, int threshold, ForkJoinPool pool, LeafObserver observer) {
@@ -116,7 +132,7 @@ public final class ForkJoinPoolExample {
             sum(new long[]{Long.MAX_VALUE, 1}, 4);
         } catch (ArithmeticException e) {
             System.out.println("Long.MAX_VALUE + 1 threw in a worker; invoke() rethrew " + e
-                    + ", caused by " + e.getCause());
+                    + ", whose original is " + originalCause(e));
         }
     }
 }
