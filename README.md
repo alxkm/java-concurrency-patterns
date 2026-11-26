@@ -492,7 +492,7 @@ The same choices as decision trees, with the counter and thread-type cases too:
 - [ForkJoinPoolExample.java](./src/main/java/org/alxkm/patterns/forkjoinpool/ForkJoinPoolExample.java): A RecursiveTask that sums an array: split by index, fork one half and compute the other, and an exception from any subtask reaching the caller.
 
 ### Future
-- [FutureExample.java](./src/main/java/org/alxkm/patterns/future/FutureExample.java): Demonstrates usage of Future.
+- [FutureExample.java](./src/main/java/org/alxkm/patterns/future/FutureExample.java): What get() and cancel() do and do not do: a timed-out get() leaves the task running, cancel() only interrupts, and a cancelled result is lost.
 
 ### Locks
 - [AbstractOwnableSynchronizerExample.java](./src/main/java/org/alxkm/patterns/locks/AbstractOwnableSynchronizerExample.java): A spin lock that shows up in thread dumps because it records its owner in AbstractOwnableSynchronizer, next to one that does not.
@@ -908,7 +908,7 @@ Here, we reach the most extensive section of the package. This part covers inter
 
 ![image](images/Future.png)
 
-**Future<V>** - This is a useful interface for obtaining the results of an asynchronous operation. The key method is get, which blocks the current thread (with or without a timeout) until the asynchronous operation completes in another thread. Additional methods are available for canceling the operation and checking its current status. The FutureTask class often implements this interface.
+**Future<V>** - This is a useful interface for obtaining the results of an asynchronous operation. The key method is get, which blocks the current thread (with or without a timeout) until the asynchronous operation completes in another thread. Additional methods are available for canceling the operation and checking its current status. The FutureTask class often implements this interface. Three things about it are easy to get wrong. A get(timeout) that times out ends only the wait: the task keeps running and keeps its pool thread, so a caller that gives up on the result should cancel the task. cancel(true) only interrupts the thread running the task; a task that never checks for interruption runs to the end anyway. And once a future is cancelled, get() throws CancellationException even if the task went on to finish, so its result is lost. If the task threw, get() throws ExecutionException whose cause is the very exception the task threw.
 
 **RunnableFuture<V>** - While Future serves as a Client API interface, the RunnableFuture interface is used to start the asynchronous operation. The successful completion of the run() method marks the asynchronous operation as complete, allowing the results to be retrieved via the get method.
 
