@@ -516,7 +516,7 @@ The same choices as decision trees, with the counter and thread-type cases too:
 
 ### Reentrant lock
 - [ReentrantLockCounter.java](./src/main/java/org/alxkm/patterns/reentrantlock/ReentrantLockCounter.java): Counter using ReentrantLock.
-- [ReentrantLockExample.java](./src/main/java/org/alxkm/patterns/reentrantlock/ReentrantLockExample.java): Demonstrates usage of ReentrantLock.
+- [ReentrantLockExample.java](./src/main/java/org/alxkm/patterns/reentrantlock/ReentrantLockExample.java): Opposite transfers between two accounts: lock() deadlocks and the JVM reports it, tryLock() with a random back-off does not. Also lockInterruptibly() against lock().
 
 ### Mutex
 - [MutexExample.java](./src/main/java/org/alxkm/patterns/mutex/MutexExample.java): Demonstrates usage of a mutex.
@@ -989,7 +989,7 @@ Thus, by dividing into parts, it is possible to achieve their parallel processin
 
 **Lock** - A fundamental interface in the lock framework that offers a more flexible approach to controlling access to resources or blocks compared to using synchronized. When using multiple locks, the release order can be arbitrary, and it provides an option to follow an alternative scenario if the lock is already held by another thread.
 
-**ReentrantLock** - A reentrant lock that allows only one thread to enter a protected block at a time. This class supports both "fair" and "non-fair" thread locking. With "fair" locking, threads are released in the order they called lock(). With "unfair" locking, the release order is not guaranteed, but it operates faster. By default, "unfair" locking is used.
+**ReentrantLock** - A reentrant lock that allows only one thread to enter a protected block at a time. This class supports both "fair" and "non-fair" thread locking. With "fair" locking, threads are released in the order they called lock(). With "unfair" locking, the release order is not guaranteed, but it operates faster. By default, "unfair" locking is used. What it adds over synchronized is the choice not to wait forever. tryLock() returns at once, and tryLock(timeout) after a while, so a thread that needs a second lock can let go of the first and retry instead of deadlocking; the example forces two opposite transfers to hold one account lock each and shows lock() deadlocking (the JVM's findDeadlockedThreads sees it) while the back-off version completes. The pause before retrying is random, or two threads can keep failing in step. lockInterruptibly() gives up when the waiting thread is interrupted; lock(), like synchronized, keeps waiting and sets the interrupt flag again only once it has the lock.
 
 **ReadWriteLock** - An interface for creating read/write locks. These locks are particularly useful when the system has many read operations and few write operations.
 
