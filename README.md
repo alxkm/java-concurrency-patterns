@@ -1068,6 +1068,11 @@ observed - through the helpers in [`src/test/java/org/alxkm/testsupport`](./src/
 - [`Concurrently`](./src/test/java/org/alxkm/testsupport/Concurrently.java) - holds N threads behind a start
   gate and releases them together, so the operations actually overlap instead of running one after another;
   `collect` returns one result per thread.
+- [`UncaughtExceptions`](./src/test/java/org/alxkm/testsupport/UncaughtExceptions.java) - a JUnit extension,
+  registered for every test through autodetection, that fails a test when one of its threads dies of an
+  uncaught exception. Without it the stack trace goes to stderr and the test passes: an example's `main()`
+  could start two threads, both could fail, and `mainRuns()` stayed green. A task given to `submit()` is
+  not covered; its `Future` keeps the exception, and the test has to call `get()`.
 
 Tests that pin down an antipattern assert both halves: that the broken version can actually lose updates,
 and that the corrected version never does.
