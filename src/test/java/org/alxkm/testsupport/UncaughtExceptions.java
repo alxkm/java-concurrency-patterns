@@ -16,7 +16,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * test fails and names the thread.
  * <p>
  * It is registered for every test through JUnit's extension autodetection
- * (src/test/resources/META-INF/services and junit-platform.properties), so a new test cannot forget it.
+ * (src/test/resources/META-INF/services, switched on in build.gradle), so a new test cannot forget it.
  * <p>
  * What it sees and what it does not:
  * <ul>

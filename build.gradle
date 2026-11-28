@@ -196,6 +196,10 @@ test {
     // default timeout a deadlock regression would stall CI until the job is killed, with no clue as to
     // which test caused it; with one, the offending test fails by name.
     systemProperty 'junit.jupiter.execution.timeout.default', '60s'
+    // An exception on a thread the test does not join is printed and forgotten, and the test passes.
+    // This loads the extensions listed in src/test/resources/META-INF/services, which today means
+    // org.alxkm.testsupport.UncaughtExceptions: it fails a test when one of its threads dies that way.
+    systemProperty 'junit.jupiter.extensions.autodetection.enabled', 'true'
     finalizedBy jacocoTestReport
     
     // Report failures as they happen, with enough detail to diagnose them from a CI log.
