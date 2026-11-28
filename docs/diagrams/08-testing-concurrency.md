@@ -23,7 +23,7 @@ flowchart TD
 | | Failure | Fix |
 |---|---|---|
 | 1 | `Thread.sleep(1000)` then assert | wait for the condition: `Await.until(...)` |
-| 2 | `assertEquals` inside a spawned thread | return values, assert on the test thread |
+| 2 | `assertEquals` inside a spawned thread | return values, assert on the test thread. The `UncaughtExceptions` extension now fails the test when a plain thread or an `execute()` task dies this way; a `submit()` task keeps the error in its `Future`, so only `get()` reports it |
 | 3 | `assertTrue(x \|\| !x)`, a tautology | assert the property the code provides |
 | 4 | test builds its own `AtomicInteger` and never calls the example | call the example; if it returns `void` and only prints, that is the bug |
 | 5 | asserting which side of a race won | order the two with a latch |

@@ -35,7 +35,9 @@ class ThreadDumpExampleTest {
 
         Thread contender = daemon("contender", () -> {
             synchronized (monitor) {
-                throw new IllegalStateException("unreachable");
+                // Reached at the end of the test, once the holder is interrupted and lets go. It used to
+                // throw "unreachable" here, which every run printed as an uncaught exception.
+                Thread.onSpinWait();
             }
         });
         awaitState(contender, Thread.State.BLOCKED);
